@@ -10,7 +10,6 @@ import net.pedroksl.advanced_ae.common.items.armors.IGridLinkedItem;
 import net.pedroksl.advanced_ae.common.patterns.AdvPatternDetailsDecoder;
 import net.pedroksl.advanced_ae.events.AAELivingEntityEvents;
 import net.pedroksl.advanced_ae.events.AAEPlayerEvents;
-import net.pedroksl.advanced_ae.network.AAENetworkHandler;
 import net.pedroksl.advanced_ae.recipes.InitRecipeSerializers;
 
 import appeng.api.crafting.PatternDetailsHelper;
@@ -53,7 +52,6 @@ public class AdvancedAE {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        AAENetworkHandler.INSTANCE.init();
         PatternDetailsHelper.registerDecoder(AdvPatternDetailsDecoder.INSTANCE);
         initGridLinkables();
         AAEPlayerEvents.init();
