@@ -3,105 +3,110 @@ package net.pedroksl.advanced_ae.common.definitions;
 import java.util.EnumMap;
 import java.util.function.Supplier;
 
-import net.minecraft.Util;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.LazyLoadedValue;
-import net.minecraft.util.StringRepresentable;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.IArmorMaterial;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
 
-@SuppressWarnings("deprecation")
-public enum AAEMaterials implements StringRepresentable, ArmorMaterial {
+public enum AAEMaterials implements IArmorMaterial {
     QUANTUM_ALLOY(
             "quantum_alloy",
             10,
-            Util.make(new EnumMap<>(ArmorItem.Type.class), map -> {
-                map.put(ArmorItem.Type.BOOTS, 4);
-                map.put(ArmorItem.Type.LEGGINGS, 6);
-                map.put(ArmorItem.Type.CHESTPLATE, 9);
-                map.put(ArmorItem.Type.HELMET, 4);
-            }),
+            protectionValues(4, 6, 9, 4),
             15,
-            SoundEvents.ARMOR_EQUIP_NETHERITE,
+            SoundEvents.ITEM_ARMOR_EQUIP_NETHERITE,
             10.0F,
             0.25F,
-            () -> Ingredient.of(AAEItems.QUANTUM_ALLOY));
+            () -> Ingredient.fromItems(AAEItems.QUANTUM_ALLOY));
 
-    public static final StringRepresentable.EnumCodec<AAEMaterials> CODEC =
-            StringRepresentable.fromEnum(AAEMaterials::values);
-    private static final EnumMap<ArmorItem.Type, Integer> HEALTH_FUNCTION_FOR_TYPE =
-            Util.make(new EnumMap<>(ArmorItem.Type.class), (p_266653_) -> {
-                p_266653_.put(ArmorItem.Type.BOOTS, 13);
-                p_266653_.put(ArmorItem.Type.LEGGINGS, 15);
-                p_266653_.put(ArmorItem.Type.CHESTPLATE, 16);
-                p_266653_.put(ArmorItem.Type.HELMET, 11);
-            });
+    private static final EnumMap<EquipmentSlotType, Integer> BASE_DURABILITY = durabilityValues();
+
     private final String name;
     private final int durabilityMultiplier;
-    private final EnumMap<ArmorItem.Type, Integer> protectionFunctionForType;
-    private final int enchantmentValue;
+    private final EnumMap<EquipmentSlotType, Integer> protectionBySlot;
+    private final int enchantability;
     private final SoundEvent sound;
     private final float toughness;
     private final float knockbackResistance;
-    private final LazyLoadedValue<Ingredient> repairIngredient;
+    private final Supplier<Ingredient> repairIngredient;
 
     AAEMaterials(
-            String pName,
-            int pDurabilityMultiplier,
-            EnumMap<ArmorItem.Type, Integer> pProtectionFunctionForType,
-            int pEnchantmentValue,
-            SoundEvent pSound,
-            float pToughness,
-            float pKnockbackResistance,
-            Supplier<Ingredient> pRepairIngredient) {
-        this.name = pName;
-        this.durabilityMultiplier = pDurabilityMultiplier;
-        this.protectionFunctionForType = pProtectionFunctionForType;
-        this.enchantmentValue = pEnchantmentValue;
-        this.sound = pSound;
-        this.toughness = pToughness;
-        this.knockbackResistance = pKnockbackResistance;
-        this.repairIngredient = new LazyLoadedValue<>(pRepairIngredient);
+            String name,
+            int durabilityMultiplier,
+            EnumMap<EquipmentSlotType, Integer> protectionBySlot,
+            int enchantability,
+            SoundEvent sound,
+            float toughness,
+            float knockbackResistance,
+            Supplier<Ingredient> repairIngredient) {
+        this.name = name;
+        this.durabilityMultiplier = durabilityMultiplier;
+        this.protectionBySlot = protectionBySlot;
+        this.enchantability = enchantability;
+        this.sound = sound;
+        this.toughness = toughness;
+        this.knockbackResistance = knockbackResistance;
+        this.repairIngredient = repairIngredient;
     }
 
-    public int getDurabilityForType(ArmorItem.Type pType) {
-        return HEALTH_FUNCTION_FOR_TYPE.get(pType) * this.durabilityMultiplier;
+    private static EnumMap<EquipmentSlotType, Integer> durabilityValues() {
+        EnumMap<EquipmentSlotType, Integer> values = new EnumMap<EquipmentSlotType, Integer>(EquipmentSlotType.class);
+        values.put(EquipmentSlotType.FEET, 13);
+        values.put(EquipmentSlotType.LEGS, 15);
+        values.put(EquipmentSlotType.CHEST, 16);
+        values.put(EquipmentSlotType.HEAD, 11);
+        return values;
     }
 
-    public int getDefenseForType(ArmorItem.Type pType) {
-        return this.protectionFunctionForType.get(pType);
+    private static EnumMap<EquipmentSlotType, Integer> protectionValues(int feet, int legs, int chest, int head) {
+        EnumMap<EquipmentSlotType, Integer> values = new EnumMap<EquipmentSlotType, Integer>(EquipmentSlotType.class);
+        values.put(EquipmentSlotType.FEET, feet);
+        values.put(EquipmentSlotType.LEGS, legs);
+        values.put(EquipmentSlotType.CHEST, chest);
+        values.put(EquipmentSlotType.HEAD, head);
+        return values;
     }
 
-    public int getEnchantmentValue() {
-        return this.enchantmentValue;
+    @Override
+    public int getDurability(EquipmentSlotType slot) {
+        Integer base = BASE_DURABILITY.get(slot);
+        return (base == null ? 0 : base) * this.durabilityMultiplier;
     }
 
-    public SoundEvent getEquipSound() {
+    @Override
+    public int getDamageReductionAmount(EquipmentSlotType slot) {
+        Integer protection = this.protectionBySlot.get(slot);
+        return protection == null ? 0 : protection;
+    }
+
+    @Override
+    public int getEnchantability() {
+        return this.enchantability;
+    }
+
+    @Override
+    public SoundEvent getSoundEvent() {
         return this.sound;
     }
 
-    public Ingredient getRepairIngredient() {
+    @Override
+    public Ingredient getRepairMaterial() {
         return this.repairIngredient.get();
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
+    @Override
     public float getToughness() {
         return this.toughness;
     }
 
-    /**
-     * Gets the percentage of knockback resistance provided by armor of the material.
-     */
+    @Override
     public float getKnockbackResistance() {
         return this.knockbackResistance;
-    }
-
-    public String getSerializedName() {
-        return this.name;
     }
 }
