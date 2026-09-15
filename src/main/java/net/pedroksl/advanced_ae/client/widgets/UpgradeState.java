@@ -1,6 +1,7 @@
 package net.pedroksl.advanced_ae.client.widgets;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -11,26 +12,61 @@ import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
 
 import appeng.api.stacks.GenericStack;
 
-public record UpgradeState(
-        UpgradeType type,
-        UpgradeSettings settings,
-        boolean enabled,
-        int currentValue,
-        @Nullable List<GenericStack> filter) {
+public final class UpgradeState {
+    private final UpgradeType type;
+    private final UpgradeSettings settings;
+    private final boolean enabled;
+    private final int currentValue;
+    @Nullable
+    private final List<GenericStack> filter;
+
+    public UpgradeState(
+            UpgradeType type,
+            UpgradeSettings settings,
+            boolean enabled,
+            int currentValue,
+            @Nullable List<GenericStack> filter) {
+        this.type = type;
+        this.settings = settings;
+        this.enabled = enabled;
+        this.currentValue = currentValue;
+        this.filter = filter;
+    }
 
     public UpgradeState(UpgradeType type, UpgradeSettings settings, boolean enabled, int currentValue) {
-        this(type, settings, enabled, currentValue, List.of());
+        this(type, settings, enabled, currentValue, Collections.<GenericStack>emptyList());
+    }
+
+    public UpgradeType type() {
+        return type;
+    }
+
+    public UpgradeSettings settings() {
+        return settings;
+    }
+
+    public boolean enabled() {
+        return enabled;
+    }
+
+    public int currentValue() {
+        return currentValue;
+    }
+
+    @Nullable
+    public List<GenericStack> filter() {
+        return filter;
     }
 
     public static UpgradeState fromBytes(FriendlyByteBuf stream) {
-        var type = stream.readEnum(UpgradeType.class);
-        var settings = UpgradeSettings.fromBytes(stream);
-        var enabled = stream.readBoolean();
-        var currentValue = stream.readInt();
+        UpgradeType type = stream.readEnum(UpgradeType.class);
+        UpgradeSettings settings = UpgradeSettings.fromBytes(stream);
+        boolean enabled = stream.readBoolean();
+        int currentValue = stream.readInt();
 
-        var size = stream.readInt();
+        int size = stream.readInt();
         List<GenericStack> filter = new ArrayList<>();
-        for (var i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             filter.add(GenericStack.readBuffer(stream));
         }
 
@@ -45,7 +81,7 @@ public record UpgradeState(
 
         if (filter != null) {
             data.writeInt(filter.size());
-            for (var i = 0; i < filter.size(); i++) {
+            for (int i = 0; i < filter.size(); i++) {
                 GenericStack.writeBuffer(filter.get(i), data);
             }
         }
