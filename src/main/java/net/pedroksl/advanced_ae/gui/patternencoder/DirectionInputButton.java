@@ -60,15 +60,22 @@ public class DirectionInputButton extends Button {
     }
 
     public Direction getDirection() {
-        return switch (index) {
-            case 1 -> Direction.NORTH;
-            case 2 -> Direction.EAST;
-            case 3 -> Direction.SOUTH;
-            case 4 -> Direction.WEST;
-            case 5 -> Direction.UP;
-            case 6 -> Direction.DOWN;
-            default -> null;
-        };
+        switch (index) {
+            case 1:
+                return Direction.NORTH;
+            case 2:
+                return Direction.EAST;
+            case 3:
+                return Direction.SOUTH;
+            case 4:
+                return Direction.WEST;
+            case 5:
+                return Direction.UP;
+            case 6:
+                return Direction.DOWN;
+            default:
+                return null;
+        }
     }
 
     @Override
