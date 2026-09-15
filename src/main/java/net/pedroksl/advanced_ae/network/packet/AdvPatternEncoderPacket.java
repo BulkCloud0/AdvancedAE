@@ -3,6 +3,7 @@ package net.pedroksl.advanced_ae.network.packet;
 import static appeng.api.stacks.AEKey.writeKey;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
@@ -21,7 +22,7 @@ public class AdvPatternEncoderPacket extends AddonPacket {
         this.dirMap = new LinkedHashMap<>();
 
         int size = stream.readInt();
-        for (var x = 0; x < size; x++) {
+        for (int x = 0; x < size; x++) {
             AEKey key = AEKey.readKey(stream);
             Direction dir = stream.readBoolean() ? stream.readEnum(Direction.class) : null;
             dirMap.put(key, dir);
@@ -39,7 +40,7 @@ public class AdvPatternEncoderPacket extends AddonPacket {
     @Override
     protected void write(FriendlyByteBuf stream) {
         stream.writeInt(dirMap.size());
-        for (var entry : dirMap.entrySet()) {
+        for (Map.Entry<AEKey, Direction> entry : dirMap.entrySet()) {
             writeKey(stream, entry.getKey());
             Direction dir = entry.getValue();
             if (dir == null) {
@@ -53,7 +54,8 @@ public class AdvPatternEncoderPacket extends AddonPacket {
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof AdvPatternEncoderScreen encoderGui) {
+        if (Minecraft.getInstance().screen instanceof AdvPatternEncoderScreen) {
+            AdvPatternEncoderScreen encoderGui = (AdvPatternEncoderScreen) Minecraft.getInstance().screen;
             encoderGui.update(this.dirMap);
         }
     }
