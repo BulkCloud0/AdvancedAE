@@ -1,7 +1,6 @@
 package net.pedroksl.advanced_ae.common.definitions;
 
 import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.pedroksl.advanced_ae.AdvancedAE;
@@ -156,7 +155,7 @@ public enum AAEText {
         return String.format("%s.%s.%s", type.root, AdvancedAE.MOD_ID, name());
     }
 
-    public ITextComponent text() {
+    public IFormattableTextComponent text() {
         return new TranslationTextComponent(getTranslationKey());
     }
 
