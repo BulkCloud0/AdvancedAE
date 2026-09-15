@@ -1,11 +1,12 @@
 package net.pedroksl.advanced_ae.common.definitions;
 
-import net.minecraft.ChatFormatting;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.pedroksl.advanced_ae.AdvancedAE;
 
-import appeng.core.localization.LocalizationEnum;
-
-public enum AAEText implements LocalizationEnum {
+public enum AAEText {
     ModName("Advanced AE", Type.GUI),
     QuantumStructureTooltip(
             "Used in the outside layer of the Quantum Computer Multiblock. Maximum multiblock size is %1$dx%1$dx%1$d.",
@@ -23,7 +24,6 @@ public enum AAEText implements LocalizationEnum {
             "Created by upgrading an Advanced Pattern Provider with a capacity upgrade", Type.EMI_TEXT),
     AdvPatternEncoder("Advanced Pattern Encoder", Type.GUI),
     ReactionChamber("Reaction Chamber", Type.GUI),
-
     QuantumCrafter("Quantum Crafter", Type.GUI),
     QuantumCrafterTerminalShort("Quantum Crafter T.", Type.GUI),
     ShowCraftersCategory("Display Mode", Type.TOOLTIP),
@@ -36,7 +36,6 @@ public enum AAEText implements LocalizationEnum {
     RegulateCategory("Regulate", Type.TOOLTIP),
     RegulateOn("Attempt to import what exceeds the filters", Type.TOOLTIP),
     RegulateOff("Keep exported items even if over the filters", Type.TOOLTIP),
-
     StockExportBus("ME Stock Export Bus", Type.GUI),
     ImportExportBus("ME Import Export Bus", Type.GUI),
     AdvancedIOBus("ME Advanced IO Bus", Type.GUI),
@@ -63,23 +62,17 @@ public enum AAEText implements LocalizationEnum {
     QuantumArmorConfig("Quantum Armor Config", Type.GUI),
     QuantumArmorSetting("Setting Config", Type.GUI),
     MagnetRangeSlider("Pickup Range", Type.GUI),
-
     ReactionChamberEnergy("Used Power: %d" + "k FE", Type.EMI_TEXT),
     ShatteredSingularityDescription(
-            "This item is produced by chemical reaction in the reaction chamber and has "
-                    + "several applications in quantum computing.",
+            "This item is produced by chemical reaction in the reaction chamber and has several applications in quantum computing.",
             Type.EMI_TEXT),
-
     PatternProviderUpgrade(
-            "Upgrades a normal or extended pattern provider to the advanced version with the same "
-                    + "amount of pattern slots",
+            "Upgrades a normal or extended pattern provider to the advanced version with the same amount of pattern slots",
             Type.TOOLTIP),
     PatternProviderCapacityUpgrade(
             "Upgrades an Advanced Pattern Provider to the maximum amount of pattern slots", Type.TOOLTIP),
-
     PatternInventory("Pattern Input", Type.GUI),
     OutputInventory("Output", Type.GUI),
-
     MeExport("ME Export", Type.TOOLTIP),
     MeExportOn("Produced items will be exported to the ME System.", Type.TOOLTIP),
     MeExportOff("Produces items will be exported to allowed nearby containers", Type.TOOLTIP),
@@ -88,24 +81,20 @@ public enum AAEText implements LocalizationEnum {
     FilteredImportOff("Input is unrestricted", Type.TOOLTIP),
     DirectionalOutput("Directional Output", Type.TOOLTIP),
     DirectionalOutputHint("Configure which directions are allowed for output auto-export", Type.TOOLTIP),
-
     NumberTextFieldInputHint("Confirm the input using the %s key.", Type.TOOLTIP),
     NumberTextFieldOutputHint(
             "Confirm the input using the %s key.\nSetting the value to 0 removes the limit.", Type.TOOLTIP),
     QuantumCrafterPatternConfig("Pattern Configuration", Type.GUI),
     ConfigurePatternButton("Configure Pattern", Type.TOOLTIP),
     EnablePatternButton("Enabled/Disable", Type.TOOLTIP),
-
     SetAmountButtonHint("Middle click to set the amount to keep in stock", Type.GUI),
     SetAmount("Set Amount", Type.GUI),
     Enabled("Enabled", Type.TOOLTIP),
     Disabled("Disabled", Type.TOOLTIP),
-
     ThroughputMonitorValue("%s" + "%s" + "/s", Type.GUI),
     OverdriveThroughputMonitorValue("%s" + "%s" + "/t", Type.GUI),
     SlowThroughputMonitorValue("%s" + "%s" + "/m", Type.GUI),
     SlowerThroughputMonitorValue("%s" + "%s" + "/10m", Type.GUI),
-
     QuantumUpgradeTooltip("Quantum Armor Upgrade", Type.TOOLTIP),
     UpgradeBaseTooltip("Base upgrade card required to craft the others.", Type.TOOLTIP),
     WalkSpeedTooltip("Boosts the walking speed.", Type.TOOLTIP),
@@ -136,21 +125,15 @@ public enum AAEText implements LocalizationEnum {
             "Enables the ability to request craft of the targeted block if a pattern is available in the ME system.",
             Type.TOOLTIP),
     HudTooltip("Adds a HUD with configurable safety checks and information about the ME System.", Type.TOOLTIP),
-
     InsufficientPower("Insufficient Power", Type.TOOLTIP),
     InsufficientPowerDetails(
-            "Unable to extract enough power for full speed progress. Check guide for possible solutions.",
-            Type.TOOLTIP),
-
+            "Unable to extract enough power for full speed progress. Check guide for possible solutions.", Type.TOOLTIP),
     InvalidPattern("Invalid Pattern", Type.TOOLTIP),
     InvalidPatternDetails(
-            "Invalid Pattern detected and highlighted. Recipes that consume durability are not supported.",
-            Type.TOOLTIP),
-
+            "Invalid Pattern detected and highlighted. Recipes that consume durability are not supported.", Type.TOOLTIP),
     QuantumArmorHotkeyTooltip("Press [%s] with this equipped to configure.", Type.TOOLTIP),
     QuantumArmorStableFootingTooltip("Negates mining speed penalty when flying.", Type.TOOLTIP),
     QuantumArmorFallDamageTooltip("Negates fall damage when worn.", Type.TOOLTIP),
-
     StyleConfig("Style Config", Type.GUI),
     InvalidHexInput("Invalid hex code input", Type.TOOLTIP),
     ApplyToAll("Apply to all", Type.GUI);
@@ -158,21 +141,27 @@ public enum AAEText implements LocalizationEnum {
     private final String englishText;
     private final Type type;
 
-    public static final ChatFormatting TOOLTIP_DEFAULT_COLOR = ChatFormatting.GRAY;
+    public static final TextFormatting TOOLTIP_DEFAULT_COLOR = TextFormatting.GRAY;
 
     AAEText(String englishText, Type type) {
         this.englishText = englishText;
         this.type = type;
     }
 
-    @Override
     public String getEnglishText() {
         return englishText;
     }
 
-    @Override
     public String getTranslationKey() {
         return String.format("%s.%s.%s", type.root, AdvancedAE.MOD_ID, name());
+    }
+
+    public ITextComponent text() {
+        return new TranslationTextComponent(getTranslationKey());
+    }
+
+    public IFormattableTextComponent text(Object... args) {
+        return new TranslationTextComponent(getTranslationKey(), args);
     }
 
     private enum Type {
