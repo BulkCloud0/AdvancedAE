@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.api.AAESettings;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
@@ -17,7 +18,6 @@ import appeng.api.config.YesNo;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.networking.storage.IStorageService;
-import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -49,7 +49,7 @@ public class AdvancedIOBusPart extends StockExportBusPart {
     @Nullable
     private StackImportStrategy importStrategy;
 
-    public AdvancedIOBusPart(IPartItem<?> partItem) {
+    public AdvancedIOBusPart(ItemStack partItem) {
         super(partItem);
 
         getConfigManager().registerSetting(AAESettings.REGULATE_STOCK, YesNo.YES);
