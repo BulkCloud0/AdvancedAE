@@ -1,42 +1,20 @@
 package net.pedroksl.advanced_ae.gui;
 
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.pedroksl.advanced_ae.api.AAESettings;
+import net.minecraft.entity.player.PlayerInventory;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.parts.StockExportBusPart;
 
-import appeng.api.config.YesNo;
-import appeng.menu.MenuOpener;
-import appeng.menu.guisync.GuiSync;
-
+/**
+ * 1.16.5 advanced I/O bus container.
+ *
+ * <p>The generic addon setting synchronization used by newer AE2 versions is
+ * not present in AE2 8.4.x. Standard I/O bus behavior is inherited from
+ * {@link StockExportBusMenu}; custom stock regulation will be restored when the
+ * part itself is ported to the 8.4.x storage API.</p>
+ */
 public class AdvancedIOBusMenu extends StockExportBusMenu {
 
-    @GuiSync(2)
-    private YesNo regulate;
-
-    public AdvancedIOBusMenu(int id, Inventory ip, StockExportBusPart host) {
-        super(AAEMenus.ADVANCED_IO_BUS.get(), id, ip, host);
-    }
-
-    @Override
-    public void broadcastChanges() {
-        super.broadcastChanges();
-
-        this.regulate = getHost().getConfigManager().getSetting(AAESettings.REGULATE_STOCK);
-    }
-
-    public YesNo getRegulate() {
-        return this.regulate;
-    }
-
-    @Override
-    public void returnFromSetAmountMenu() {
-        Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer) {
-            ServerPlayer serverPlayer = (ServerPlayer) player;
-            MenuOpener.open(AAEMenus.ADVANCED_IO_BUS.get(), serverPlayer, getLocator(), true);
-        }
+    public AdvancedIOBusMenu(int id, PlayerInventory playerInventory, StockExportBusPart host) {
+        super(AAEMenus.ADVANCED_IO_BUS.get(), id, playerInventory, host);
     }
 }
