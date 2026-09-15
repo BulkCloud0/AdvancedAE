@@ -8,6 +8,10 @@ on:
     branches:
       - forge/1.16.5
 
+concurrency:
+  group: forge-1.16.5-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
