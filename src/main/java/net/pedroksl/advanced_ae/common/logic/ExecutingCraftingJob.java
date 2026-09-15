@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -33,7 +35,7 @@ public class ExecutingCraftingJob {
 
     final CraftingLink link;
     final ListCraftingInventory waitingFor;
-    final Map<IPatternDetails, TaskProgress> tasks = new HashMap<>();
+    final Map<IPatternDetails, TaskProgress> tasks = new HashMap<IPatternDetails, TaskProgress>();
     final ElapsedTimeTracker timeTracker;
     GenericStack finalOutput;
     long remainingAmount;
@@ -57,14 +59,14 @@ public class ExecutingCraftingJob {
 
         // Fill waiting for and tasks
         this.timeTracker = new ElapsedTimeTracker();
-        for (var entry : plan.emittedItems()) {
+        for (Object2LongMap.Entry<AEKey> entry : plan.emittedItems()) {
             waitingFor.insert(entry.getKey(), entry.getLongValue(), Actionable.MODULATE);
             timeTracker.addMaxItems(entry.getLongValue(), entry.getKey().getType());
         }
-        for (var entry : plan.patternTimes().entrySet()) {
+        for (Map.Entry<IPatternDetails, Long> entry : plan.patternTimes().entrySet()) {
             tasks.computeIfAbsent(entry.getKey(), p -> new TaskProgress()).value += entry.getValue();
-            for (var output : entry.getKey().getOutputs()) {
-                var amount = output.amount() * entry.getValue() * output.what().getAmountPerUnit();
+            for (GenericStack output : entry.getKey().getOutputs()) {
+                long amount = output.amount() * entry.getValue() * output.what().getAmountPerUnit();
                 timeTracker.addMaxItems(amount, output.what().getType());
             }
         }
@@ -93,8 +95,8 @@ public class ExecutingCraftingJob {
         ListTag tasksTag = data.getList(NBT_TASKS, Tag.TAG_COMPOUND);
         for (int i = 0; i < tasksTag.size(); ++i) {
             final CompoundTag item = tasksTag.getCompound(i);
-            var pattern = AEItemKey.fromTag(item);
-            var details = PatternDetailsHelper.decodePattern(pattern, cpu.cpu.getLevel());
+            AEItemKey pattern = AEItemKey.fromTag(item);
+            IPatternDetails details = PatternDetailsHelper.decodePattern(pattern, cpu.cpu.getLevel());
             if (details != null) {
                 final TaskProgress tp = new TaskProgress();
                 tp.value = item.getLong(NBT_CRAFTING_PROGRESS);
@@ -116,8 +118,8 @@ public class ExecutingCraftingJob {
         data.put(NBT_TIME_TRACKER, timeTracker.writeToNBT());
 
         final ListTag list = new ListTag();
-        for (var e : this.tasks.entrySet()) {
-            var item = e.getKey().getDefinition().toTag();
+        for (Map.Entry<IPatternDetails, TaskProgress> e : this.tasks.entrySet()) {
+            CompoundTag item = e.getKey().getDefinition().toTag();
             item.putLong(NBT_CRAFTING_PROGRESS, e.getValue().value);
             list.add(item);
         }
