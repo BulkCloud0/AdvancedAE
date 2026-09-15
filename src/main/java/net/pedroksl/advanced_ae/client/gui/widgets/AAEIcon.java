@@ -5,6 +5,7 @@ import net.minecraft.util.ResourceLocation;
 import net.pedroksl.advanced_ae.AdvancedAE;
 
 import appeng.client.gui.style.Blitter;
+import appeng.core.AppEng;
 
 /**
  * Icon atlas entries used by AdvancedAE's 1.16 GUI code.
@@ -44,6 +45,8 @@ public enum AAEIcon {
     TOOLBAR_BUTTON_ENABLED(194, 128, 18, 18);
 
     public static final ResourceLocation TEXTURE = AdvancedAE.makeId("textures/guis/states.png");
+    private static final ResourceLocation AE2_TEXTURE =
+            new ResourceLocation(AppEng.MOD_ID, "textures/guis/states.png");
     public static final int TEXTURE_WIDTH = 256;
     public static final int TEXTURE_HEIGHT = 256;
 
@@ -74,10 +77,7 @@ public enum AAEIcon {
     }
 
     public ResourceLocation getTexture() {
-        if (textureSource == TextureSource.AE2) {
-            return appeng.client.gui.Icon.TEXTURE;
-        }
-        return TEXTURE;
+        return textureSource == TextureSource.AE2 ? AE2_TEXTURE : TEXTURE;
     }
 
     public Rectangle2d getRect() {
