@@ -53,7 +53,8 @@ public class QuantumArmorStyleConfigScreen extends AEBaseScreen<QuantumArmorStyl
 
         int lastColor = -1;
         for (var slot : this.menu.getSlots(AAESlotSemantics.ARMOR)) {
-            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase armor) {
+            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase armor = (QuantumArmorBase) slot.getItem().getItem();
                 int color = armor.getTintColor(slot.getItem());
                 if (lastColor != -1 && lastColor != color) {
                     this.applyToAll = false;
@@ -74,7 +75,8 @@ public class QuantumArmorStyleConfigScreen extends AEBaseScreen<QuantumArmorStyl
     public void updateColorPicker() {
         if (selectedIndex != -1 && selectedIndex < this.menu.slots.size()) {
             var slot = this.menu.getSlot(selectedIndex);
-            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase armor) {
+            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase armor = (QuantumArmorBase) slot.getItem().getItem();
                 this.colorPicker.setColorAndUpdate(armor.getTintColor(slot.getItem()));
             }
         }
