@@ -16,7 +16,8 @@ public class ClearQuantumCrafterTerminalPacket extends AddonPacket {
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen<?> screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen) {
+            QuantumCrafterTermScreen<?> screen = (QuantumCrafterTermScreen<?>) Minecraft.getInstance().screen;
             screen.clear();
         }
     }
