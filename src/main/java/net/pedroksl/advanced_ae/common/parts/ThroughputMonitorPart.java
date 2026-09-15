@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -227,7 +228,7 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
             poseStack.translate(0, -0.23F, 0);
             String sign = lastReportedValue > 0 ? "+" : lastReportedValue == 0 ? "" : "-";
-            Object text;
+            Component text;
             switch (this.workRoutine) {
                 case TICK:
                     text = AAEText.OverdriveThroughputMonitorValue.text(sign, lastHumanReadableValue);
