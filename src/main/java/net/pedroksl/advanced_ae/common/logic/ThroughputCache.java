@@ -38,12 +38,12 @@ public class ThroughputCache {
         long lastAmount = -1;
         long lastTimestamp = -1;
         List<Double> averages = new ArrayList<>();
-        for (var entry : cache) {
+        for (CacheEntry entry : cache) {
             if (entry.timestamp < tLimit) break;
 
             if (lastTimestamp != -1) {
-                var timestampDelta = lastTimestamp - entry.timestamp;
-                var amountDelta = lastAmount - entry.amount;
+                long timestampDelta = lastTimestamp - entry.timestamp;
+                long amountDelta = lastAmount - entry.amount;
                 averages.add(amountDelta / (double) timestampDelta);
             }
 
@@ -53,12 +53,20 @@ public class ThroughputCache {
 
         double average = 0;
         int size = averages.size();
-        for (var avg : averages) {
+        for (Double avg : averages) {
             average += avg / (double) size;
         }
 
         return average;
     }
 
-    private record CacheEntry(long amount, long timestamp) {}
+    private static final class CacheEntry {
+        private final long amount;
+        private final long timestamp;
+
+        private CacheEntry(long amount, long timestamp) {
+            this.amount = amount;
+            this.timestamp = timestamp;
+        }
+    }
 }
