@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import appeng.api.features.IGridLinkableHandler;
 import appeng.api.implementations.blockentities.IWirelessAccessPoint;
@@ -52,11 +53,12 @@ public interface IGridLinkedItem {
 
     @Nullable
     default IGrid getLinkedGrid(ItemStack item, Level level, @Nullable Player sendMessagesTo) {
-        if (!(level instanceof ServerLevel serverLevel)) {
+        if (!(level instanceof ServerLevel)) {
             return null;
         }
+        ServerLevel serverLevel = (ServerLevel) level;
 
-        var linkedPos = getLinkedPosition(item);
+        GlobalPos linkedPos = getLinkedPosition(item);
         if (linkedPos == null) {
             if (sendMessagesTo != null) {
                 sendMessagesTo.displayClientMessage(PlayerMessages.DeviceNotLinked.text(), true);
@@ -64,7 +66,7 @@ public interface IGridLinkedItem {
             return null;
         }
 
-        var linkedLevel = serverLevel.getServer().getLevel(linkedPos.dimension());
+        ServerLevel linkedLevel = serverLevel.getServer().getLevel(linkedPos.dimension());
         if (linkedLevel == null) {
             if (sendMessagesTo != null) {
                 sendMessagesTo.displayClientMessage(PlayerMessages.LinkedNetworkNotFound.text(), true);
@@ -72,19 +74,18 @@ public interface IGridLinkedItem {
             return null;
         }
 
-        var be = Platform.getTickingBlockEntity(linkedLevel, linkedPos.pos());
-        if (!(be instanceof IWirelessAccessPoint accessPoint)) {
+        BlockEntity be = Platform.getTickingBlockEntity(linkedLevel, linkedPos.pos());
+        if (!(be instanceof IWirelessAccessPoint)) {
             if (sendMessagesTo != null) {
                 sendMessagesTo.displayClientMessage(PlayerMessages.LinkedNetworkNotFound.text(), true);
             }
             return null;
         }
+        IWirelessAccessPoint accessPoint = (IWirelessAccessPoint) be;
 
-        var grid = accessPoint.getGrid();
-        if (grid == null) {
-            if (sendMessagesTo != null) {
-                sendMessagesTo.displayClientMessage(PlayerMessages.LinkedNetworkNotFound.text(), true);
-            }
+        IGrid grid = accessPoint.getGrid();
+        if (grid == null && sendMessagesTo != null) {
+            sendMessagesTo.displayClientMessage(PlayerMessages.LinkedNetworkNotFound.text(), true);
         }
         return grid;
     }
