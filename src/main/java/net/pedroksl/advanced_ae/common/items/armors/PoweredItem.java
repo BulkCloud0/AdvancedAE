@@ -38,7 +38,7 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
     public void addToMainCreativeTab(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output) {
         output.accept(this);
 
-        var charged = new ItemStack(this, 1);
+        ItemStack charged = new ItemStack(this, 1);
         injectAEPower(charged, getAEMaxPower(charged), Actionable.MODULATE);
         output.accept(charged);
     }
@@ -47,8 +47,8 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
     @Override
     public void appendHoverText(
             ItemStack stack, @NotNull Level context, List<Component> lines, TooltipFlag advancedTooltips) {
-        var storedEnergy = getAECurrentPower(stack);
-        var energyCapacity = getAEMaxPower(stack);
+        double storedEnergy = getAECurrentPower(stack);
+        double energyCapacity = getAEMaxPower(stack);
         lines.add(Tooltips.energyStorageComponent(storedEnergy, energyCapacity));
     }
 
@@ -65,7 +65,6 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
 
     @Override
     public int getBarColor(ItemStack stack) {
-        // This is the standard green color of full durability bars
         return Mth.hsvToRgb(1 / 3.0F, 1.0F, 1.0F);
     }
 
@@ -77,7 +76,7 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
         final double overflow = Math.max(0, Math.min(amount - required, amount));
 
         if (mode == Actionable.MODULATE) {
-            var toAdd = Math.min(amount, required);
+            double toAdd = Math.min(amount, required);
             setAECurrentPower(stack, currentStorage + toAdd);
         }
 
@@ -98,8 +97,7 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
 
     @Override
     public double getAEMaxPower(ItemStack stack) {
-        // Allow per-item-stack overrides of the maximum power storage
-        var tag = stack.getTag();
+        CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(MAX_POWER_NBT_KEY, Tag.TAG_DOUBLE)) {
             return tag.getDouble(MAX_POWER_NBT_KEY);
         }
@@ -108,7 +106,7 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
     }
 
     protected final void setAEMaxPower(ItemStack stack, double maxPower) {
-        var defaultCapacity = powerCapacity.getAsDouble();
+        double defaultCapacity = powerCapacity.getAsDouble();
         if (Math.abs(maxPower - defaultCapacity) < MIN_POWER) {
             stack.removeTagKey(MAX_POWER_NBT_KEY);
             maxPower = defaultCapacity;
@@ -116,8 +114,7 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
             stack.getOrCreateTag().putDouble(MAX_POWER_NBT_KEY, maxPower);
         }
 
-        // Clamp current power to be within bounds
-        var currentPower = getAECurrentPower(stack);
+        double currentPower = getAECurrentPower(stack);
         if (currentPower > maxPower) {
             setAECurrentPower(stack, maxPower);
         }
@@ -134,7 +131,7 @@ public class PoweredItem extends ArmorItem implements IAEItemPowerStorage {
 
     @Override
     public double getAECurrentPower(ItemStack is) {
-        var tag = is.getTag();
+        CompoundTag tag = is.getTag();
         if (tag != null) {
             return tag.getDouble(CURRENT_POWER_NBT_KEY);
         } else {
