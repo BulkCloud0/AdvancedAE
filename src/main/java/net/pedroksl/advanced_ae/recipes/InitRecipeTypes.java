@@ -1,27 +1,13 @@
 package net.pedroksl.advanced_ae.recipes;
 
-import java.util.ArrayList;
-import java.util.List;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeType;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.registries.IForgeRegistry;
+/** Forge/Minecraft 1.16.5 recipe-type registration compatibility helper. */
+public final class InitRecipeTypes {
+    private InitRecipeTypes() {}
 
-public class InitRecipeTypes {
-    private record ToRegister(RecipeType<?> recipeType, ResourceLocation id) {}
-
-    private static final List<ToRegister> toRegister = new ArrayList<>();
-
-    public static <T extends Recipe<?>> RecipeType<T> register(String id) {
-        RecipeType<T> type = RecipeType.simple(new ResourceLocation(id));
-        toRegister.add(new ToRegister(type, new ResourceLocation(id)));
-        return type;
-    }
-
-    public static void init(IForgeRegistry<RecipeType<?>> registry) {
-        for (var toRegister : toRegister) {
-            registry.register(toRegister.id, toRegister.recipeType);
-        }
+    public static <T extends IRecipe<?>> IRecipeType<T> register(String id) {
+        return IRecipeType.register(id);
     }
 }
