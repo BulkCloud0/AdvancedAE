@@ -8,12 +8,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
 import net.pedroksl.advanced_ae.AdvancedAE;
-import net.pedroksl.advanced_ae.common.items.AdvPatternEncoderItem;
 import net.pedroksl.advanced_ae.common.items.armors.*;
 import net.pedroksl.advanced_ae.common.items.upgrades.QuantumUpgradeBaseItem;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
 import net.pedroksl.advanced_ae.common.parts.*;
-import net.pedroksl.advanced_ae.common.patterns.AdvProcessingPatternItem;
 import net.pedroksl.advanced_ae.xmod.Addons;
 import net.pedroksl.ae2addonlib.registry.ItemRegistry;
 import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
@@ -44,8 +42,8 @@ public class AAEItems extends ItemRegistry {
                 .collect(Collectors.toList());
     }
 
-    // Temporary 1.16.5 baseline placeholders. Keep registry IDs stable while the
-    // Pattern Provider parts are backported to AE2 v8.
+    // Temporary 1.16.5 baseline placeholders. Keep registry IDs stable while
+    // modern provider/pattern implementations are backported to AE2 v8.
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER =
             item("Advanced Extended Pattern Provider", "adv_pattern_provider_part", Item::new);
     public static final LibItemDefinition<Item> SMALL_ADV_PATTERN_PROVIDER =
@@ -69,8 +67,8 @@ public class AAEItems extends ItemRegistry {
             "wireless_quantum_crafter_terminal",
             "net.pedroksl.advanced_ae.common.items.QuantumCrafterWirelessTerminalItem");
 
-    public static final LibItemDefinition<AdvProcessingPatternItem> ADV_PROCESSING_PATTERN =
-            item("Advanced Processing Pattern", "adv_processing_pattern", AdvProcessingPatternItem::new);
+    public static final LibItemDefinition<Item> ADV_PROCESSING_PATTERN =
+            item("Advanced Processing Pattern", "adv_processing_pattern", Item::new);
 
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_UPGRADE =
             item("Advanced Pattern Provider Upgrade", "adv_pattern_provider_upgrade", Item::new);
@@ -93,8 +91,8 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<MaterialItem> QUANTUM_STORAGE_COMPONENT =
             item("Quantum Storage Component", "quantum_storage_component", MaterialItem::new);
 
-    public static final LibItemDefinition<AdvPatternEncoderItem> ADV_PATTERN_ENCODER =
-            item("Advanced Pattern Encoder", "adv_pattern_encoder", AdvPatternEncoderItem::new);
+    public static final LibItemDefinition<Item> ADV_PATTERN_ENCODER =
+            item("Advanced Pattern Encoder", "adv_pattern_encoder", Item::new);
 
     public static final LibItemDefinition<Item> MONITOR_CONFIGURATOR =
             item("Throughput Monitor Configurator", "throughput_monitor_configurator", Item::new);

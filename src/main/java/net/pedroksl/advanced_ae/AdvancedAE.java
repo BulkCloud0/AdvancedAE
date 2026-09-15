@@ -7,12 +7,10 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.pedroksl.advanced_ae.common.definitions.*;
 import net.pedroksl.advanced_ae.common.items.armors.IGridLinkedItem;
-import net.pedroksl.advanced_ae.common.patterns.AdvPatternDetailsDecoder;
 import net.pedroksl.advanced_ae.events.AAELivingEntityEvents;
 import net.pedroksl.advanced_ae.events.AAEPlayerEvents;
 import net.pedroksl.advanced_ae.recipes.InitRecipeSerializers;
 
-import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.features.GridLinkables;
 import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEItems;
@@ -52,7 +50,6 @@ public class AdvancedAE {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        PatternDetailsHelper.registerDecoder(AdvPatternDetailsDecoder.INSTANCE);
         initGridLinkables();
         AAEPlayerEvents.init();
         AAELivingEntityEvents.init();
