@@ -2,6 +2,7 @@ package net.pedroksl.advanced_ae.common.items.armors;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,25 +47,26 @@ public class QuantumHelmet extends QuantumArmorBase {
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
-        if (slotId == EquipmentSlot.HEAD.getIndex()) {
-            if (entity instanceof Player player) {
-                if (!getPassiveUpgrades(stack).isEmpty()) {
-                    tickUpgrades(level, player, stack);
-                }
+        if (slotId == EquipmentSlot.HEAD.getIndex() && entity instanceof Player) {
+            Player player = (Player) entity;
+            if (!getPassiveUpgrades(stack).isEmpty()) {
+                tickUpgrades(level, player, stack);
+            }
 
-                if (level.isClientSide()) {
-                    toggleBoneVisibilities(stack, player);
-                }
+            if (level.isClientSide()) {
+                toggleBoneVisibilities(stack, player);
             }
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     private void toggleBoneVisibilities(ItemStack stack, Player player) {
-        var item = (QuantumArmorBase) stack.getItem();
-        var renderer = IClientItemExtensions.of(item).getHumanoidArmorModel(player, stack, EquipmentSlot.HEAD, null);
-        if (renderer instanceof QuantumArmorRenderer quantumRenderer) {
-            var visible = IrisPlugin.isShaderPackInUse();
+        QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+        HumanoidModel<?> renderer =
+                IClientItemExtensions.of(item).getHumanoidArmorModel(player, stack, EquipmentSlot.HEAD, null);
+        if (renderer instanceof QuantumArmorRenderer) {
+            QuantumArmorRenderer quantumRenderer = (QuantumArmorRenderer) renderer;
+            boolean visible = IrisPlugin.isShaderPackInUse();
             quantumRenderer.setBoneVisible(QuantumArmorRenderer.HUD_BONE, visible);
         }
     }
@@ -72,7 +74,8 @@ public class QuantumHelmet extends QuantumArmorBase {
     @Override
     public boolean openFromEquipmentSlot(
             Player player, int inventorySlot, ItemStack stack, boolean returningFromSubmenu) {
-        if (player instanceof ServerPlayer serverPlayer && checkPreconditions(stack)) {
+        if (player instanceof ServerPlayer && checkPreconditions(stack)) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             player.getPersistentData().putInt(MENU_TYPE, MenuId.STANDARD.id);
             AAENetworkHandler.INSTANCE.sendTo(new MenuSelectionPacket(MENU_TYPE, MenuId.STANDARD.id), serverPlayer);
         }
@@ -85,7 +88,8 @@ public class QuantumHelmet extends QuantumArmorBase {
 
     public boolean openPortableWorkbench(
             Player player, int inventorySlot, ItemStack stack, boolean returningFromSubmenu) {
-        if (player instanceof ServerPlayer serverPlayer && checkPreconditions(stack)) {
+        if (player instanceof ServerPlayer && checkPreconditions(stack)) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             if (((QuantumHelmet) stack.getItem()).isUpgradeEnabled(stack, UpgradeType.WORKBENCH)) {
                 player.getPersistentData().putInt(MENU_TYPE, MenuId.WORKBENCH.id);
                 AAENetworkHandler.INSTANCE.sendTo(
@@ -96,8 +100,7 @@ public class QuantumHelmet extends QuantumArmorBase {
                         MenuLocators.forInventorySlot(inventorySlot),
                         returningFromSubmenu);
             } else {
-                var id = Component.translatable(
-                        UpgradeType.WORKBENCH.item().asItem().getDescriptionId());
+                Component id = Component.translatable(UpgradeType.WORKBENCH.item().asItem().getDescriptionId());
                 player.displayClientMessage(AAEText.UpgradeNotInstalledMessage.text(id), true);
             }
         }
