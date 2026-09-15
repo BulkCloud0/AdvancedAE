@@ -241,7 +241,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
             ItemStack is = this.patternInv.getStackInSlot(x);
             if (!is.isEmpty()) {
                 IPatternDetails details = PatternDetailsHelper.decodePattern(is, this.getLevel());
-                if (details instanceof AECraftingPattern craftPattern) {
+                if (details instanceof AECraftingPattern) {
+                    AECraftingPattern craftPattern = (AECraftingPattern) details;
                     if (craftingJobs.get(x) != null) {
                         if (craftingJobs.get(x).pattern == null) {
                             craftingJobs.get(x).setPattern(craftPattern);
@@ -398,7 +399,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
                     .noneMatch(p -> p.what().matches(job.pattern.getOutputs()[0]));
         } else {
             for (var output : job.pattern.getOutputs()) {
-                if (output.what() instanceof AEItemKey key) {
+                if (output.what() instanceof AEItemKey) {
+                    AEItemKey key = (AEItemKey) output.what();
                     var stack = key.toStack((int) output.amount());
                     for (var x = 0; x < this.outputInv.size(); x++) {
                         stack = this.outputInv.insertItem(x, stack, true);
@@ -429,14 +431,25 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
         }
 
         if (this.hasCraftWork()) {
-            final int speedFactor =
-                    switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {
-                        default -> 1;
-                        case 1 -> 8;
-                        case 2 -> 16;
-                        case 3 -> 32;
-                        case 4 -> 64;
-                    };
+            final int installedSpeedCards = this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD);
+            final int speedFactor;
+            switch (installedSpeedCards) {
+                case 1:
+                    speedFactor = 8;
+                    break;
+                case 2:
+                    speedFactor = 16;
+                    break;
+                case 3:
+                    speedFactor = 32;
+                    break;
+                case 4:
+                    speedFactor = 64;
+                    break;
+                default:
+                    speedFactor = 1;
+                    break;
+            }
 
             this.setWorking(true);
             getMainNode().ifPresent(grid -> {
@@ -529,7 +542,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
 
         // Create outputs and put them in output slots
         for (var output : outputs) {
-            if (output.what() instanceof AEItemKey key) {
+            if (output.what() instanceof AEItemKey) {
+                AEItemKey key = (AEItemKey) output.what();
                 var stack = key.toStack();
                 stack.setCount((int) job.outputAmountPerCraft(output) * completeRecipes);
 
@@ -853,10 +867,12 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
         super.exportSettings(mode, output, player);
 
         if (mode == SettingsFrom.MEMORY_CARD) {
-            var outputs = getAllowedOutputs();
-            var sides = new IntArrayTag(outputs.stream()
-                    .map(o -> o.getUnrotatedSide().get3DDataValue())
-                    .toList());
+            EnumSet<RelativeSide> outputs = getAllowedOutputs();
+            List<Integer> outputSides = new ArrayList<Integer>();
+            for (RelativeSide outputSide : outputs) {
+                outputSides.add(outputSide.getUnrotatedSide().get3DDataValue());
+            }
+            IntArrayTag sides = new IntArrayTag(outputSides);
             output.put(NBT_ALLOWED_SIDES, sides);
 
             this.patternInv.writeToNBT(output, NBT_MEMORY_CARD_PATTERNS);
@@ -868,15 +884,16 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
         super.importSettings(mode, input, player);
 
         if (mode == SettingsFrom.MEMORY_CARD && input.contains(NBT_MEMORY_CARD_PATTERNS)) {
-            var tag = input.get(NBT_ALLOWED_SIDES);
-            if (tag instanceof IntArrayTag list) {
-                var level = getLevel();
+            Tag tag = input.get(NBT_ALLOWED_SIDES);
+            if (tag instanceof IntArrayTag) {
+                IntArrayTag list = (IntArrayTag) tag;
+                Level level = getLevel();
                 if (level != null) {
-                    var be = level.getBlockEntity(getBlockPos());
-                    if (be instanceof IDirectionalOutputHost host) {
-
-                        var outputs = EnumSet.noneOf(RelativeSide.class);
-                        for (var item : list) {
+                    BlockEntity be = level.getBlockEntity(getBlockPos());
+                    if (be instanceof IDirectionalOutputHost) {
+                        IDirectionalOutputHost host = (IDirectionalOutputHost) be;
+                        EnumSet<RelativeSide> outputs = EnumSet.noneOf(RelativeSide.class);
+                        for (IntTag item : list) {
                             outputs.add(RelativeSide.fromUnrotatedSide(Direction.from3DDataValue(item.getAsInt())));
                         }
                         host.updateOutputSides(outputs);
@@ -1208,7 +1225,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
             for (var input : pattern.getInputs()) {
                 var in = input.getPossibleInputs()[0];
 
-                if (in.what() instanceof AEItemKey inKey) {
+                if (in.what() instanceof AEItemKey) {
+                    AEItemKey inKey = (AEItemKey) in.what();
                     var inStack = inKey.toStack((int) in.amount());
 
                     if (!this.keysThatConsumeDurability.containsKey(inKey)) {
@@ -1306,7 +1324,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
         }
 
         public int requiredDurability(GenericStack input) {
-            if (input.what() instanceof AEItemKey inputKey) {
+            if (input.what() instanceof AEItemKey) {
+                AEItemKey inputKey = (AEItemKey) input.what();
                 if (this.keysThatConsumeDurability.containsKey(inputKey)) {
                     return this.keysThatConsumeDurability.get(inputKey);
                 }
@@ -1341,7 +1360,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
                 return multiplier;
             }
 
-            if (input.what() instanceof AEItemKey key) {
+            if (input.what() instanceof AEItemKey) {
+                AEItemKey key = (AEItemKey) input.what();
                 ItemStack stack = key.toStack();
 
                 for (var item : remainingItems) {
@@ -1359,7 +1379,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
         }
 
         public ItemStack findMatchingOutput(GenericStack input) {
-            if (!(input.what() instanceof AEItemKey inKey)) return ItemStack.EMPTY;
+            if (!(input.what() instanceof AEItemKey)) return ItemStack.EMPTY;
+            AEItemKey inKey = (AEItemKey) input.what();
             ItemStack inStack = inKey.toStack();
             var inTags = inStack.getOrCreateTag();
 
@@ -1383,9 +1404,11 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
 
         public ItemStack findMatchingRemainingItem(GenericStack input) {
             for (var item : remainingItems) {
-                if (input.what() instanceof AEItemKey inputKey
-                        && inputKey.getItem().equals(item.getItem())) {
-                    return item;
+                if (input.what() instanceof AEItemKey) {
+                    AEItemKey inputKey = (AEItemKey) input.what();
+                    if (inputKey.getItem().equals(item.getItem())) {
+                        return item;
+                    }
                 }
             }
             return ItemStack.EMPTY;
@@ -1428,7 +1451,8 @@ public class QuantumCrafterEntity extends AENetworkPowerBlockEntity
                 var input = pattern.getSparseInputs()[x];
                 if (input == null) {
                     craftingInput.add(ItemStack.EMPTY);
-                } else if (input.what() instanceof AEItemKey key) {
+                } else if (input.what() instanceof AEItemKey) {
+                    AEItemKey key = (AEItemKey) input.what();
                     craftingInput.add(key.toStack((int) input.amount()));
                 }
                 if (pattern.canSubstituteFluids() && pattern.getValidFluid(x) != null) {
