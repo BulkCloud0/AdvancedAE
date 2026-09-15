@@ -45,10 +45,10 @@ public class UpgradeSettings {
     }
 
     public static UpgradeSettings fromBytes(FriendlyByteBuf stream) {
-        var minValue = stream.readInt();
-        var maxValue = stream.readInt();
-        var multiplier = stream.readFloat();
-        var defaultValue = stream.readInt();
+        int minValue = stream.readInt();
+        int maxValue = stream.readInt();
+        float multiplier = stream.readFloat();
+        int defaultValue = stream.readInt();
 
         return new UpgradeSettings(minValue, maxValue, multiplier, defaultValue);
     }
