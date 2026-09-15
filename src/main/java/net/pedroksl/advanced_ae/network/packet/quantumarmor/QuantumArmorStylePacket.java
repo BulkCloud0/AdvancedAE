@@ -14,9 +14,9 @@ public class QuantumArmorStylePacket extends AddonPacket {
     private final int color;
 
     public QuantumArmorStylePacket(FriendlyByteBuf stream) {
-        var size = stream.readInt();
+        int size = stream.readInt();
         List<Integer> list = new ArrayList<>();
-        for (var i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             list.add(stream.readInt());
         }
         slots = list;
@@ -32,7 +32,7 @@ public class QuantumArmorStylePacket extends AddonPacket {
     @Override
     public void write(FriendlyByteBuf stream) {
         stream.writeInt(slots.size());
-        for (var slotIndex : slots) {
+        for (Integer slotIndex : slots) {
             stream.writeInt(slotIndex);
         }
 
@@ -41,7 +41,8 @@ public class QuantumArmorStylePacket extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer serverPlayer) {
-        if (serverPlayer.containerMenu instanceof QuantumArmorStyleConfigMenu menu) {
+        if (serverPlayer.containerMenu instanceof QuantumArmorStyleConfigMenu) {
+            QuantumArmorStyleConfigMenu menu = (QuantumArmorStyleConfigMenu) serverPlayer.containerMenu;
             menu.updateItemColors(this.slots, this.color);
         }
     }
