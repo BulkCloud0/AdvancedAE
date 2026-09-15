@@ -16,7 +16,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
 
 import appeng.api.parts.IPart;
-import appeng.api.parts.IPartItem;
 import appeng.items.parts.PartItem;
 
 /** Minimal Forge 1.16.5 registry shim for the subset of AE2AddonLib used by AdvancedAE. */
@@ -69,13 +68,9 @@ public class ItemRegistry {
         return definition;
     }
 
-    @SuppressWarnings("unchecked")
     protected static <T extends IPart> LibItemDefinition<PartItem<T>> part(
-            String modId, String englishName, String id, Class<T> partClass, Function<IPartItem<T>, T> factory) {
-        return item(modId, englishName, id, properties -> new PartItem<>(properties, (ItemStack stack) -> {
-            IPartItem<T> partItem = (IPartItem<T>) stack.getItem();
-            return factory.apply(partItem);
-        }));
+            String modId, String englishName, String id, Class<T> partClass, Function<ItemStack, T> factory) {
+        return item(modId, englishName, id, properties -> new PartItem<>(properties, factory));
     }
 
     public void register(IEventBus eventBus) {
