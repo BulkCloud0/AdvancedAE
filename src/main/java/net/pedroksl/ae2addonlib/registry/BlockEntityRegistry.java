@@ -14,6 +14,7 @@ import net.minecraftforge.registries.RegistryObject;
 import net.pedroksl.ae2addonlib.registry.helpers.LibBlockDefinition;
 
 import appeng.block.AEBaseTileBlock;
+import appeng.tile.AEBaseTileEntity;
 
 /** Forge 1.16.5 tile entity registry backend used in place of newer AE2AddonLib. */
 public class BlockEntityRegistry {
@@ -49,15 +50,20 @@ public class BlockEntityRegistry {
             for (int i = 0; i < blockDefs.length; i++) {
                 Block block = blockDefs[i].block();
                 blocks[i] = block;
-                if (block instanceof AEBaseTileBlock) {
-                    @SuppressWarnings("unchecked")
-                    AEBaseTileBlock<T> tileBlock = (AEBaseTileBlock<T>) block;
-                    tileBlock.setTileEntity(entityClass, factory);
-                }
+                bindAeTileBlock(block, entityClass, factory);
             }
             return TileEntityType.Builder.create(factory::get, blocks).build(null);
         });
         return type;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static <T extends TileEntity> void bindAeTileBlock(
+            Block block, Class<T> entityClass, Supplier<T> factory) {
+        if (block instanceof AEBaseTileBlock && AEBaseTileEntity.class.isAssignableFrom(entityClass)) {
+            AEBaseTileBlock tileBlock = (AEBaseTileBlock) block;
+            tileBlock.setTileEntity((Class) entityClass, (Supplier) factory);
+        }
     }
 
     public void register(IEventBus eventBus) {
