@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Rarity;
+import net.minecraft.item.Item;
+import net.minecraft.item.Rarity;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.items.AdvPatternEncoderItem;
 import net.pedroksl.advanced_ae.common.items.AdvPatternProviderCapacityUpgradeItem;
@@ -105,7 +105,7 @@ public class AAEItems extends ItemRegistry {
             item("Advanced Pattern Encoder", "adv_pattern_encoder", AdvPatternEncoderItem::new);
 
     public static final LibItemDefinition<Item> MONITOR_CONFIGURATOR =
-            item("Throughput Monitor Configurator", "monitor_configurator", Item::new);
+            item("Throughput Monitor Configurator", "throughput_monitor_configurator", Item::new);
 
     public static final LibItemDefinition<QuantumHelmet> QUANTUM_HELMET =
             item("Quantum Helmet", "quantum_helmet", QuantumHelmet::new);
