@@ -117,6 +117,24 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
 
     private int roundRobinIndex = 0;
 
+    private static final class PushTarget {
+        private final Direction direction;
+        private final PatternProviderTarget target;
+
+        private PushTarget(Direction direction, PatternProviderTarget target) {
+            this.direction = direction;
+            this.target = target;
+        }
+
+        private Direction direction() {
+            return direction;
+        }
+
+        private PatternProviderTarget target() {
+            return target;
+        }
+    }
+
     private final ICraftingWatcherNode craftingWatcherNode = new ICraftingWatcherNode() {
         @Override
         public void updateWatcher(IStackWatcher newWatcher) {
@@ -231,15 +249,24 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
         this.priority = tag.getInt(NBT_PRIORITY);
 
         var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);
-        this.unlockEvent = switch (unlockEventType) {
-            case 0 -> null;
-            case 1 -> UnlockCraftingEvent.REDSTONE_POWER;
-            case 2 -> UnlockCraftingEvent.RESULT;
-            case 3 -> UnlockCraftingEvent.REDSTONE_PULSE;
-            default -> {
+        switch (unlockEventType) {
+            case 0:
+                this.unlockEvent = null;
+                break;
+            case 1:
+                this.unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;
+                break;
+            case 2:
+                this.unlockEvent = UnlockCraftingEvent.RESULT;
+                break;
+            case 3:
+                this.unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;
+                break;
+            default:
                 LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);
-                yield null;
-            }};
+                this.unlockEvent = null;
+                break;
+        }
         if (this.unlockEvent == UnlockCraftingEvent.RESULT) {
             this.unlockStack = GenericStack.readTag(tag.getCompound(NBT_UNLOCK_STACK));
             if (this.unlockStack == null) {
@@ -380,7 +407,6 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
             return false;
         }
 
-        record PushTarget(Direction direction, PatternProviderTarget target) {}
         var possibleTargets = new ArrayList<PushTarget>();
 
         // Push to crafting machines first
@@ -491,7 +517,7 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
 
         var lockMode = configManager.getSetting(Settings.LOCK_CRAFTING_MODE);
         switch (lockMode) {
-            case LOCK_UNTIL_PULSE -> {
+            case LOCK_UNTIL_PULSE:
                 if (getRedstoneState()) {
                     // Already have signal, wait for no signal before switching to REDSTONE_POWER
                     unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;
@@ -501,12 +527,14 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
                 }
                 redstoneState = YesNo.UNDECIDED; // Check redstone state again next update
                 saveChanges();
-            }
-            case LOCK_UNTIL_RESULT -> {
+                break;
+            case LOCK_UNTIL_RESULT:
                 unlockEvent = UnlockCraftingEvent.RESULT;
                 unlockStack = pattern.getPrimaryOutput();
                 saveChanges();
-            }
+                break;
+            default:
+                break;
         }
     }
 
@@ -525,12 +553,13 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
         } else if (unlockEvent != null) {
             // Crafting locked by waiting for unlock event
             switch (unlockEvent) {
-                case REDSTONE_POWER, REDSTONE_PULSE -> {
+                case REDSTONE_POWER:
+                case REDSTONE_PULSE:
                     return LockCraftingMode.LOCK_UNTIL_PULSE;
-                }
-                case RESULT -> {
+                case RESULT:
                     return LockCraftingMode.LOCK_UNTIL_RESULT;
-                }
+                default:
+                    break;
             }
         }
         return LockCraftingMode.NONE;
@@ -872,9 +901,12 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
         var hostLevel = host.getLevel();
 
         // Prefer own custom name / icon if player has named it
-        if (this.host instanceof Nameable nameable && nameable.hasCustomName()) {
-            var name = nameable.getCustomName();
-            return new PatternContainerGroup(this.host.getTerminalIcon(), name, List.of());
+        if (this.host instanceof Nameable) {
+            Nameable nameable = (Nameable) this.host;
+            if (nameable.hasCustomName()) {
+                var name = nameable.getCustomName();
+                return new PatternContainerGroup(this.host.getTerminalIcon(), name, Collections.emptyList());
+            }
         }
 
         var sides = getActiveSides();
@@ -892,7 +924,7 @@ public class AdvPatternProviderLogic implements InternalInventoryHost, ICrafting
             return groups.iterator().next();
         }
 
-        List<Component> tooltip = List.of();
+        List<Component> tooltip = Collections.emptyList();
         // If there are multiple groups, show that in the tooltip
         if (groups.size() > 1) {
             tooltip = new ArrayList<>();
