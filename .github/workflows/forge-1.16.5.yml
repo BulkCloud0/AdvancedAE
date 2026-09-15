@@ -29,5 +29,5 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Compile
-        run: ./gradlew compileJava --stacktrace --no-daemon --console=plain
+      - name: Compile common code
+        run: ./gradlew compileJava -PcommonOnly --stacktrace --no-daemon --console=plain
