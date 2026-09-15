@@ -19,9 +19,9 @@ public class QuantumArmorUpgradeFilterPacket extends AddonPacket {
     public QuantumArmorUpgradeFilterPacket(FriendlyByteBuf stream) {
         upgradeType = stream.readEnum(UpgradeType.class);
 
-        var size = stream.readInt();
+        int size = stream.readInt();
         List<GenericStack> list = new ArrayList<>();
-        for (var i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             list.add(GenericStack.readBuffer(stream));
         }
         filter = list;
@@ -43,7 +43,8 @@ public class QuantumArmorUpgradeFilterPacket extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer serverPlayer) {
-        if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu menu) {
+        if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu) {
+            QuantumArmorConfigMenu menu = (QuantumArmorConfigMenu) serverPlayer.containerMenu;
             menu.openFilterConfigScreen(upgradeType, filter);
         }
     }
