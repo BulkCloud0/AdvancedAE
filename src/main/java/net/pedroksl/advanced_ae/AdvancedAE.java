@@ -6,7 +6,6 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.pedroksl.advanced_ae.common.definitions.*;
-
 import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEItems;
 
@@ -22,7 +21,6 @@ public class AdvancedAE {
         AAEItems.INSTANCE.register(eventBus);
         AAEBlocks.INSTANCE.register(eventBus);
         AAEBlockEntities.INSTANCE.register(eventBus);
-        AAEFluids.INSTANCE.register(eventBus);
         AAECreativeTab.INSTANCE.register(eventBus);
         eventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
@@ -31,10 +29,7 @@ public class AdvancedAE {
     }
 
     public static AdvancedAE instance() { return INSTANCE; }
-
-    private void commonSetup(final FMLCommonSetupEvent event) {
-        // Runtime services are re-enabled as their AE2 8 adapters land.
-    }
+    private void commonSetup(final FMLCommonSetupEvent event) {}
 
     private static void initUpgrades(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
