@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
@@ -18,7 +19,7 @@ public class AdvProcessingPattern extends AEProcessingPattern implements AdvPatt
     public AdvProcessingPattern(AEItemKey definition) {
         super(definition);
 
-        var tag = Objects.requireNonNull(definition.getTag());
+        CompoundTag tag = Objects.requireNonNull(definition.getTag());
 
         this.dirMap = AdvPatternEncoding.getInputDirections(tag);
     }
