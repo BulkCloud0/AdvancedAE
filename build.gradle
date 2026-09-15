@@ -27,9 +27,7 @@ sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = co
 
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
-
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-
     runs {
         client {
             workingDirectory project.file('run')
@@ -83,6 +81,8 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/logic/ElapsedTimeTracker.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/ReactionChamberBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/entities/ReactionChamberEntity.java'
+            exclude 'net/pedroksl/advanced_ae/common/blocks/QuantumCrafterBlock.java'
+            exclude 'net/pedroksl/advanced_ae/common/entities/QuantumCrafterEntity.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/AdvPatternProviderBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/SmallAdvPatternProviderBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/entities/AdvPatternProviderEntity.java'
@@ -99,15 +99,8 @@ sourceSets {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        name = 'ModMaven'
-        url = 'https://modmaven.dev/'
-        content { includeGroup 'appeng' }
-    }
-    maven {
-        url = 'https://www.cursemaven.com'
-        content { includeGroup 'curse.maven' }
-    }
+    maven { name = 'ModMaven'; url = 'https://modmaven.dev/'; content { includeGroup 'appeng' } }
+    maven { url = 'https://www.cursemaven.com'; content { includeGroup 'curse.maven' } }
     maven { url = 'https://maven.blamejared.com' }
     maven { url = 'https://dvs1.progwml6.com/files/maven/' }
 }
@@ -129,7 +122,6 @@ processResources {
     inputs.property 'minecraft_version_range', minecraft_version_range
     inputs.property 'forge_version_range', forge_version_range
     inputs.property 'loader_version_range', loader_version_range
-
     filesMatching('META-INF/mods.toml') {
         expand([
                 mod_id: mod_id,
@@ -146,10 +138,7 @@ processResources {
     }
 }
 
-jar {
-    manifest { attributes(['MixinConfigs': 'mixins.aae.json']) }
-}
-
+jar { manifest { attributes(['MixinConfigs': 'mixins.aae.json']) } }
 jar.finalizedBy('reobfJar')
 
 publishing {

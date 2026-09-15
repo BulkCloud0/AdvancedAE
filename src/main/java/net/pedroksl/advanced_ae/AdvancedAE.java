@@ -12,34 +12,25 @@ import appeng.core.definitions.AEItems;
 
 public class AdvancedAE {
     public static final String MOD_ID = "advanced_ae";
-
     static AdvancedAE INSTANCE;
 
     public AdvancedAE() {
-        if (INSTANCE != null) {
-            throw new IllegalStateException();
-        }
+        if (INSTANCE != null) throw new IllegalStateException();
         INSTANCE = this;
-
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
         AAEConfig.register(MOD_ID);
         AAEItems.INSTANCE.register(eventBus);
         AAEBlocks.INSTANCE.register(eventBus);
         AAEBlockEntities.INSTANCE.register(eventBus);
         AAEFluids.INSTANCE.register(eventBus);
         AAECreativeTab.INSTANCE.register(eventBus);
-
         eventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
         eventBus.addListener(AdvancedAE::initUpgrades);
-
         AAENbt.init();
     }
 
-    public static AdvancedAE instance() {
-        return INSTANCE;
-    }
+    public static AdvancedAE instance() { return INSTANCE; }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         // Runtime services are re-enabled as their AE2 8 adapters land.
@@ -47,8 +38,6 @@ public class AdvancedAE {
 
     private static void initUpgrades(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            Upgrades.add(AEItems.SPEED_CARD, AAEBlocks.QUANTUM_CRAFTER, 4);
-            Upgrades.add(AEItems.REDSTONE_CARD, AAEBlocks.QUANTUM_CRAFTER, 1);
             Upgrades.add(AEItems.SPEED_CARD, AAEItems.STOCK_EXPORT_BUS, 4);
             Upgrades.add(AEItems.CAPACITY_CARD, AAEItems.STOCK_EXPORT_BUS, 5);
             Upgrades.add(AEItems.REDSTONE_CARD, AAEItems.STOCK_EXPORT_BUS, 1);
@@ -67,7 +56,5 @@ public class AdvancedAE {
         });
     }
 
-    public static ResourceLocation makeId(String id) {
-        return new ResourceLocation(MOD_ID, id);
-    }
+    public static ResourceLocation makeId(String id) { return new ResourceLocation(MOD_ID, id); }
 }
