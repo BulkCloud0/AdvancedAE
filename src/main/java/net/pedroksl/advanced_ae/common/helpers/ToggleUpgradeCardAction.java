@@ -8,7 +8,10 @@ import net.minecraft.world.level.ItemLike;
 
 import appeng.api.features.HotkeyAction;
 
-public record ToggleUpgradeCardAction(Predicate<ItemStack> locatable, Opener opener) implements HotkeyAction {
+public final class ToggleUpgradeCardAction implements HotkeyAction {
+    private final Predicate<ItemStack> locatable;
+    private final Opener opener;
+
     public ToggleUpgradeCardAction(ItemLike item, Opener opener) {
         this((stack) -> stack.is(item.asItem()), opener);
     }
@@ -20,17 +23,12 @@ public record ToggleUpgradeCardAction(Predicate<ItemStack> locatable, Opener ope
 
     @Override
     public boolean run(Player player) {
-        var items = player.getArmorSlots();
-        int i = 0;
-        for (var item : items) {
-            if (this.locatable.test(item)) {
-                if (opener.open(player, item)) {
-                    return true;
-                }
+        Iterable<ItemStack> items = player.getArmorSlots();
+        for (ItemStack item : items) {
+            if (this.locatable.test(item) && opener.open(player, item)) {
+                return true;
             }
-            i++;
         }
-
         return false;
     }
 
