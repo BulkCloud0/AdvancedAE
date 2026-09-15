@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.items.armors.QuantumArmorBase;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
@@ -42,7 +43,8 @@ public class QuantumArmorMagnetMenu extends QuantumArmorFilterConfigMenu {
             boolean blacklist) {
         MenuOpener.open(AAEMenus.QUANTUM_ARMOR_MAGNET.get(), player, locator);
 
-        if (player.containerMenu instanceof QuantumArmorMagnetMenu cca) {
+        if (player.containerMenu instanceof QuantumArmorMagnetMenu) {
+            QuantumArmorMagnetMenu cca = (QuantumArmorMagnetMenu) player.containerMenu;
             cca.setUpgradeType(UpgradeType.MAGNET);
             cca.setSlotIndex(slotIndex);
             cca.setFilterList(filterList);
@@ -60,8 +62,9 @@ public class QuantumArmorMagnetMenu extends QuantumArmorFilterConfigMenu {
 
         this.blacklist = blacklist;
 
-        var stack = getPlayer().getInventory().getItem(this.slotIndex);
-        if (stack.getItem() instanceof QuantumArmorBase item) {
+        ItemStack stack = getPlayer().getInventory().getItem(this.slotIndex);
+        if (stack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
             if (item.getPossibleUpgrades().contains(this.upgradeType)) {
                 if (item.hasUpgrade(stack, this.upgradeType)) {
                     item.setUpgradeExtra(stack, this.upgradeType, blacklist);
@@ -78,11 +81,12 @@ public class QuantumArmorMagnetMenu extends QuantumArmorFilterConfigMenu {
 
         this.currentValue = value;
 
-        var stack = getPlayer().getInventory().getItem(this.slotIndex);
-        if (stack.getItem() instanceof QuantumArmorBase item) {
+        ItemStack stack = getPlayer().getInventory().getItem(this.slotIndex);
+        if (stack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
             if (item.getPossibleUpgrades().contains(this.upgradeType)) {
                 if (item.hasUpgrade(stack, this.upgradeType)) {
-                    var currentValue = item.getUpgradeValue(stack, this.upgradeType, -1);
+                    int currentValue = item.getUpgradeValue(stack, this.upgradeType, -1);
                     if (currentValue == -1 || currentValue != value) {
                         item.setUpgradeValue(stack, this.upgradeType, value);
                     }
@@ -96,7 +100,8 @@ public class QuantumArmorMagnetMenu extends QuantumArmorFilterConfigMenu {
         List<GenericStack> filterList = makeFilterList();
 
         Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (player instanceof ServerPlayer) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             QuantumArmorMagnetMenu.open(
                     serverPlayer, getLocator(), this.slotIndex, filterList, this.currentValue, this.blacklist);
         }
