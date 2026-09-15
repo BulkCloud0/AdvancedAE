@@ -12,6 +12,7 @@ import net.pedroksl.advanced_ae.client.gui.SmallAdvPatternProviderScreen;
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.stacks.AmountFormat;
+import appeng.api.stacks.GenericStack;
 import appeng.client.Point;
 import appeng.client.gui.ICompositeWidget;
 import appeng.client.gui.Icon;
@@ -55,7 +56,7 @@ public class SmallAdvPatternProviderLockReason implements ICompositeWidget {
 
     @Override
     public void drawForegroundLayer(GuiGraphics guiGraphics, Rect2i bounds, Point mouse) {
-        var menu = gui.getMenu();
+        SmallAdvPatternProviderMenu menu = gui.getMenu();
 
         Icon icon;
         Component lockStatusText;
@@ -74,28 +75,36 @@ public class SmallAdvPatternProviderLockReason implements ICompositeWidget {
     @Nullable
     @Override
     public Tooltip getTooltip(int mouseX, int mouseY) {
-        var menu = gui.getMenu();
-        var tooltip =
-                switch (menu.getCraftingLockedReason()) {
-                    case NONE -> null;
-                    case LOCK_UNTIL_PULSE -> InGameTooltip.CraftingLockedUntilPulse.text();
-                    case LOCK_WHILE_HIGH -> InGameTooltip.CraftingLockedByRedstoneSignal.text();
-                    case LOCK_WHILE_LOW -> InGameTooltip.CraftingLockedByLackOfRedstoneSignal.text();
-                    case LOCK_UNTIL_RESULT -> {
-                        var stack = menu.getUnlockStack();
-                        Component stackName;
-                        Component stackAmount;
-                        if (stack != null) {
-                            stackName = AEKeyRendering.getDisplayName(stack.what());
-                            stackAmount =
-                                    Component.literal(stack.what().formatAmount(stack.amount(), AmountFormat.FULL));
-                        } else {
-                            stackName = Component.literal("ERROR");
-                            stackAmount = Component.literal("ERROR");
-                        }
-                        yield InGameTooltip.CraftingLockedUntilResult.text(stackName, stackAmount);
-                    }
-                };
+        SmallAdvPatternProviderMenu menu = gui.getMenu();
+        Component tooltip = null;
+
+        switch (menu.getCraftingLockedReason()) {
+            case LOCK_UNTIL_PULSE:
+                tooltip = InGameTooltip.CraftingLockedUntilPulse.text();
+                break;
+            case LOCK_WHILE_HIGH:
+                tooltip = InGameTooltip.CraftingLockedByRedstoneSignal.text();
+                break;
+            case LOCK_WHILE_LOW:
+                tooltip = InGameTooltip.CraftingLockedByLackOfRedstoneSignal.text();
+                break;
+            case LOCK_UNTIL_RESULT:
+                GenericStack stack = menu.getUnlockStack();
+                Component stackName;
+                Component stackAmount;
+                if (stack != null) {
+                    stackName = AEKeyRendering.getDisplayName(stack.what());
+                    stackAmount = Component.literal(stack.what().formatAmount(stack.amount(), AmountFormat.FULL));
+                } else {
+                    stackName = Component.literal("ERROR");
+                    stackAmount = Component.literal("ERROR");
+                }
+                tooltip = InGameTooltip.CraftingLockedUntilResult.text(stackName, stackAmount);
+                break;
+            case NONE:
+            default:
+                break;
+        }
 
         return tooltip != null ? new Tooltip(tooltip) : null;
     }
