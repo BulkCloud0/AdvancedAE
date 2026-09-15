@@ -2,10 +2,10 @@ package net.pedroksl.ae2addonlib.registry.helpers;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.IItemProvider;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IItemProvider;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.fml.RegistryObject;
 
 /** Minimal 1.16.5-compatible block definition used by AdvancedAE. */
 public class LibBlockDefinition<T extends Block> implements IItemProvider {
