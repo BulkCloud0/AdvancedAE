@@ -13,7 +13,6 @@ import net.pedroksl.advanced_ae.api.ShowQuantumCrafters;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 
-import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.util.IConfigManager;
 import appeng.items.parts.PartModels;
@@ -38,8 +37,8 @@ public class QuantumCrafterTerminalPart extends AbstractDisplayPart implements I
 
     private final IConfigManager configManager;
 
-    public QuantumCrafterTerminalPart(IPartItem<?> partItem) {
-        super(partItem, true);
+    public QuantumCrafterTerminalPart(ItemStack partItem) {
+        super(partItem);
 
         configManager = new ConfigManager(() -> this.getHost().markForSave());
         configManager.registerSetting(AAESettings.TERMINAL_SHOW_QUANTUM_CRAFTERS, ShowQuantumCrafters.VISIBLE);
