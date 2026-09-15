@@ -209,7 +209,8 @@ public class QuantumArmorConfigScreen extends AEBaseScreen<QuantumArmorConfigMen
 
         int index = 0;
         var armorStack = stack.isEmpty() ? this.menu.getSlot(this.selectedIndex).getItem() : stack;
-        if (armorStack.getItem() instanceof QuantumArmorBase item) {
+        if (armorStack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) armorStack.getItem();
             for (var upgrade : item.getPossibleUpgrades()) {
                 if (item.hasUpgrade(armorStack, upgrade)) {
 
@@ -287,7 +288,8 @@ public class QuantumArmorConfigScreen extends AEBaseScreen<QuantumArmorConfigMen
         } else if (state.type().getSettingType() == UpgradeType.SettingType.NUM_AND_FILTER) {
             if (state.type() == UpgradeType.MAGNET) {
                 var stack = this.menu.getSlot(selectedIndex).getItem();
-                if (stack.getItem() instanceof QuantumArmorBase item) {
+                if (stack.getItem() instanceof QuantumArmorBase) {
+                    QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
                     var blacklist = item.isUpgradeEnabled(stack, UpgradeType.MAGNET);
                     AAENetworkHandler.INSTANCE.sendToServer(
                             new QuantumArmorMagnetPacket(state.currentValue(), state.filter(), blacklist));
