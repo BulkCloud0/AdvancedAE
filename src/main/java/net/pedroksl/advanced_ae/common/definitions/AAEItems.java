@@ -2,6 +2,7 @@ package net.pedroksl.advanced_ae.common.definitions;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -36,13 +37,13 @@ public class AAEItems extends ItemRegistry {
     public static List<LibItemDefinition<?>> getQuantumArmor() {
         return INSTANCE.getItems().stream()
                 .filter(item -> item.stack().getItem() instanceof QuantumArmorBase)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public static List<LibItemDefinition<?>> getQuantumCards() {
         return INSTANCE.getItems().stream()
                 .filter(item -> item.stack().getItem() instanceof QuantumUpgradeBaseItem)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public static final LibItemDefinition<PartItem<AdvPatternProviderPart>> ADV_PATTERN_PROVIDER = part(
@@ -104,7 +105,7 @@ public class AAEItems extends ItemRegistry {
             item("Advanced Pattern Encoder", "adv_pattern_encoder", AdvPatternEncoderItem::new);
 
     public static final LibItemDefinition<Item> MONITOR_CONFIGURATOR =
-            item("Throughput Monitor Configurator", "throughput_monitor_configurator", Item::new);
+            item("Throughput Monitor Configurator", "monitor_configurator", Item::new);
 
     public static final LibItemDefinition<QuantumHelmet> QUANTUM_HELMET =
             item("Quantum Helmet", "quantum_helmet", QuantumHelmet::new);
@@ -167,16 +168,13 @@ public class AAEItems extends ItemRegistry {
             p -> new QuantumUpgradeBaseItem(UpgradeType.WORKBENCH, p));
     public static final LibItemDefinition<QuantumUpgradeBaseItem> PICK_CRAFT_CARD =
             item("Pick Craft Card", "pick_craft_card", p -> new QuantumUpgradeBaseItem(UpgradeType.PICK_CRAFT, p));
-    //    public static final ItemDefinition<QuantumUpgradeBaseItem> HUD_CARD =
-    //            item("HUD Card", "hud_card", p -> new QuantumUpgradeBaseItem(UpgradeType.HUD, p));
 
     @SuppressWarnings("unchecked")
     private static <T extends Item> LibItemDefinition<T> conditionalItem(
             AddonEnum addon, String englishName, String id, String itemClass) {
         if (addon.isLoaded()) {
             try {
-                var instance =
-                        (T) Class.forName(itemClass).getDeclaredConstructor().newInstance();
+                T instance = (T) Class.forName(itemClass).getDeclaredConstructor().newInstance();
                 return item(AdvancedAE.MOD_ID, englishName, id, p -> instance);
             } catch (Exception ignored) {
             }
