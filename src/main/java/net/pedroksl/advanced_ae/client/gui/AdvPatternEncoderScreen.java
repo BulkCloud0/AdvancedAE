@@ -75,14 +75,14 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
             }
 
             InputRow row = this.rows.get(currentRow);
-            var renderContext = new SimpleRenderContext(LytRect.empty(), guiGraphics);
+            SimpleRenderContext renderContext = new SimpleRenderContext(LytRect.empty(), guiGraphics);
             renderContext.renderItem(
                     row.key().wrapForDisplayOrFilter(), LIST_ANCHOR_X + 1, LIST_ANCHOR_Y + 1 + i * ROW_HEIGHT, 16, 16);
 
-            var buttons = this.directionButtons.get(row.key);
-            var highlight = getSelectedDirButton(row.dir);
-            for (var col = 0; col < 7; col++) {
-                var button = buttons[col];
+            DirectionInputButton[] buttons = this.directionButtons.get(row.key());
+            int highlight = getSelectedDirButton(row.dir());
+            for (int col = 0; col < 7; col++) {
+                DirectionInputButton button = buttons[col];
                 button.setPosition(
                         this.leftPos
                                 + LIST_ANCHOR_X
@@ -148,7 +148,7 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
     public void update(HashMap<AEKey, Direction> inputList) {
         this.inputList.clear();
         this.directionButtons.forEach((k, v) -> {
-            for (var btn : v) {
+            for (DirectionInputButton btn : v) {
                 this.removeWidget(btn);
             }
         });
@@ -160,12 +160,12 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
     }
 
     private void refreshList() {
-        for (var key : this.inputList.keySet()) {
+        for (AEKey key : this.inputList.keySet()) {
             this.rows.add(new InputRow(key, this.inputList.get(key)));
 
             DirectionInputButton[] buttons = new DirectionInputButton[7];
-            for (var x = 0; x < 7; x++) {
-                var button = new DirectionInputButton(
+            for (int x = 0; x < 7; x++) {
+                DirectionInputButton button = new DirectionInputButton(
                         0,
                         0,
                         DIRECTION_BUTTONS_WIDTH,
@@ -193,28 +193,45 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
     }
 
     private int getSelectedDirButton(@Nullable Direction dir) {
-        if (dir == null) return 0;
+        if (dir == null) {
+            return 0;
+        }
 
-        return switch (dir) {
-            case NORTH -> 1;
-            case EAST -> 2;
-            case SOUTH -> 3;
-            case WEST -> 4;
-            case UP -> 5;
-            case DOWN -> 6;
-        };
+        switch (dir) {
+            case NORTH:
+                return 1;
+            case EAST:
+                return 2;
+            case SOUTH:
+                return 3;
+            case WEST:
+                return 4;
+            case UP:
+                return 5;
+            case DOWN:
+                return 6;
+            default:
+                return 0;
+        }
     }
 
     private ResourceLocation getDirButtonTexture(int index) {
-        return switch (index) {
-            case 1 -> AdvancedAE.makeId("textures/guis/north_button.png");
-            case 2 -> AdvancedAE.makeId("textures/guis/east_button.png");
-            case 3 -> AdvancedAE.makeId("textures/guis/south_button.png");
-            case 4 -> AdvancedAE.makeId("textures/guis/west_button.png");
-            case 5 -> AdvancedAE.makeId("textures/guis/up_button.png");
-            case 6 -> AdvancedAE.makeId("textures/guis/down_button.png");
-            default -> AdvancedAE.makeId("textures/guis/any_button.png");
-        };
+        switch (index) {
+            case 1:
+                return AdvancedAE.makeId("textures/guis/north_button.png");
+            case 2:
+                return AdvancedAE.makeId("textures/guis/east_button.png");
+            case 3:
+                return AdvancedAE.makeId("textures/guis/south_button.png");
+            case 4:
+                return AdvancedAE.makeId("textures/guis/west_button.png");
+            case 5:
+                return AdvancedAE.makeId("textures/guis/up_button.png");
+            case 6:
+                return AdvancedAE.makeId("textures/guis/down_button.png");
+            default:
+                return AdvancedAE.makeId("textures/guis/any_button.png");
+        }
     }
 
     private void resetScrollbar() {
@@ -222,5 +239,23 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
         scrollbar.setRange(0, this.inputList.size() - VISIBLE_ROWS, 2);
     }
 
-    public record InputRow(AEKey key, @Nullable Direction dir) {}
+    public static final class InputRow {
+        private final AEKey key;
+        @Nullable
+        private final Direction dir;
+
+        public InputRow(AEKey key, @Nullable Direction dir) {
+            this.key = key;
+            this.dir = dir;
+        }
+
+        public AEKey key() {
+            return key;
+        }
+
+        @Nullable
+        public Direction dir() {
+            return dir;
+        }
+    }
 }
