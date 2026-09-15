@@ -73,6 +73,8 @@ sourceSets {
     main {
         java {
             exclude 'net/pedroksl/advanced_ae/datagen/**'
+            exclude 'net/pedroksl/advanced_ae/client/**'
+            exclude 'net/pedroksl/advanced_ae/common/definitions/AAEHotkeysRegistry.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/AdvPatternProviderBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/SmallAdvPatternProviderBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/entities/AdvPatternProviderEntity.java'
@@ -82,8 +84,7 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/parts/SmallAdvPatternProviderPart.java'
             exclude 'net/pedroksl/advanced_ae/common/items/AdvPatternProvider*UpgradeItem.java'
             exclude 'net/pedroksl/advanced_ae/gui/advpatternprovider/**'
-            exclude 'net/pedroksl/advanced_ae/client/gui/AdvPatternProviderScreen.java'
-            exclude 'net/pedroksl/advanced_ae/client/gui/SmallAdvPatternProviderScreen.java'
+            exclude 'net/pedroksl/advanced_ae/mixins/client/**'
             exclude 'net/pedroksl/advanced_ae/mixins/appflux/**'
             exclude 'net/pedroksl/advanced_ae/xmod/appflux/**'
         }

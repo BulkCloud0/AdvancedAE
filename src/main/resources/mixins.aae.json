@@ -9,8 +9,6 @@
     "MixinIOBusPartInvoker",
     "MixinPatternEncodingTermMenu",
     "MixinPatternProviderLogic",
-    "client.BuiltInModelHooksAccessor",
-    "client.ModelBakeryMixin",
     "cpu.MixinCraftingCPUMenu",
     "cpu.MixinCraftingService",
     "eae.MixinContainerPatternModifier"

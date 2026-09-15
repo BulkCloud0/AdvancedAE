@@ -46,7 +46,6 @@ public class AdvancedAE {
 
         eventBus.addListener(AdvancedAE::initUpgrades);
 
-        AAEHotkeysRegistry.INSTANCE.init();
         AAENbt.init();
     }
 
