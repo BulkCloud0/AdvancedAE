@@ -1,12 +1,12 @@
 package net.pedroksl.advanced_ae.common.items.upgrades;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.definitions.AAEConfig;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
@@ -82,7 +82,6 @@ public enum UpgradeType {
             AAEItems.REGENERATION_CARD),
     STRENGTH("Strength", null, SettingType.NONE, 10, ApplicationType.BUFF, AAEItems.STRENGTH_CARD),
     ATTACK_SPEED("Attack Speed", null, SettingType.NONE, 10, ApplicationType.BUFF, AAEItems.ATTACK_SPEED_CARD),
-
     LUCK("Luck Boost", null, SettingType.NONE, 10, ApplicationType.BUFF, AAEItems.LUCK_CARD),
     REACH("Reach Boost", null, SettingType.NUM_INPUT, 10, ApplicationType.BUFF, AAEItems.REACH_CARD),
     SWIM_SPEED(
@@ -103,7 +102,6 @@ public enum UpgradeType {
             AAEItems.RECHARGING_CARD),
     WORKBENCH("Portable Workbench", null, SettingType.NONE, 0, ApplicationType.PASSIVE_USE, AAEItems.WORKBENCH_CARD),
     PICK_CRAFT("Pick-Craft", null, SettingType.NONE, 1000, ApplicationType.PASSIVE_USE, AAEItems.PICK_CRAFT_CARD);
-    //    HUD("HUD", null, SettingType.BOOL_LIST, 10, ApplicationType.PASSIVE, AAEItems.HUD_CARD);
 
     public enum SettingType {
         NONE,
@@ -179,71 +177,109 @@ public enum UpgradeType {
         return "gui.upgrades." + AdvancedAE.MOD_ID + "." + this.name.replaceAll("\\s+", "") + "Upgrade";
     }
 
-    public Component getTranslatedName() {
-        return Component.translatable(getTranslationKey());
+    public ITextComponent getTranslatedName() {
+        return new TranslationTextComponent(getTranslationKey());
     }
 
     public UpgradeSettings getSettings() {
-        return switch (this) {
-            case EMPTY,
-                    LAVA_IMMUNITY,
-                    WATER_BREATHING,
-                    AUTO_FEED,
-                    AUTO_STOCK,
-                    REGENERATION,
-                    NIGHT_VISION,
-                    CHARGING,
-                    WORKBENCH,
-                    PICK_CRAFT /*,
-                               HUD*/ -> new UpgradeSettings(1);
-            case WALK_SPEED -> new UpgradeSettings(1, AAEConfig.instance().getMaxWalkSpeed(), 0.1f);
-            case SPRINT_SPEED -> new UpgradeSettings(1, AAEConfig.instance().getMaxSprintSpeed(), 0.1f);
-            case STEP_ASSIST -> new UpgradeSettings(1, AAEConfig.instance().getMaxStepHeight());
-            case JUMP_HEIGHT -> new UpgradeSettings(1, AAEConfig.instance().getMaxJumpHeight());
-            case MAGNET -> new UpgradeSettings(3, AAEConfig.instance().getMaxMagnetRange());
-            case HP_BUFFER -> new UpgradeSettings(AAEConfig.instance().getmaxHpBuffer());
-            case FLIGHT -> new UpgradeSettings(1, AAEConfig.instance().getMaxFlightSpeed());
-            case EVASION -> new UpgradeSettings(AAEConfig.instance().getEvasionChance());
-            case STRENGTH -> new UpgradeSettings(AAEConfig.instance().getStrengthBoost());
-            case ATTACK_SPEED -> new UpgradeSettings(AAEConfig.instance().getAttackSpeedBoost());
-            case LUCK -> new UpgradeSettings(AAEConfig.instance().getLuckBoost());
-            case REACH -> new UpgradeSettings(1, AAEConfig.instance().getMaxReachBoost());
-            case SWIM_SPEED -> new UpgradeSettings(1, AAEConfig.instance().getMaxSwimSpeedBoost(), 0.1f);
-            case FLIGHT_DRIFT -> new UpgradeSettings(0, 100, 1, 50);
-        };
+        switch (this) {
+            case EMPTY:
+            case LAVA_IMMUNITY:
+            case WATER_BREATHING:
+            case AUTO_FEED:
+            case AUTO_STOCK:
+            case REGENERATION:
+            case NIGHT_VISION:
+            case CHARGING:
+            case WORKBENCH:
+            case PICK_CRAFT:
+                return new UpgradeSettings(1);
+            case WALK_SPEED:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxWalkSpeed(), 0.1f);
+            case SPRINT_SPEED:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxSprintSpeed(), 0.1f);
+            case STEP_ASSIST:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxStepHeight());
+            case JUMP_HEIGHT:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxJumpHeight());
+            case MAGNET:
+                return new UpgradeSettings(3, AAEConfig.instance().getMaxMagnetRange());
+            case HP_BUFFER:
+                return new UpgradeSettings(AAEConfig.instance().getmaxHpBuffer());
+            case FLIGHT:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxFlightSpeed());
+            case EVASION:
+                return new UpgradeSettings(AAEConfig.instance().getEvasionChance());
+            case STRENGTH:
+                return new UpgradeSettings(AAEConfig.instance().getStrengthBoost());
+            case ATTACK_SPEED:
+                return new UpgradeSettings(AAEConfig.instance().getAttackSpeedBoost());
+            case LUCK:
+                return new UpgradeSettings(AAEConfig.instance().getLuckBoost());
+            case REACH:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxReachBoost());
+            case SWIM_SPEED:
+                return new UpgradeSettings(1, AAEConfig.instance().getMaxSwimSpeedBoost(), 0.1f);
+            case FLIGHT_DRIFT:
+                return new UpgradeSettings(0, 100, 1, 50);
+            default:
+                throw new IllegalStateException("Unhandled quantum upgrade: " + this);
+        }
     }
 
-    public MutableComponent getTooltip() {
-        return switch (this) {
-            case EMPTY -> AAEText.UpgradeBaseTooltip.text();
-            case WALK_SPEED -> AAEText.WalkSpeedTooltip.text();
-            case SPRINT_SPEED -> AAEText.SprintSpeedTooltip.text();
-            case STEP_ASSIST -> AAEText.StepAssistTooltip.text(
-                    AAEConfig.instance().getMaxStepHeight());
-            case JUMP_HEIGHT -> AAEText.JumpHeightTooltip.text(
-                    AAEConfig.instance().getMaxJumpHeight());
-            case LAVA_IMMUNITY -> AAEText.LavaImmunityTooltip.text();
-            case FLIGHT -> AAEText.FlightTooltip.text();
-            case WATER_BREATHING -> AAEText.WaterBreathingTooltip.text();
-            case AUTO_FEED -> AAEText.AutoFeedTooltip.text();
-            case AUTO_STOCK -> AAEText.AutoStockTooltip.text();
-            case MAGNET -> AAEText.MagnetTooltip.text(AAEConfig.instance().getMaxMagnetRange());
-            case HP_BUFFER -> AAEText.HpBufferTooltip.text(AAEConfig.instance().getmaxHpBuffer());
-            case EVASION -> AAEText.EvasionTooltip.text(AAEConfig.instance().getEvasionChance());
-            case REGENERATION -> AAEText.RegenerationTooltip.text();
-            case STRENGTH -> AAEText.StrengthTooltip.text(AAEConfig.instance().getStrengthBoost());
-            case ATTACK_SPEED -> AAEText.AttackSpeedTooltip.text(
-                    AAEConfig.instance().getAttackSpeedBoost());
-            case LUCK -> AAEText.LuckTooltip.text(AAEConfig.instance().getLuckBoost());
-            case REACH -> AAEText.ReachTooltip.text(AAEConfig.instance().getMaxReachBoost());
-            case SWIM_SPEED -> AAEText.SwimSpeedTooltip.text();
-            case NIGHT_VISION -> AAEText.NightVisionTooltip.text();
-            case FLIGHT_DRIFT -> AAEText.FlightDriftTooltip.text();
-            case CHARGING -> AAEText.RechargingTooltip.text();
-            case WORKBENCH -> AAEText.PortableWorkbenchTooltip.text();
-            case PICK_CRAFT -> AAEText.PickCraftTooltip.text();
-                //            case HUD -> AAEText.PortableWorkbenchTooltip.text();
-        };
+    public ITextComponent getTooltip() {
+        switch (this) {
+            case EMPTY:
+                return AAEText.UpgradeBaseTooltip.text();
+            case WALK_SPEED:
+                return AAEText.WalkSpeedTooltip.text();
+            case SPRINT_SPEED:
+                return AAEText.SprintSpeedTooltip.text();
+            case STEP_ASSIST:
+                return AAEText.StepAssistTooltip.text(AAEConfig.instance().getMaxStepHeight());
+            case JUMP_HEIGHT:
+                return AAEText.JumpHeightTooltip.text(AAEConfig.instance().getMaxJumpHeight());
+            case LAVA_IMMUNITY:
+                return AAEText.LavaImmunityTooltip.text();
+            case FLIGHT:
+                return AAEText.FlightTooltip.text();
+            case WATER_BREATHING:
+                return AAEText.WaterBreathingTooltip.text();
+            case AUTO_FEED:
+                return AAEText.AutoFeedTooltip.text();
+            case AUTO_STOCK:
+                return AAEText.AutoStockTooltip.text();
+            case MAGNET:
+                return AAEText.MagnetTooltip.text(AAEConfig.instance().getMaxMagnetRange());
+            case HP_BUFFER:
+                return AAEText.HpBufferTooltip.text(AAEConfig.instance().getmaxHpBuffer());
+            case EVASION:
+                return AAEText.EvasionTooltip.text(AAEConfig.instance().getEvasionChance());
+            case REGENERATION:
+                return AAEText.RegenerationTooltip.text();
+            case STRENGTH:
+                return AAEText.StrengthTooltip.text(AAEConfig.instance().getStrengthBoost());
+            case ATTACK_SPEED:
+                return AAEText.AttackSpeedTooltip.text(AAEConfig.instance().getAttackSpeedBoost());
+            case LUCK:
+                return AAEText.LuckTooltip.text(AAEConfig.instance().getLuckBoost());
+            case REACH:
+                return AAEText.ReachTooltip.text(AAEConfig.instance().getMaxReachBoost());
+            case SWIM_SPEED:
+                return AAEText.SwimSpeedTooltip.text();
+            case NIGHT_VISION:
+                return AAEText.NightVisionTooltip.text();
+            case FLIGHT_DRIFT:
+                return AAEText.FlightDriftTooltip.text();
+            case CHARGING:
+                return AAEText.RechargingTooltip.text();
+            case WORKBENCH:
+                return AAEText.PortableWorkbenchTooltip.text();
+            case PICK_CRAFT:
+                return AAEText.PickCraftTooltip.text();
+            default:
+                throw new IllegalStateException("Unhandled quantum upgrade: " + this);
+        }
     }
 
     public ExtraSettings getExtraSettings() {
@@ -252,6 +288,6 @@ public enum UpgradeType {
 
     @FunctionalInterface
     public interface Ability {
-        boolean execute(Level level, Player player, ItemStack stack);
+        boolean execute(World level, PlayerEntity player, ItemStack stack);
     }
 }
