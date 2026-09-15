@@ -28,26 +28,32 @@ public class AAELivingEntityEvents {
 
     public static void checkInvulnerability(LivingAttackEvent event) {
         Entity target = event.getEntity();
-        if (target instanceof Player player) {
+        if (target instanceof Player) {
+            Player player = (Player) target;
             ItemStack chestStack = player.getItemBySlot(EquipmentSlot.CHEST);
-            if (chestStack.getItem() instanceof QuantumArmorBase item
-                    && item.isUpgradeEnabledAndPowered(chestStack, UpgradeType.LAVA_IMMUNITY)) {
-                if (event.getSource().is(DamageTypes.LAVA)
-                        || event.getSource().is(DamageTypes.IN_FIRE)
-                        || event.getSource().is(DamageTypes.ON_FIRE)) {
-                    player.setRemainingFireTicks(0);
-                    event.setCanceled(true);
-                    item.consumeEnergy(player, chestStack, UpgradeType.LAVA_IMMUNITY);
+            if (chestStack.getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase item = (QuantumArmorBase) chestStack.getItem();
+                if (item.isUpgradeEnabledAndPowered(chestStack, UpgradeType.LAVA_IMMUNITY)) {
+                    if (event.getSource().is(DamageTypes.LAVA)
+                            || event.getSource().is(DamageTypes.IN_FIRE)
+                            || event.getSource().is(DamageTypes.ON_FIRE)) {
+                        player.setRemainingFireTicks(0);
+                        event.setCanceled(true);
+                        item.consumeEnergy(player, chestStack, UpgradeType.LAVA_IMMUNITY);
+                    }
                 }
             }
+
             ItemStack bootStack = player.getItemBySlot(EquipmentSlot.FEET);
-            if (bootStack.getItem() instanceof QuantumArmorBase item
-                    && item.isUpgradeEnabledAndPowered(bootStack, UpgradeType.EVASION)) {
-                Random randomGenerator = new Random();
-                var chance = randomGenerator.nextDouble(100);
-                if (chance < AAEConfig.instance().getEvasionChance()) {
-                    event.setCanceled(true);
-                    item.consumeEnergy(player, bootStack, UpgradeType.EVASION);
+            if (bootStack.getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase item = (QuantumArmorBase) bootStack.getItem();
+                if (item.isUpgradeEnabledAndPowered(bootStack, UpgradeType.EVASION)) {
+                    Random randomGenerator = new Random();
+                    double chance = randomGenerator.nextDouble() * 100.0D;
+                    if (chance < AAEConfig.instance().getEvasionChance()) {
+                        event.setCanceled(true);
+                        item.consumeEnergy(player, bootStack, UpgradeType.EVASION);
+                    }
                 }
             }
         }
@@ -55,13 +61,15 @@ public class AAELivingEntityEvents {
 
     public static void incomingDamage(LivingDamageEvent event) {
         Entity target = event.getEntity();
-        if (target.isAlive() && event.getAmount() > 0 && target instanceof Player player) {
-            var maxAbsorption = event.getAmount() * AAEConfig.instance().getPercentageDamageAbsorption() / 100f;
-            var amountPerPiece = maxAbsorption / 4f;
+        if (target.isAlive() && event.getAmount() > 0 && target instanceof Player) {
+            Player player = (Player) target;
+            double maxAbsorption = event.getAmount() * AAEConfig.instance().getPercentageDamageAbsorption() / 100f;
+            double amountPerPiece = maxAbsorption / 4f;
             float absorbed = 0;
-            for (var stack : player.getArmorSlots()) {
-                if (stack != null && !stack.isEmpty() && stack.getItem() instanceof QuantumArmorBase item) {
-                    var extracted = item.extractAEPower(stack, amountPerPiece * 1000f, Actionable.MODULATE);
+            for (ItemStack stack : player.getArmorSlots()) {
+                if (stack != null && !stack.isEmpty() && stack.getItem() instanceof QuantumArmorBase) {
+                    QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+                    double extracted = item.extractAEPower(stack, amountPerPiece * 1000f, Actionable.MODULATE);
                     absorbed += (float) extracted / 1000f;
                 }
             }
@@ -76,31 +84,39 @@ public class AAELivingEntityEvents {
     }
 
     public static void breath(LivingBreatheEvent event) {
-        if (event.getEntity() instanceof Player player) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
             ItemStack stack = player.getItemBySlot(EquipmentSlot.HEAD);
-            if (stack.getItem() instanceof QuantumArmorBase item
-                    && item.isUpgradeEnabledAndPowered(stack, UpgradeType.WATER_BREATHING)) {
-                event.setCanBreathe(true);
-                item.consumeEnergy(player, stack, UpgradeType.WATER_BREATHING);
+            if (stack.getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+                if (item.isUpgradeEnabledAndPowered(stack, UpgradeType.WATER_BREATHING)) {
+                    event.setCanBreathe(true);
+                    item.consumeEnergy(player, stack, UpgradeType.WATER_BREATHING);
+                }
             }
         }
     }
 
     public static void jumpEvent(LivingEvent.LivingJumpEvent event) {
-        if (event.getEntity() instanceof Player player) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
             ItemStack stack = player.getItemBySlot(EquipmentSlot.FEET);
-            if (stack.getItem() instanceof QuantumArmorBase item
-                    && item.isUpgradeEnabledAndPowered(stack, UpgradeType.JUMP_HEIGHT)) {
-                UpgradeType.JUMP_HEIGHT.ability.execute(player.level(), player, stack);
-                item.consumeEnergy(player, stack, UpgradeType.JUMP_HEIGHT);
+            if (stack.getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+                if (item.isUpgradeEnabledAndPowered(stack, UpgradeType.JUMP_HEIGHT)) {
+                    UpgradeType.JUMP_HEIGHT.ability.execute(player.level(), player, stack);
+                    item.consumeEnergy(player, stack, UpgradeType.JUMP_HEIGHT);
+                }
             }
         }
     }
 
     public static void livingFallDamage(LivingFallEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
+        if (event.getEntity() instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) event.getEntity();
             ItemStack stack = player.getItemBySlot(EquipmentSlot.FEET);
-            if (stack.getItem() instanceof QuantumArmorBase item) {
+            if (stack.getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
                 if (item.extractAEPower(stack, 10, Actionable.SIMULATE) > 0) {
                     event.setDistance(0.0f);
                 }
