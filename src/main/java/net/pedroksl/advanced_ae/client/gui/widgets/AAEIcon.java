@@ -67,10 +67,13 @@ public enum AAEIcon implements IBlitterIcon {
 
     @Override
     public ResourceLocation getTexture() {
-        return switch (textureSource) {
-            case CUSTOM -> TEXTURE;
-            case AE2 -> appeng.client.gui.Icon.TEXTURE;
-        };
+        switch (textureSource) {
+            case AE2:
+                return appeng.client.gui.Icon.TEXTURE;
+            case CUSTOM:
+            default:
+                return TEXTURE;
+        }
     }
 
     @Override
