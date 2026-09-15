@@ -27,7 +27,6 @@ import net.pedroksl.advanced_ae.xmod.appflux.AppliedFluxPlugin;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.parts.IPartCollisionHelper;
-import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.util.AECableType;
@@ -57,11 +56,11 @@ public class AdvPatternProviderPart extends AEBasePart implements AdvPatternProv
 
     protected AdvPatternProviderLogic logic;
 
-    public AdvPatternProviderPart(IPartItem<?> partItem) {
+    public AdvPatternProviderPart(ItemStack partItem) {
         this(partItem, 36);
     }
 
-    public AdvPatternProviderPart(IPartItem<?> partItem, int slots) {
+    public AdvPatternProviderPart(ItemStack partItem, int slots) {
         super(partItem);
         this.getMainNode().setFlags(GridFlags.REQUIRE_CHANNEL);
 
