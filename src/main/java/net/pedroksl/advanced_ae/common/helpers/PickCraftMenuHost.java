@@ -24,12 +24,12 @@ public class PickCraftMenuHost<T extends QuantumArmorBase> extends ItemMenuHost 
 
     public PickCraftMenuHost(Player player, int inventorySlot, ItemStack stack) {
         super(player, inventorySlot, stack);
-
         updateConnectedAccessPoint();
     }
 
     private IGrid getLinkedGrid(ItemStack stack) {
-        if (stack.getItem() instanceof IGridLinkedItem item) {
+        if (stack.getItem() instanceof IGridLinkedItem) {
+            IGridLinkedItem item = (IGridLinkedItem) stack.getItem();
             return item.getLinkedGrid(stack, getPlayer().level());
         }
         return null;
@@ -43,9 +43,9 @@ public class PickCraftMenuHost<T extends QuantumArmorBase> extends ItemMenuHost 
     protected void updateConnectedAccessPoint() {
         this.currentAccessPoint = null;
 
-        var targetGrid = getLinkedGrid(getItemStack());
+        IGrid targetGrid = getLinkedGrid(getItemStack());
         if (targetGrid != null) {
-            for (var wap : targetGrid.getMachines(WirelessAccessPointBlockEntity.class)) {
+            for (WirelessAccessPointBlockEntity wap : targetGrid.getMachines(WirelessAccessPointBlockEntity.class)) {
                 if (wap.isActive()) {
                     this.currentAccessPoint = wap;
                     break;
