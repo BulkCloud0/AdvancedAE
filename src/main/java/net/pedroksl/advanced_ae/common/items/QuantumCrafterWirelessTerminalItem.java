@@ -22,7 +22,7 @@ public class QuantumCrafterWirelessTerminalItem extends ItemWT {
 
     @Override
     public @NotNull IConfigManager getConfigManager(ItemStack target) {
-        var out = new ConfigManager((manager, settingName) -> {
+        ConfigManager out = new ConfigManager((manager, settingName) -> {
             manager.writeToNBT(target.getOrCreateTag());
         });
 
