@@ -1,57 +1,54 @@
 package net.pedroksl.advanced_ae.common.cluster;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.*;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.Level;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
-import appeng.api.config.CpuSelectionMode;
-import appeng.api.config.Settings;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
-import appeng.api.networking.crafting.*;
-import appeng.api.networking.events.GridCraftingCpuChange;
+import appeng.api.networking.crafting.ICraftingJob;
+import appeng.api.networking.crafting.ICraftingLink;
+import appeng.api.networking.crafting.ICraftingRequester;
+import appeng.api.networking.events.MENetworkCraftingCpuChange;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.GenericStack;
-import appeng.api.util.IConfigManager;
-import appeng.blockentity.crafting.CraftingMonitorBlockEntity;
-import appeng.crafting.CraftingPlan;
-import appeng.crafting.execution.CraftingSubmitResult;
-import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.cluster.IAECluster;
 import appeng.me.cluster.MBCalculator;
 import appeng.me.helpers.MachineSource;
-import appeng.util.ConfigManager;
 
 public class AdvCraftingCPUCluster implements IAECluster {
 
     private final BlockPos boundsMin;
     private final BlockPos boundsMax;
 
-    private final HashMap<UUID, AdvCraftingCPU> activeCpus = new HashMap<>();
+    private final Map<UUID, AdvCraftingCPU> activeCpus = new HashMap<>();
     private AdvCraftingCPU remainingStorageCpu;
     private final List<AdvCraftingBlockEntity> blockEntities = new ArrayList<>();
-    private final List<CraftingMonitorBlockEntity> status = new ArrayList<>();
-    private final ConfigManager configManager = new ConfigManager(this::markDirty);
-    private Component myName = null;
-    private boolean isDestroyed = false;
-    private long storage = 0;
-    private long storageMultiplier = 0;
-    private long remainingStorage = 0;
-    private MachineSource machineSrc = null;
-    private int accelerator = 0;
-    private int acceleratorMultiplier = 0;
+    private ITextComponent myName;
+    private boolean isDestroyed;
+    private long storage;
+    private long storageMultiplier;
+    private long remainingStorage;
+    private MachineSource machineSrc;
+    private int accelerator;
+    private int acceleratorMultiplier;
+    private AdvCpuSelectionMode selectionMode = AdvCpuSelectionMode.ANY;
 
-    public AdvCraftingCPUCluster(BlockPos boundsMin, BlockPos boundsMax) {
-        this.boundsMin = boundsMin.immutable();
-        this.boundsMax = boundsMax.immutable();
-
-        this.configManager.registerSetting(Settings.CPU_SELECTION_MODE, CpuSelectionMode.ANY);
+    public AdvCraftingCPUCluster(final BlockPos boundsMin, final BlockPos boundsMax) {
+        this.boundsMin = boundsMin.toImmutable();
+        this.boundsMax = boundsMax.toImmutable();
     }
 
     @Override
@@ -70,9 +67,9 @@ public class AdvCraftingCPUCluster implements IAECluster {
     }
 
     @Override
-    public void updateStatus(boolean b) {
-        for (AdvCraftingBlockEntity r : this.blockEntities) {
-            r.updateSubType(true);
+    public void updateStatus(final boolean updateGrid) {
+        for (final AdvCraftingBlockEntity tile : this.blockEntities) {
+            tile.updateSubType(true);
         }
     }
 
@@ -83,7 +80,7 @@ public class AdvCraftingCPUCluster implements IAECluster {
         }
         this.isDestroyed = true;
 
-        boolean ownsModification = !MBCalculator.isModificationInProgress();
+        final boolean ownsModification = !MBCalculator.isModificationInProgress();
         if (ownsModification) {
             MBCalculator.setModificationInProgress(this);
         }
@@ -96,102 +93,95 @@ public class AdvCraftingCPUCluster implements IAECluster {
         }
     }
 
-    private void updateGridForChangedCpu(AdvCraftingCPUCluster cluster) {
-        var posted = false;
-        for (AdvCraftingBlockEntity r : this.blockEntities) {
-            final IGridNode n = r.getActionableNode();
-            if (n != null && !posted) {
-                n.getGrid().postEvent(new GridCraftingCpuChange(n));
-                posted = true;
+    private void updateGridForChangedCpu(@Nullable final AdvCraftingCPUCluster cluster) {
+        boolean posted = false;
+        for (final AdvCraftingBlockEntity tile : this.blockEntities) {
+            final IGridNode node = tile.getActionableNode();
+            if (node != null && !posted) {
+                final IGrid grid = node.getGrid();
+                if (grid != null) {
+                    grid.postEvent(new MENetworkCraftingCpuChange(node));
+                    posted = true;
+                }
             }
-
-            r.updateStatus(cluster);
+            tile.updateStatus(cluster);
         }
     }
 
     @Override
-    public Iterator<AdvCraftingBlockEntity> getBlockEntities() {
+    public Iterator<AdvCraftingBlockEntity> getTiles() {
         return this.blockEntities.iterator();
+    }
+
+    /**
+     * Kept as an addon-facing alias for the multiblock calculator and existing
+     * callers while IAECluster itself uses getTiles() in AE2 8.4.7.
+     */
+    public Iterator<AdvCraftingBlockEntity> getBlockEntities() {
+        return getTiles();
     }
 
     public int numBlockEntities() {
         return this.blockEntities.size();
     }
 
-    public List<ListCraftingInventory> getInventories() {
-        List<ListCraftingInventory> list = new ArrayList<>();
-        for (var cpu : this.activeCpus.values()) {
-            list.add(cpu.getInventory());
-        }
-        return list;
-    }
-
-    void addBlockEntity(AdvCraftingBlockEntity te) {
-        if (this.machineSrc == null || te.isCoreBlock()) {
-            this.machineSrc = new MachineSource(te);
+    void addBlockEntity(final AdvCraftingBlockEntity tile) {
+        if (this.machineSrc == null || tile.isCoreBlock()) {
+            this.machineSrc = new MachineSource(tile);
         }
 
-        te.setCoreBlock(false);
-        te.saveChanges();
-        this.blockEntities.add(0, te);
+        tile.setCoreBlock(false);
+        tile.saveChanges();
+        this.blockEntities.add(0, tile);
 
-        //		if (te instanceof CraftingMonitorBlockEntity) {
-        //			this.status.add((CraftingMonitorBlockEntity) te);
-        //		}
-        if (te.getStorageBytes() > 0) {
-            this.storage += te.getStorageBytes();
+        if (tile.getStorageBytes() > 0) {
+            this.storage += tile.getStorageBytes();
             recalculateRemainingStorage();
         }
-        if (te.getStorageMultiplier() > 0) {
-            this.storageMultiplier += te.getStorageMultiplier();
+        if (tile.getStorageMultiplier() > 0) {
+            this.storageMultiplier += tile.getStorageMultiplier();
             recalculateRemainingStorage();
         }
-        if (te.getAcceleratorThreads() > 0) {
-            if (te.getAcceleratorThreads() <= 16) {
-                this.accelerator += te.getAcceleratorThreads();
-            } else {
+        if (tile.getAcceleratorThreads() > 0) {
+            if (tile.getAcceleratorThreads() > 16) {
                 throw new IllegalArgumentException("Co-processor threads may not exceed 16 per single unit block.");
             }
+            this.accelerator += tile.getAcceleratorThreads();
         }
-        if (te.getAccelerationMultiplier() > 0) {
-            this.acceleratorMultiplier += te.getAccelerationMultiplier();
+        if (tile.getAccelerationMultiplier() > 0) {
+            this.acceleratorMultiplier += tile.getAccelerationMultiplier();
         }
     }
 
     public void recalculateRemainingStorage() {
-        var totalStorage = this.storage;
-        if (this.storageMultiplier > 0) totalStorage *= this.storageMultiplier;
+        long totalStorage = this.storage;
+        if (this.storageMultiplier > 0) {
+            totalStorage *= this.storageMultiplier;
+        }
 
         long usedStorage = 0;
-        for (var cpu : this.activeCpus.values()) {
+        for (final AdvCraftingCPU cpu : this.activeCpus.values()) {
             usedStorage += cpu.getAvailableStorage();
         }
 
-        this.remainingStorage = totalStorage - usedStorage;
+        this.remainingStorage = Math.max(0, totalStorage - usedStorage);
+        this.remainingStorageCpu = null;
     }
 
     public void markDirty() {
-        this.getCore().saveChanges();
-    }
-
-    public void updateOutput(GenericStack finalOutput) {
-        var send = finalOutput;
-
-        if (finalOutput != null && finalOutput.amount() <= 0) {
-            send = null;
-        }
-
-        for (var t : this.status) {
-            t.setJob(send);
+        final AdvCraftingBlockEntity core = this.getCore();
+        if (core != null) {
+            core.saveChanges();
         }
     }
 
     public IActionSource getSrc() {
-        return Objects.requireNonNull(this.machineSrc);
+        return Objects.requireNonNull(this.machineSrc, "Crafting cluster is not initialized");
     }
 
+    @Nullable
     private AdvCraftingBlockEntity getCore() {
-        if (this.machineSrc == null) {
+        if (this.machineSrc == null || !this.machineSrc.machine().isPresent()) {
             return null;
         }
         return (AdvCraftingBlockEntity) this.machineSrc.machine().get();
@@ -199,44 +189,59 @@ public class AdvCraftingCPUCluster implements IAECluster {
 
     @Nullable
     public IGrid getGrid() {
-        IGridNode node = getNode();
+        final IGridNode node = getNode();
         return node != null ? node.getGrid() : null;
     }
 
     public void cancelJobs() {
-        for (var id : activeCpus.keySet()) {
+        final List<UUID> ids = new ArrayList<>(this.activeCpus.keySet());
+        for (final UUID id : ids) {
             killCpu(id, false);
         }
+        updateGridForChangedCpu(this);
     }
 
-    public void cancelJob(UUID uniqueId) {
-        var cpu = activeCpus.get(uniqueId);
-        if (cpu != null) {
-            killCpu(uniqueId);
+    public void cancelJob(final UUID uniqueId) {
+        if (this.activeCpus.containsKey(uniqueId)) {
+            killCpu(uniqueId, true);
         }
     }
 
-    public ICraftingSubmitResult submitJob(
-            IGrid grid, ICraftingPlan plan, IActionSource src, ICraftingRequester requestingMachine) {
-        // Check that the node is active.
-        if (!isActive()) return CraftingSubmitResult.CPU_OFFLINE;
-        // Check bytes.
-        if (getAvailableStorage() < plan.bytes()) return CraftingSubmitResult.CPU_TOO_SMALL;
+    /**
+     * AE2 8.4.7 submits ICraftingJob instances rather than the newer
+     * ICraftingPlan/CraftingSubmitResult pair. The per-job logic will finish the
+     * old-job conversion; the cluster already owns the correct allocation and
+     * lifecycle semantics.
+     */
+    @Nullable
+    public ICraftingLink submitJob(
+            final IGrid grid,
+            final ICraftingJob job,
+            final IActionSource src,
+            @Nullable final ICraftingRequester requestingMachine) {
+        if (!isActive() || job == null || job.isSimulation()) {
+            return null;
+        }
+        if (getAvailableStorage() < job.getByteTotal()) {
+            return null;
+        }
 
-        var uniqueId = UUID.randomUUID();
-        var newCpu = new AdvCraftingCPU(this, uniqueId, plan.bytes());
-
-        var submitResult = newCpu.craftingLogic.trySubmitJob(grid, plan, src, requestingMachine);
-        if (submitResult.successful()) {
+        final UUID uniqueId = UUID.randomUUID();
+        final AdvCraftingCPU newCpu = new AdvCraftingCPU(this, uniqueId, job.getByteTotal());
+        final ICraftingLink result = newCpu.craftingLogic.trySubmitJob(grid, job, src, requestingMachine);
+        if (newCpu.craftingLogic.hasJob()) {
             this.activeCpus.put(uniqueId, newCpu);
             recalculateRemainingStorage();
             updateGridForChangedCpu(this);
         }
-        return submitResult;
+        return result;
     }
 
-    private void killCpu(UUID id, boolean updateGrid) {
-        var cpu = this.activeCpus.get(id);
+    private void killCpu(final UUID id, final boolean updateGrid) {
+        final AdvCraftingCPU cpu = this.activeCpus.get(id);
+        if (cpu == null) {
+            return;
+        }
         cpu.craftingLogic.cancel();
         cpu.craftingLogic.markForDeletion();
         recalculateRemainingStorage();
@@ -245,31 +250,31 @@ public class AdvCraftingCPUCluster implements IAECluster {
         }
     }
 
-    private void killCpu(UUID uniqueId) {
-        killCpu(uniqueId, true);
-    }
-
-    protected void deactivate(UUID uniqueId) {
-        this.activeCpus.remove(uniqueId);
-        recalculateRemainingStorage();
-        updateGridForChangedCpu(this);
+    protected void deactivate(final UUID uniqueId) {
+        if (uniqueId != null) {
+            this.activeCpus.remove(uniqueId);
+            recalculateRemainingStorage();
+            updateGridForChangedCpu(this);
+        }
     }
 
     public List<AdvCraftingCPU> getActiveCPUs() {
-        var list = new ArrayList<AdvCraftingCPU>();
-        var killList = new ArrayList<UUID>();
-        for (var cpuEntry : activeCpus.entrySet()) {
-            var cpu = cpuEntry.getValue();
+        final List<AdvCraftingCPU> list = new ArrayList<>();
+        final List<UUID> killList = new ArrayList<>();
+        for (final Map.Entry<UUID, AdvCraftingCPU> entry : this.activeCpus.entrySet()) {
+            final AdvCraftingCPU cpu = entry.getValue();
             if (cpu.craftingLogic.hasJob() || cpu.craftingLogic.isMarkedForDeletion()) {
                 list.add(cpu);
             } else {
-                killList.add(cpuEntry.getKey());
+                killList.add(entry.getKey());
             }
         }
-        for (var cpuId : killList) {
-            killCpu(cpuId);
+        for (final UUID cpuId : killList) {
+            this.activeCpus.remove(cpuId);
         }
-
+        if (!killList.isEmpty()) {
+            recalculateRemainingStorage();
+        }
         return list;
     }
 
@@ -281,165 +286,148 @@ public class AdvCraftingCPUCluster implements IAECluster {
         return this.remainingStorageCpu;
     }
 
-    @Nullable
-    public CraftingJobStatus getJobStatus(UUID uniqueId) {
-        var cpu = activeCpus.get(uniqueId);
-        if (cpu != null) {
-            return cpu.getJobStatus();
-        }
-        return null;
-    }
-
     public long getAvailableStorage() {
         return this.remainingStorage;
     }
 
     public int getCoProcessors() {
-        var coprocessors = this.accelerator;
-        if (this.acceleratorMultiplier > 0) coprocessors *= this.acceleratorMultiplier;
+        int coprocessors = this.accelerator;
+        if (this.acceleratorMultiplier > 0) {
+            coprocessors *= this.acceleratorMultiplier;
+        }
         return coprocessors;
     }
 
-    public Component getName() {
+    @Nullable
+    public ITextComponent getName() {
         return this.myName;
     }
 
     @Nullable
     public IGridNode getNode() {
-        AdvCraftingBlockEntity core = getCore();
+        final AdvCraftingBlockEntity core = getCore();
         return core != null ? core.getActionableNode() : null;
     }
 
     public boolean isActive() {
-        IGridNode node = getNode();
+        final IGridNode node = getNode();
         return node != null && node.isActive();
     }
 
-    public void writeToNBT(CompoundTag data) {
-        ListTag listCpus = new ListTag();
-        for (var cpu : activeCpus.entrySet()) {
-            if (cpu != null) {
-                StringTag keyTag = StringTag.valueOf(cpu.getKey().toString());
-                LongTag bytesTag = LongTag.valueOf(cpu.getValue().getAvailableStorage());
-                CompoundTag cpuTag = new CompoundTag();
-                cpu.getValue().writeToNBT(cpuTag);
-                CompoundTag pair = new CompoundTag();
-                pair.put("key", keyTag);
-                pair.put("bytes", bytesTag);
-                pair.put("cpu", cpuTag);
-                listCpus.add(pair);
+    public void writeToNBT(final CompoundNBT data) {
+        final ListNBT cpuList = new ListNBT();
+        for (final Map.Entry<UUID, AdvCraftingCPU> entry : this.activeCpus.entrySet()) {
+            final AdvCraftingCPU cpu = entry.getValue();
+            if (cpu == null) {
+                continue;
             }
+
+            final CompoundNBT pair = new CompoundNBT();
+            pair.putString("key", entry.getKey().toString());
+            pair.putLong("bytes", cpu.getAvailableStorage());
+            final CompoundNBT cpuTag = new CompoundNBT();
+            cpu.writeToNBT(cpuTag);
+            pair.put("cpu", cpuTag);
+            cpuList.add(pair);
         }
-        data.put("cpuList", listCpus);
-        this.configManager.writeToNBT(data);
+        data.put("cpuList", cpuList);
+        data.putString("selectionMode", this.selectionMode.name());
     }
 
     void done() {
         final AdvCraftingBlockEntity core = this.getCore();
+        if (core == null) {
+            return;
+        }
 
         core.setCoreBlock(true);
-
         if (core.getPreviousState() != null) {
             this.readFromNBT(core.getPreviousState());
             core.setPreviousState(null);
         }
-
         this.updateName();
     }
 
-    public void readFromNBT(CompoundTag data) {
-        ListTag cpuList = (ListTag) data.get("cpuList");
-        if (cpuList != null) {
-            for (var x = 0; x < cpuList.size(); x++) {
-                CompoundTag pair = cpuList.getCompound(x);
-
-                // fix old cpus
-                UUID id;
-                long bytes;
-                Tag keyTag = pair.get("key");
-                if (keyTag != null && keyTag.getType() instanceof CompoundTag planTag) {
-                    var plan = readCraftingPlanFromNBT(planTag);
-                    id = UUID.randomUUID();
-                    bytes = plan.bytes();
-                } else {
-                    try {
-                        id = UUID.fromString(pair.getString("key"));
-                    } catch (IllegalArgumentException e) {
-                        id = UUID.randomUUID();
-                    }
-                    bytes = pair.getLong("bytes");
-                }
-
-                var cpu = new AdvCraftingCPU(this, id, bytes);
-                this.activeCpus.put(id, cpu);
-                cpu.readFromNBT(pair.getCompound("cpu"));
+    public void readFromNBT(final CompoundNBT data) {
+        this.activeCpus.clear();
+        final ListNBT cpuList = data.getList("cpuList", 10);
+        for (int i = 0; i < cpuList.size(); i++) {
+            final CompoundNBT pair = cpuList.getCompound(i);
+            UUID id;
+            try {
+                id = UUID.fromString(pair.getString("key"));
+            } catch (IllegalArgumentException ignored) {
+                id = UUID.randomUUID();
             }
-        }
-        this.configManager.readFromNBT(data);
-        recalculateRemainingStorage();
-    }
 
-    private CraftingPlan readCraftingPlanFromNBT(CompoundTag tag) {
-        GenericStack output = GenericStack.readTag(tag.getCompound("output"));
-        long bytes = tag.getLong("bytes");
-        boolean simulation = tag.getBoolean("simulation");
-        boolean multiplePaths = tag.getBoolean("multiplePaths");
-        return new CraftingPlan(output, bytes, simulation, multiplePaths, null, null, null, null);
+            final long bytes = pair.getLong("bytes");
+            final AdvCraftingCPU cpu = new AdvCraftingCPU(this, id, bytes);
+            this.activeCpus.put(id, cpu);
+            cpu.readFromNBT(pair.getCompound("cpu"));
+        }
+
+        this.selectionMode = AdvCpuSelectionMode.fromName(data.getString("selectionMode"));
+        recalculateRemainingStorage();
     }
 
     public void updateName() {
         this.myName = null;
-        for (AdvCraftingBlockEntity te : this.blockEntities) {
-
-            if (te.hasCustomName()) {
-                if (this.myName != null) {
-                    this.myName.copy().append(" ").append(te.getCustomName());
+        for (final AdvCraftingBlockEntity tile : this.blockEntities) {
+            if (tile.hasCustomInventoryName()) {
+                if (this.myName == null) {
+                    this.myName = tile.getCustomInventoryName().deepCopy();
                 } else {
-                    this.myName = te.getCustomName().copy();
+                    this.myName = this.myName.deepCopy()
+                            .appendString(" ")
+                            .appendSibling(tile.getCustomInventoryName());
                 }
             }
         }
     }
 
-    public Level getLevel() {
-        return this.getCore().getLevel();
+    @Nullable
+    public World getLevel() {
+        final AdvCraftingBlockEntity core = this.getCore();
+        return core != null ? core.getWorld() : null;
     }
 
     public void breakCluster() {
-        final AdvCraftingBlockEntity t = this.getCore();
-
-        if (t != null) {
-            t.breakCluster();
+        final AdvCraftingBlockEntity core = this.getCore();
+        if (core != null) {
+            core.breakCluster();
         }
     }
 
-    public CpuSelectionMode getSelectionMode() {
-        return this.configManager.getSetting(Settings.CPU_SELECTION_MODE);
+    public AdvCpuSelectionMode getSelectionMode() {
+        return this.selectionMode;
     }
 
-    public IConfigManager getConfigManager() {
-        return configManager;
+    public void setSelectionMode(final AdvCpuSelectionMode selectionMode) {
+        this.selectionMode = selectionMode == null ? AdvCpuSelectionMode.ANY : selectionMode;
+        markDirty();
     }
 
-    /**
-     * Checks if this CPU cluster can be automatically selected for a crafting request by the given action source.
-     */
-    public boolean canBeAutoSelectedFor(IActionSource source) {
-        return switch (getSelectionMode()) {
-            case ANY -> true;
-            case PLAYER_ONLY -> source.player().isPresent();
-            case MACHINE_ONLY -> source.player().isEmpty();
-        };
+    public boolean canBeAutoSelectedFor(final IActionSource source) {
+        switch (getSelectionMode()) {
+            case PLAYER_ONLY:
+                return source.player().isPresent();
+            case MACHINE_ONLY:
+                return !source.player().isPresent();
+            case ANY:
+            default:
+                return true;
+        }
     }
 
-    /**
-     * Checks if this CPU cluster is preferred for crafting requests by the given action source.
-     */
-    public boolean isPreferredFor(IActionSource source) {
-        return switch (getSelectionMode()) {
-            case ANY -> false;
-            case PLAYER_ONLY -> source.player().isPresent();
-            case MACHINE_ONLY -> source.player().isEmpty();
-        };
+    public boolean isPreferredFor(final IActionSource source) {
+        switch (getSelectionMode()) {
+            case PLAYER_ONLY:
+                return source.player().isPresent();
+            case MACHINE_ONLY:
+                return !source.player().isPresent();
+            case ANY:
+            default:
+                return false;
+        }
     }
 }
