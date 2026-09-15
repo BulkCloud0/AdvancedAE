@@ -72,14 +72,16 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     }
 
     public ItemStack getResultItem() {
-        if (this.output.what() instanceof AEItemKey key) {
+        if (this.output.what() instanceof AEItemKey) {
+            AEItemKey key = (AEItemKey) this.output.what();
             return key.toStack((int) this.output.amount());
         }
         return ItemStack.EMPTY;
     }
 
     public FluidStack getResultFluid() {
-        if (this.output.what() instanceof AEFluidKey key) {
+        if (this.output.what() instanceof AEFluidKey) {
+            AEFluidKey key = (AEFluidKey) this.output.what();
             return key.toStack((int) this.output.amount());
         }
         return FluidStack.EMPTY;
@@ -102,7 +104,7 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     public List<IngredientStack<?, ?>> getValidInputs() {
         List<IngredientStack<?, ?>> validInputs = new ArrayList<>();
 
-        for (var input : this.inputs) {
+        for (IngredientStack.Item input : this.inputs) {
             if (!input.isEmpty()) {
                 validInputs.add(input.sample());
             }
@@ -132,7 +134,7 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     }
 
     public boolean containsIngredient(ItemStack stack) {
-        for (var input : inputs) {
+        for (IngredientStack.Item input : inputs) {
             if (!input.isEmpty() && input.test(stack)) {
                 return true;
             }
