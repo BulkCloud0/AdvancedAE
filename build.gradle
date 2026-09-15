@@ -65,6 +65,15 @@ sourceSets.main.resources {
     exclude '.cache/'
 }
 
+// Temporary diagnostic profile used by CI while the 1.20 client UI is being
+// backported. The normal build still includes all client sources.
+if (project.hasProperty('commonOnly')) {
+    sourceSets.main.java {
+        exclude 'net/pedroksl/advanced_ae/client/**'
+        exclude 'net/pedroksl/advanced_ae/AAEBootstrap.java'
+    }
+}
+
 repositories {
     mavenCentral()
     maven { url = 'https://www.cursemaven.com' }
@@ -137,4 +146,5 @@ publishing {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xmaxerrs', '1000']
 }
