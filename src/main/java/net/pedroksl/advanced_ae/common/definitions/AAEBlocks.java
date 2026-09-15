@@ -1,19 +1,19 @@
 package net.pedroksl.advanced_ae.common.definitions;
 
-import static appeng.block.AEBaseBlock.metalProps;
-import static appeng.block.AEBaseBlock.stoneProps;
-
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.StairBlock;
-import net.minecraft.world.level.block.WallBlock;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.SlabBlock;
+import net.minecraft.block.StairsBlock;
+import net.minecraft.block.WallBlock;
+import net.minecraft.block.material.Material;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraftforge.common.ToolType;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.blocks.*;
 import net.pedroksl.advanced_ae.common.items.AAECraftingBlockItem;
@@ -34,12 +34,12 @@ public final class AAEBlocks extends BlockRegistry {
     public static final LibBlockDefinition<AEDecorativeBlock> QUANTUM_ALLOY_BLOCK = block(
             "Quantum Alloy Block",
             "quantum_alloy_block",
-            () -> new AEDecorativeBlock(stoneProps().strength(25, 150).requiresCorrectToolForDrops()),
+            () -> new AEDecorativeBlock(stoneProps().hardnessAndResistance(25.0f, 150.0f)),
             BlockItem::new);
-    public static final LibBlockDefinition<StairBlock> QUANTUM_ALLOY_STAIRS = block(
+    public static final LibBlockDefinition<StairsBlock> QUANTUM_ALLOY_STAIRS = block(
             "Quantum Alloy Stairs",
             "quantum_alloy_stairs",
-            () -> new StairBlock(QUANTUM_ALLOY_BLOCK.block().defaultBlockState(), metalProps()),
+            () -> new StairsBlock(() -> QUANTUM_ALLOY_BLOCK.block().getDefaultState(), metalProps()),
             BlockItem::new);
     public static final LibBlockDefinition<WallBlock> QUANTUM_ALLOY_WALL =
             block("Quantum Alloy Wall", "quantum_alloy_wall", () -> new WallBlock(metalProps()), BlockItem::new);
@@ -102,6 +102,20 @@ public final class AAEBlocks extends BlockRegistry {
             block("Reaction Chamber", "reaction_chamber", ReactionChamberBlock::new, AEBaseBlockItem::new);
     public static final LibBlockDefinition<QuantumCrafterBlock> QUANTUM_CRAFTER =
             block("Quantum Crafter", "quantum_crafter", QuantumCrafterBlock::new, AEBaseBlockItem::new);
+
+    private static AbstractBlock.Properties stoneProps() {
+        return AbstractBlock.Properties.create(Material.ROCK)
+                .hardnessAndResistance(2.2f, 11.0f)
+                .harvestTool(ToolType.PICKAXE)
+                .harvestLevel(0);
+    }
+
+    private static AbstractBlock.Properties metalProps() {
+        return AbstractBlock.Properties.create(Material.IRON)
+                .hardnessAndResistance(2.2f, 11.0f)
+                .harvestTool(ToolType.PICKAXE)
+                .harvestLevel(0);
+    }
 
     protected static <T extends Block> LibBlockDefinition<T> block(
             String englishName, String id, Supplier<T> blockSupplier) {
