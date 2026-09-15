@@ -22,6 +22,7 @@ import appeng.block.AEBaseTileBlock;
 import appeng.container.ContainerLocator;
 import appeng.container.ContainerOpener;
 import appeng.tile.AEBaseTileEntity;
+import appeng.util.InteractionUtil;
 
 public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> extends AEBaseTileBlock<T> {
     public static final BooleanProperty FORMED = BooleanProperty.create("formed");
@@ -65,9 +66,9 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
     @Override
     public void neighborChanged(
             BlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) this.getTileEntity(world, pos);
-        if (crafting != null) {
-            crafting.updateMultiBlock(fromPos);
+        T tile = this.getTileEntity(world, pos);
+        if (tile instanceof AdvCraftingBlockEntity) {
+            ((AdvCraftingBlockEntity) tile).updateMultiBlock(fromPos);
         }
     }
 
@@ -77,9 +78,9 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
             return;
         }
 
-        AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) this.getTileEntity(world, pos);
-        if (crafting != null) {
-            crafting.breakCluster();
+        T tile = this.getTileEntity(world, pos);
+        if (tile instanceof AdvCraftingBlockEntity) {
+            ((AdvCraftingBlockEntity) tile).breakCluster();
         }
 
         super.onReplaced(state, world, pos, newState, isMoving);
@@ -88,15 +89,18 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
     @Override
     public ActionResultType onBlockActivated(
             BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-        AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) this.getTileEntity(world, pos);
-        if (crafting != null && crafting.isFormed() && crafting.isActive()) {
-            if (!world.isRemote()) {
-                ContainerOpener.openContainer(
-                        AAEMenus.QUANTUM_COMPUTER.get(),
-                        player,
-                        ContainerLocator.forTileEntitySide(crafting, hit.getFace()));
+        T tile = this.getTileEntity(world, pos);
+        if (tile instanceof AdvCraftingBlockEntity) {
+            AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) tile;
+            if (!InteractionUtil.isInAlternateUseMode(player) && crafting.isFormed() && crafting.isActive()) {
+                if (!world.isRemote()) {
+                    ContainerOpener.openContainer(
+                            AAEMenus.QUANTUM_COMPUTER.get(),
+                            player,
+                            ContainerLocator.forTileEntitySide(crafting, hit.getFace()));
+                }
+                return ActionResultType.func_233537_a_(world.isRemote());
             }
-            return ActionResultType.func_233537_a_(world.isRemote());
         }
 
         return super.onBlockActivated(state, world, pos, player, hand, hit);
