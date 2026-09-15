@@ -1,11 +1,11 @@
 package net.pedroksl.advanced_ae.common.definitions;
 
-import net.minecraft.ChatFormatting;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.pedroksl.advanced_ae.AdvancedAE;
 
-import appeng.core.localization.LocalizationEnum;
-
-public enum AAEText implements LocalizationEnum {
+public enum AAEText {
     ModName("Advanced AE", Type.GUI),
     QuantumStructureTooltip(
             "Used in the outside layer of the Quantum Computer Multiblock. Maximum multiblock size is %1$dx%1$dx%1$d.",
@@ -158,21 +158,23 @@ public enum AAEText implements LocalizationEnum {
     private final String englishText;
     private final Type type;
 
-    public static final ChatFormatting TOOLTIP_DEFAULT_COLOR = ChatFormatting.GRAY;
+    public static final TextFormatting TOOLTIP_DEFAULT_COLOR = TextFormatting.GRAY;
 
     AAEText(String englishText, Type type) {
         this.englishText = englishText;
         this.type = type;
     }
 
-    @Override
     public String getEnglishText() {
         return englishText;
     }
 
-    @Override
     public String getTranslationKey() {
         return String.format("%s.%s.%s", type.root, AdvancedAE.MOD_ID, name());
+    }
+
+    public ITextComponent text(Object... args) {
+        return new TranslationTextComponent(getTranslationKey(), args);
     }
 
     private enum Type {
