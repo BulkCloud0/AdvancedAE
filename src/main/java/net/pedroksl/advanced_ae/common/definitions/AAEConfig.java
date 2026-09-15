@@ -134,7 +134,7 @@ public class AAEConfig extends ConfigRegistry {
         public final ForgeConfigSpec.BooleanValue enableEffects;
 
         public ClientConfig() {
-            var builder = new ForgeConfigSpec.Builder();
+            ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
             builder.push("reaction chamber");
             enableEffects = define(
@@ -175,7 +175,7 @@ public class AAEConfig extends ConfigRegistry {
         public final ForgeConfigSpec.IntValue throughputMonitorCacheSize;
 
         public CommonConfig() {
-            var builder = new ForgeConfigSpec.Builder();
+            ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
             builder.push("quantum computer");
             quantumComputerMaxSize = define(
