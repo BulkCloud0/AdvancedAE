@@ -80,6 +80,7 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/inventory/**'
             exclude 'net/pedroksl/advanced_ae/common/patterns/**'
             exclude 'net/pedroksl/advanced_ae/common/items/AdvPatternEncoderItem.java'
+            exclude 'net/pedroksl/advanced_ae/common/parts/QuantumCrafterTerminalPart.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/AutoCraftingContainer.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/PickCraftMenuHost.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/PortableCellWorkbenchMenuHost.java'

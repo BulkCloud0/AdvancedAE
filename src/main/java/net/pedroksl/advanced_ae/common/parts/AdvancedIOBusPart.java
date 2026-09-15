@@ -1,16 +1,10 @@
 package net.pedroksl.advanced_ae.common.parts;
 
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3d;
 import net.pedroksl.advanced_ae.AdvancedAE;
-import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 
 import appeng.api.parts.IPartModel;
-import appeng.container.ContainerLocator;
-import appeng.container.ContainerOpener;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 import appeng.parts.PartModel;
@@ -21,7 +15,7 @@ import appeng.parts.PartModel;
  * <p>The modern bidirectional transfer implementation relies on AE2 transfer
  * strategies introduced long after 8.4.x. Until that logic is expressed using
  * the historical storage channel APIs, retain the stock export-bus behavior
- * and the advanced bus' own model/menu identity.</p>
+ * and the advanced bus' own model identity.</p>
  */
 public class AdvancedIOBusPart extends StockExportBusPart {
 
@@ -41,15 +35,6 @@ public class AdvancedIOBusPart extends StockExportBusPart {
 
     public AdvancedIOBusPart(ItemStack partItem) {
         super(partItem);
-    }
-
-    @Override
-    public boolean onPartActivate(PlayerEntity player, Hand hand, Vector3d pos) {
-        if (!isRemote()) {
-            ContainerOpener.openContainer(
-                    AAEMenus.ADVANCED_IO_BUS.get(), player, ContainerLocator.forPart(this));
-        }
-        return true;
     }
 
     @Override

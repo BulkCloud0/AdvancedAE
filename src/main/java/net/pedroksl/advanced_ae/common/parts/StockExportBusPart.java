@@ -1,16 +1,10 @@
 package net.pedroksl.advanced_ae.common.parts;
 
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3d;
 import net.pedroksl.advanced_ae.AdvancedAE;
-import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 
 import appeng.api.parts.IPartModel;
-import appeng.container.ContainerLocator;
-import appeng.container.ContainerOpener;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 import appeng.parts.PartModel;
@@ -21,9 +15,8 @@ import appeng.parts.automation.ExportBusPart;
  *
  * <p>AE2 8.4.x does not expose the modern AEKey/GenericStack transfer strategy
  * API used by the newer implementation. Inherit the proven 8.4.x export-bus
- * behavior first while preserving this part's identity and custom menu. The
- * target-stock limiter is restored separately on top of the historical
- * IAEItemStack storage API.</p>
+ * behavior first while preserving this part's identity. The target-stock
+ * limiter and custom menu are restored separately on the historical storage API.</p>
  */
 public class StockExportBusPart extends ExportBusPart {
 
@@ -43,15 +36,6 @@ public class StockExportBusPart extends ExportBusPart {
 
     public StockExportBusPart(ItemStack partItem) {
         super(partItem);
-    }
-
-    @Override
-    public boolean onPartActivate(PlayerEntity player, Hand hand, Vector3d pos) {
-        if (!isRemote()) {
-            ContainerOpener.openContainer(
-                    AAEMenus.STOCK_EXPORT_BUS.get(), player, ContainerLocator.forPart(this));
-        }
-        return true;
     }
 
     @Override

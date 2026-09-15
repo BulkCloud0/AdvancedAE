@@ -43,7 +43,7 @@ public class AAEItems extends ItemRegistry {
     }
 
     // Temporary 1.16.5 baseline placeholders. Keep registry IDs stable while
-    // modern provider/pattern implementations are backported to AE2 v8.
+    // modern provider/pattern/terminal implementations are backported to AE2 v8.
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER =
             item("Advanced Extended Pattern Provider", "adv_pattern_provider_part", Item::new);
     public static final LibItemDefinition<Item> SMALL_ADV_PATTERN_PROVIDER =
@@ -56,11 +56,8 @@ public class AAEItems extends ItemRegistry {
             part("ME Advanced IO Bus", "advanced_io_bus_part", AdvancedIOBusPart.class, AdvancedIOBusPart::new);
     public static final LibItemDefinition<PartItem<ThroughputMonitorPart>> THROUGHPUT_MONITOR = part(
             "ME Throughput Monitor", "throughput_monitor", ThroughputMonitorPart.class, ThroughputMonitorPart::new);
-    public static final LibItemDefinition<PartItem<QuantumCrafterTerminalPart>> QUANTUM_CRAFTER_TERMINAL = part(
-            "Quantum Crafter Terminal",
-            "quantum_crafter_terminal",
-            QuantumCrafterTerminalPart.class,
-            QuantumCrafterTerminalPart::new);
+    public static final LibItemDefinition<Item> QUANTUM_CRAFTER_TERMINAL =
+            item("Quantum Crafter Terminal", "quantum_crafter_terminal", Item::new);
     public static final LibItemDefinition<WirelessTerminalItem> QUANTUM_CRAFTER_WIRELESS_TERMINAL = conditionalItem(
             Addons.AE2WTLIB,
             "Wireless Quantum Crafter Terminal",

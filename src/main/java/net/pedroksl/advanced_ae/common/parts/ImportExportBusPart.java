@@ -1,16 +1,10 @@
 package net.pedroksl.advanced_ae.common.parts;
 
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3d;
 import net.pedroksl.advanced_ae.AdvancedAE;
-import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 
 import appeng.api.parts.IPartModel;
-import appeng.container.ContainerLocator;
-import appeng.container.ContainerOpener;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 import appeng.parts.PartModel;
@@ -21,7 +15,7 @@ import appeng.parts.automation.ExportBusPart;
  *
  * <p>The modern import strategy API does not exist in AE2 8.4.x. Export
  * behavior is inherited from the historical ExportBusPart while the import
- * half is restored in a later storage-API pass.</p>
+ * half and custom menu are restored in a later storage-API pass.</p>
  */
 public class ImportExportBusPart extends ExportBusPart {
 
@@ -41,15 +35,6 @@ public class ImportExportBusPart extends ExportBusPart {
 
     public ImportExportBusPart(ItemStack partItem) {
         super(partItem);
-    }
-
-    @Override
-    public boolean onPartActivate(PlayerEntity player, Hand hand, Vector3d pos) {
-        if (!isRemote()) {
-            ContainerOpener.openContainer(
-                    AAEMenus.IMPORT_EXPORT_BUS.get(), player, ContainerLocator.forPart(this));
-        }
-        return true;
     }
 
     @Override
