@@ -35,40 +35,26 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            mods {
-                advanced_ae {
-                    source sourceSets.main
-                }
-            }
+            mods { advanced_ae { source sourceSets.main } }
         }
-
         server {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            mods {
-                advanced_ae {
-                    source sourceSets.main
-                }
-            }
+            mods { advanced_ae { source sourceSets.main } }
         }
-
         data {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
             args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-            mods {
-                advanced_ae {
-                    source sourceSets.main
-                }
-            }
+            mods { advanced_ae { source sourceSets.main } }
         }
     }
 }
 
-// 1.16.5 baseline: keep modern-only source available for later backporting,
-// but do not compile it until its AE2/Forge APIs have been ported.
+// Compile a small AE2 8-compatible runtime baseline first. Modern source remains
+// in-tree and is re-enabled subsystem-by-subsystem as each backport is completed.
 sourceSets {
     main {
         java {
@@ -77,17 +63,26 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/gui/**'
             exclude 'net/pedroksl/advanced_ae/mixins/**'
             exclude 'net/pedroksl/advanced_ae/network/**'
+            exclude 'net/pedroksl/advanced_ae/events/**'
+            exclude 'net/pedroksl/advanced_ae/recipes/**'
+            exclude 'net/pedroksl/advanced_ae/xmod/*/**'
             exclude 'net/pedroksl/advanced_ae/common/inventory/**'
             exclude 'net/pedroksl/advanced_ae/common/patterns/**'
+            exclude 'net/pedroksl/advanced_ae/common/items/armors/**'
+            exclude 'net/pedroksl/advanced_ae/common/items/upgrades/**'
             exclude 'net/pedroksl/advanced_ae/common/items/AdvPatternEncoderItem.java'
             exclude 'net/pedroksl/advanced_ae/common/parts/QuantumCrafterTerminalPart.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/AutoCraftingContainer.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/PickCraftMenuHost.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/PortableCellWorkbenchMenuHost.java'
+            exclude 'net/pedroksl/advanced_ae/common/helpers/PoweredItemCapabilities.java'
+            exclude 'net/pedroksl/advanced_ae/common/helpers/RadiationShieldingProvider.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAEHotkeysRegistry.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAEMenus.java'
             exclude 'net/pedroksl/advanced_ae/common/logic/ExecutingCraftingJob.java'
             exclude 'net/pedroksl/advanced_ae/common/logic/ElapsedTimeTracker.java'
+            exclude 'net/pedroksl/advanced_ae/common/blocks/ReactionChamberBlock.java'
+            exclude 'net/pedroksl/advanced_ae/common/entities/ReactionChamberEntity.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/AdvPatternProviderBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/blocks/SmallAdvPatternProviderBlock.java'
             exclude 'net/pedroksl/advanced_ae/common/entities/AdvPatternProviderEntity.java'
@@ -96,11 +91,8 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/parts/AdvPatternProviderPart.java'
             exclude 'net/pedroksl/advanced_ae/common/parts/SmallAdvPatternProviderPart.java'
             exclude 'net/pedroksl/advanced_ae/common/items/AdvPatternProvider*UpgradeItem.java'
-            exclude 'net/pedroksl/advanced_ae/xmod/appflux/**'
         }
-        resources {
-            srcDir 'src/generated/resources'
-        }
+        resources { srcDir 'src/generated/resources' }
     }
 }
 
@@ -122,9 +114,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-
     implementation fg.deobf("appeng:appliedenergistics2:${ae2_version}")
-
     compileOnly 'org.jetbrains:annotations:22.0.0'
     annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
 }
@@ -157,28 +147,14 @@ processResources {
 }
 
 jar {
-    manifest {
-        attributes([
-                'MixinConfigs': 'mixins.aae.json'
-        ])
-    }
+    manifest { attributes(['MixinConfigs': 'mixins.aae.json']) }
 }
 
 jar.finalizedBy('reobfJar')
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
-        }
-    }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/mcmodsrepo"
-        }
-    }
+    publications { mavenJava(MavenPublication) { artifact jar } }
+    repositories { maven { url "file://${project.projectDir}/mcmodsrepo" } }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

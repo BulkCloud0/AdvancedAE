@@ -6,12 +6,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.pedroksl.advanced_ae.common.definitions.*;
-import net.pedroksl.advanced_ae.common.items.armors.IGridLinkedItem;
-import net.pedroksl.advanced_ae.events.AAELivingEntityEvents;
-import net.pedroksl.advanced_ae.events.AAEPlayerEvents;
-import net.pedroksl.advanced_ae.recipes.InitRecipeSerializers;
 
-import appeng.api.features.GridLinkables;
 import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEItems;
 
@@ -29,17 +24,14 @@ public class AdvancedAE {
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         AAEConfig.register(MOD_ID);
-
         AAEItems.INSTANCE.register(eventBus);
         AAEBlocks.INSTANCE.register(eventBus);
         AAEBlockEntities.INSTANCE.register(eventBus);
         AAEFluids.INSTANCE.register(eventBus);
         AAECreativeTab.INSTANCE.register(eventBus);
-        InitRecipeSerializers.register(eventBus);
 
         eventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
-
         eventBus.addListener(AdvancedAE::initUpgrades);
 
         AAENbt.init();
@@ -50,21 +42,11 @@ public class AdvancedAE {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        initGridLinkables();
-        AAEPlayerEvents.init();
-        AAELivingEntityEvents.init();
-    }
-
-    public static void initGridLinkables() {
-        GridLinkables.register(AAEItems.QUANTUM_HELMET, IGridLinkedItem.LINKABLE_HANDLER);
-        GridLinkables.register(AAEItems.QUANTUM_CHESTPLATE, IGridLinkedItem.LINKABLE_HANDLER);
-        GridLinkables.register(AAEItems.QUANTUM_LEGGINGS, IGridLinkedItem.LINKABLE_HANDLER);
-        GridLinkables.register(AAEItems.QUANTUM_BOOTS, IGridLinkedItem.LINKABLE_HANDLER);
+        // Runtime services are re-enabled as their AE2 8 adapters land.
     }
 
     private static void initUpgrades(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            Upgrades.add(AEItems.SPEED_CARD, AAEBlocks.REACTION_CHAMBER, 4);
             Upgrades.add(AEItems.SPEED_CARD, AAEBlocks.QUANTUM_CRAFTER, 4);
             Upgrades.add(AEItems.REDSTONE_CARD, AAEBlocks.QUANTUM_CRAFTER, 1);
             Upgrades.add(AEItems.SPEED_CARD, AAEItems.STOCK_EXPORT_BUS, 4);
