@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.definitions.AAESlotSemantics;
 import net.pedroksl.advanced_ae.common.inventory.QuantumArmorMenuHost;
@@ -33,8 +34,8 @@ public class QuantumArmorStyleConfigMenu extends AEBaseMenu implements ISubMenu 
 
         int indexOfFirstQuantum = -1;
         for (int i = 3; i >= 0; i--) {
-            var index = Inventory.INVENTORY_SIZE + i;
-            var slot = new DisabledSlot(playerInventory, index);
+            int index = Inventory.INVENTORY_SIZE + i;
+            DisabledSlot slot = new DisabledSlot(playerInventory, index);
             if (slot.getItem().getItem() instanceof QuantumArmorBase) {
                 if (indexOfFirstQuantum == -1) {
                     indexOfFirstQuantum = index;
@@ -59,7 +60,8 @@ public class QuantumArmorStyleConfigMenu extends AEBaseMenu implements ISubMenu 
     public static void open(ServerPlayer player, MenuLocator locator, int slotIndex) {
         MenuOpener.open(AAEMenus.QUANTUM_ARMOR_STYLE_CONFIG.get(), player, locator);
 
-        if (player.containerMenu instanceof QuantumArmorStyleConfigMenu cca) {
+        if (player.containerMenu instanceof QuantumArmorStyleConfigMenu) {
+            QuantumArmorStyleConfigMenu cca = (QuantumArmorStyleConfigMenu) player.containerMenu;
             cca.setSlotIndex(Math.abs(slotIndex - player.getInventory().getContainerSize() - 3));
             cca.broadcastChanges();
         }
@@ -80,9 +82,10 @@ public class QuantumArmorStyleConfigMenu extends AEBaseMenu implements ISubMenu 
     }
 
     public void updateItemColors(List<Integer> slots, int color) {
-        for (var slotIndex : slots) {
-            var slot = getSlot(slotIndex);
-            if (slot != null && slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase armor) {
+        for (Integer slotIndex : slots) {
+            Slot slot = getSlot(slotIndex);
+            if (slot != null && slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase armor = (QuantumArmorBase) slot.getItem().getItem();
                 armor.setTintColor(this.getPlayerInventory().player, slot.getItem(), color);
             }
         }
