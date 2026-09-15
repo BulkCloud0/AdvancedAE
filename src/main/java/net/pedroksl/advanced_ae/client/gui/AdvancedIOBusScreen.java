@@ -1,29 +1,22 @@
 package net.pedroksl.advanced_ae.client.gui;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
-import net.pedroksl.advanced_ae.api.AAESettings;
-import net.pedroksl.advanced_ae.client.gui.widgets.AAESettingToggleButton;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.util.text.ITextComponent;
 import net.pedroksl.advanced_ae.gui.AdvancedIOBusMenu;
 
-import appeng.api.config.YesNo;
 import appeng.client.gui.style.ScreenStyle;
 
+/**
+ * 1.16.5 advanced I/O bus screen.
+ *
+ * <p>Custom addon settings used by the newer screen depend on the modern
+ * generic setting API. The AE2 8.4.x I/O controls are provided by the parent
+ * screen and form the compatibility baseline for the port.</p>
+ */
 public class AdvancedIOBusScreen extends StockExportBusScreen<AdvancedIOBusMenu> {
 
-    private final AAESettingToggleButton<YesNo> regulateButton;
-
-    public AdvancedIOBusScreen(AdvancedIOBusMenu menu, Inventory playerInventory, Component title, ScreenStyle style) {
+    public AdvancedIOBusScreen(
+            AdvancedIOBusMenu menu, PlayerInventory playerInventory, ITextComponent title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
-
-        this.regulateButton = AAESettingToggleButton.serverButton(AAESettings.REGULATE_STOCK, YesNo.YES);
-        this.addToLeftToolbar(this.regulateButton);
-    }
-
-    @Override
-    protected void updateBeforeRender() {
-        super.updateBeforeRender();
-
-        this.regulateButton.set(getMenu().getRegulate());
     }
 }
