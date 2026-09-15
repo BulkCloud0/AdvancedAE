@@ -56,7 +56,8 @@ public class QuantumCrafterBlock extends AEBaseEntityBlock<QuantumCrafterEntity>
             Player player,
             InteractionHand hand,
             BlockHitResult hitResult) {
-        if (level.getBlockEntity(pos) instanceof QuantumCrafterEntity be) {
+        if (level.getBlockEntity(pos) instanceof QuantumCrafterEntity) {
+            QuantumCrafterEntity be = (QuantumCrafterEntity) level.getBlockEntity(pos);
             if (!level.isClientSide()) {
                 MenuOpener.open(AAEMenus.QUANTUM_CRAFTER.get(), player, MenuLocators.forBlockEntity(be));
             }
