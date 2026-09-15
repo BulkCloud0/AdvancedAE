@@ -11,13 +11,10 @@ import net.pedroksl.advanced_ae.common.entities.ReactionChamberEntity;
 import net.pedroksl.advanced_ae.common.helpers.PortableCellWorkbenchMenuHost;
 import net.pedroksl.advanced_ae.common.inventory.AdvPatternEncoderHost;
 import net.pedroksl.advanced_ae.common.inventory.QuantumArmorMenuHost;
-import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogicHost;
 import net.pedroksl.advanced_ae.common.parts.AdvancedIOBusPart;
 import net.pedroksl.advanced_ae.common.parts.ImportExportBusPart;
 import net.pedroksl.advanced_ae.common.parts.StockExportBusPart;
 import net.pedroksl.advanced_ae.gui.*;
-import net.pedroksl.advanced_ae.gui.advpatternprovider.AdvPatternProviderMenu;
-import net.pedroksl.advanced_ae.gui.advpatternprovider.SmallAdvPatternProviderMenu;
 import net.pedroksl.advanced_ae.gui.patternencoder.AdvPatternEncoderMenu;
 import net.pedroksl.advanced_ae.gui.quantumcomputer.QuantumComputerMenu;
 import net.pedroksl.ae2addonlib.registry.MenuRegistry;
@@ -37,10 +34,6 @@ public class AAEMenus extends MenuRegistry {
     public static final Supplier<MenuType<QuantumComputerMenu>> QUANTUM_COMPUTER =
             create("quantum_computer", QuantumComputerMenu::new, AdvCraftingBlockEntity.class);
 
-    public static final Supplier<MenuType<AdvPatternProviderMenu>> ADV_PATTERN_PROVIDER =
-            create("adv_pattern_provider", AdvPatternProviderMenu::new, AdvPatternProviderLogicHost.class);
-    public static final Supplier<MenuType<SmallAdvPatternProviderMenu>> SMALL_ADV_PATTERN_PROVIDER =
-            create("small_adv_pattern_provider", SmallAdvPatternProviderMenu::new, AdvPatternProviderLogicHost.class);
     public static final Supplier<MenuType<ReactionChamberMenu>> REACTION_CHAMBER =
             create("reaction_chamber", ReactionChamberMenu::new, ReactionChamberEntity.class);
     public static final Supplier<MenuType<AdvPatternEncoderMenu>> ADV_PATTERN_ENCODER =

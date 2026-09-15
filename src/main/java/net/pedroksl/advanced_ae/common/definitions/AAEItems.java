@@ -9,8 +9,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.items.AdvPatternEncoderItem;
-import net.pedroksl.advanced_ae.common.items.AdvPatternProviderCapacityUpgradeItem;
-import net.pedroksl.advanced_ae.common.items.AdvPatternProviderUpgradeItem;
 import net.pedroksl.advanced_ae.common.items.armors.*;
 import net.pedroksl.advanced_ae.common.items.upgrades.QuantumUpgradeBaseItem;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
@@ -46,16 +44,12 @@ public class AAEItems extends ItemRegistry {
                 .collect(Collectors.toList());
     }
 
-    public static final LibItemDefinition<PartItem<AdvPatternProviderPart>> ADV_PATTERN_PROVIDER = part(
-            "Advanced Extended Pattern Provider",
-            "adv_pattern_provider_part",
-            AdvPatternProviderPart.class,
-            AdvPatternProviderPart::new);
-    public static final LibItemDefinition<PartItem<SmallAdvPatternProviderPart>> SMALL_ADV_PATTERN_PROVIDER = part(
-            "Advanced Pattern Provider",
-            "small_adv_pattern_provider_part",
-            SmallAdvPatternProviderPart.class,
-            SmallAdvPatternProviderPart::new);
+    // Temporary 1.16.5 baseline placeholders. Keep registry IDs stable while the
+    // Pattern Provider parts are backported to AE2 v8.
+    public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER =
+            item("Advanced Extended Pattern Provider", "adv_pattern_provider_part", Item::new);
+    public static final LibItemDefinition<Item> SMALL_ADV_PATTERN_PROVIDER =
+            item("Advanced Pattern Provider", "small_adv_pattern_provider_part", Item::new);
     public static final LibItemDefinition<PartItem<StockExportBusPart>> STOCK_EXPORT_BUS =
             part("ME Stock Export Bus", "stock_export_bus_part", StockExportBusPart.class, StockExportBusPart::new);
     public static final LibItemDefinition<PartItem<ImportExportBusPart>> IMPORT_EXPORT_BUS =
@@ -78,12 +72,10 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<AdvProcessingPatternItem> ADV_PROCESSING_PATTERN =
             item("Advanced Processing Pattern", "adv_processing_pattern", AdvProcessingPatternItem::new);
 
-    public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_UPGRADE = item(
-            "Advanced Pattern Provider Upgrade", "adv_pattern_provider_upgrade", AdvPatternProviderUpgradeItem::new);
+    public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_UPGRADE =
+            item("Advanced Pattern Provider Upgrade", "adv_pattern_provider_upgrade", Item::new);
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_CAPACITY_UPGRADE = item(
-            "Advanced Pattern Provider Capacity Upgrade",
-            "adv_pattern_provider_capacity_upgrade",
-            AdvPatternProviderCapacityUpgradeItem::new);
+            "Advanced Pattern Provider Capacity Upgrade", "adv_pattern_provider_capacity_upgrade", Item::new);
     public static final LibItemDefinition<MaterialItem> QUANTUM_INFUSED_DUST =
             item("Quantum Infused Dust", "quantum_infused_dust", MaterialItem::new);
     public static final LibItemDefinition<MaterialItem> QUANTUM_ALLOY =

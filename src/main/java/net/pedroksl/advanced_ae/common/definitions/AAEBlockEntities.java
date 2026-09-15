@@ -6,10 +6,8 @@ import net.minecraft.block.Block;
 import net.minecraft.tileentity.TileEntityType;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
-import net.pedroksl.advanced_ae.common.entities.AdvPatternProviderEntity;
 import net.pedroksl.advanced_ae.common.entities.QuantumCrafterEntity;
 import net.pedroksl.advanced_ae.common.entities.ReactionChamberEntity;
-import net.pedroksl.advanced_ae.common.entities.SmallAdvPatternProviderEntity;
 import net.pedroksl.ae2addonlib.registry.BlockEntityRegistry;
 import net.pedroksl.ae2addonlib.registry.helpers.LibBlockDefinition;
 
@@ -36,18 +34,6 @@ public final class AAEBlockEntities extends BlockEntityRegistry {
             AAEBlocks.QUANTUM_ACCELERATOR,
             AAEBlocks.QUANTUM_MULTI_THREADER,
             AAEBlocks.QUANTUM_STRUCTURE);
-
-    public static final Supplier<TileEntityType<AdvPatternProviderEntity>> ADV_PATTERN_PROVIDER = create(
-            "adv_pattern_provider",
-            AdvPatternProviderEntity.class,
-            AdvPatternProviderEntity::new,
-            AAEBlocks.ADV_PATTERN_PROVIDER);
-
-    public static final Supplier<TileEntityType<SmallAdvPatternProviderEntity>> SMALL_ADV_PATTERN_PROVIDER = create(
-            "small_adv_pattern_provider",
-            SmallAdvPatternProviderEntity.class,
-            SmallAdvPatternProviderEntity::new,
-            AAEBlocks.SMALL_ADV_PATTERN_PROVIDER);
 
     public static final Supplier<TileEntityType<ReactionChamberEntity>> REACTION_CHAMBER = create(
             "reaction_chamber",

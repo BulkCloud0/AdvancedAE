@@ -87,15 +87,17 @@ public final class AAEBlocks extends BlockRegistry {
             () -> new AAECraftingUnitBlock(AAECraftingUnitType.STRUCTURE),
             AAECraftingBlockItem::new);
 
-    public static final LibBlockDefinition<AdvPatternProviderBlock> ADV_PATTERN_PROVIDER = block(
+    // Temporary 1.16.5 baseline placeholders. Registry IDs stay stable while the
+    // modern Pattern Provider implementation is ported to AE2 v8 APIs.
+    public static final LibBlockDefinition<AEDecorativeBlock> ADV_PATTERN_PROVIDER = block(
             "Advanced Extended Pattern Provider",
             "adv_pattern_provider",
-            AdvPatternProviderBlock::new,
+            () -> new AEDecorativeBlock(stoneProps()),
             AEBaseBlockItem::new);
-    public static final LibBlockDefinition<SmallAdvPatternProviderBlock> SMALL_ADV_PATTERN_PROVIDER = block(
+    public static final LibBlockDefinition<AEDecorativeBlock> SMALL_ADV_PATTERN_PROVIDER = block(
             "Advanced Pattern Provider",
             "small_adv_pattern_provider",
-            SmallAdvPatternProviderBlock::new,
+            () -> new AEDecorativeBlock(stoneProps()),
             AEBaseBlockItem::new);
 
     public static final LibBlockDefinition<ReactionChamberBlock> REACTION_CHAMBER =

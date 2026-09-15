@@ -9,18 +9,12 @@
     "MixinIOBusPartInvoker",
     "MixinPatternEncodingTermMenu",
     "MixinPatternProviderLogic",
-    "appflux.MixinAdvPatternProviderLogic",
-    "appflux.MixinAdvPatternProviderLogicHost",
-    "appflux.MixinAdvPatternProviderMenu",
     "client.BuiltInModelHooksAccessor",
     "client.ModelBakeryMixin",
     "cpu.MixinCraftingCPUMenu",
     "cpu.MixinCraftingService",
     "eae.MixinContainerPatternModifier"
   ],
-  "client": [
-    "appflux.MixinAdvPatternProviderScreen",
-    "appflux.MixinSmallAdvPatternProviderScreen"
-  ],
+  "client": [],
   "server": []
 }
