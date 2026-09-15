@@ -29,7 +29,6 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.storage.IStorageService;
-import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -64,7 +63,7 @@ public class StockExportBusPart extends ExportBusPart implements ISubMenuHost {
     private ConfigInventory config;
     private ArrayList<StorageReader> storageReaders;
 
-    public StockExportBusPart(IPartItem<?> partItem) {
+    public StockExportBusPart(ItemStack partItem) {
         super(partItem);
     }
 
@@ -159,7 +158,6 @@ public class StockExportBusPart extends ExportBusPart implements ISubMenuHost {
             }
         }
 
-        // Round-robin should only advance if something was actually exported
         if (context.hasDoneWork()) {
             this.updateSchedulingMode(schedulingMode, x);
         }
@@ -169,7 +167,6 @@ public class StockExportBusPart extends ExportBusPart implements ISubMenuHost {
 
     private void attemptCrafting(
             StackTransferContext context, ICraftingService cg, int slotToExport, AEKey what, long targetAmount) {
-        // don't bother crafting / checking or result, if target cannot accept at least 1 of requested item
         var maxAmount = (long) context.getOperationsRemaining() * what.getAmountPerOperation();
 
         var currentAmount = getCurrentStock(what);
