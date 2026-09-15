@@ -50,27 +50,27 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
             this.sortBy = stream.readVarLong();
         }
 
-        var size = stream.readInt();
+        int size = stream.readInt();
         this.slots = new Int2ObjectOpenHashMap<>(size);
         for (int i = 0; i < size; i++) {
-            var key = stream.readInt();
-            var value = stream.readItem();
+            int key = stream.readInt();
+            ItemStack value = stream.readItem();
             this.slots.put(key, value);
         }
 
         size = stream.readInt();
         this.enabledArray = new Int2BooleanOpenHashMap(size);
         for (int i = 0; i < size; i++) {
-            var key = stream.readInt();
-            var value = stream.readBoolean();
+            int key = stream.readInt();
+            boolean value = stream.readBoolean();
             this.enabledArray.put(key, value);
         }
 
         size = stream.readInt();
         this.invalidArray = new Int2BooleanOpenHashMap(size);
         for (int i = 0; i < size; i++) {
-            var key = stream.readInt();
-            var value = stream.readBoolean();
+            int key = stream.readInt();
+            boolean value = stream.readBoolean();
             this.invalidArray.put(key, value);
         }
     }
@@ -84,19 +84,19 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
         }
 
         stream.writeInt(slots.size());
-        for (var entry : slots.int2ObjectEntrySet()) {
+        for (Int2ObjectMap.Entry<ItemStack> entry : slots.int2ObjectEntrySet()) {
             stream.writeInt(entry.getIntKey());
             stream.writeItemStack(entry.getValue(), false);
         }
 
         stream.writeInt(enabledArray.size());
-        for (var entry : enabledArray.int2BooleanEntrySet()) {
+        for (Int2BooleanMap.Entry entry : enabledArray.int2BooleanEntrySet()) {
             stream.writeInt(entry.getIntKey());
             stream.writeBoolean(entry.getBooleanValue());
         }
 
         stream.writeInt(invalidArray.size());
-        for (var entry : invalidArray.int2BooleanEntrySet()) {
+        for (Int2BooleanMap.Entry entry : invalidArray.int2BooleanEntrySet()) {
             stream.writeInt(entry.getIntKey());
             stream.writeBoolean(entry.getBooleanValue());
         }
@@ -123,7 +123,8 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen<?> screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen) {
+            QuantumCrafterTermScreen<?> screen = (QuantumCrafterTermScreen<?>) Minecraft.getInstance().screen;
             if (fullUpdate) {
                 screen.postFullUpdate(this.inventoryId, sortBy, inventorySize, slots, enabledArray, invalidArray);
             } else {
