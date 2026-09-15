@@ -22,6 +22,7 @@ import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogic;
 import net.pedroksl.advanced_ae.common.logic.AdvPatternProviderLogicHost;
 
+import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.stacks.AEItemKey;
@@ -66,12 +67,10 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
             return;
         }
 
-        var connected = false;
-        var grid = getMainNode().getGrid();
-        if (grid != null) {
-            if (grid.getEnergyService().isNetworkPowered()) {
-                connected = true;
-            }
+        boolean connected = false;
+        IGrid grid = getMainNode().getGrid();
+        if (grid != null && grid.getEnergyService().isNetworkPowered()) {
+            connected = true;
         }
 
         if (this.checkPosition(this.worldPosition)
@@ -96,13 +95,10 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
 
     @Override
     public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        // In omnidirectional mode, every side is grid-connectable
-        var pushDirection = getPushDirection().getDirection();
+        Direction pushDirection = getPushDirection().getDirection();
         if (pushDirection == null) {
             return EnumSet.allOf(Direction.class);
         }
-
-        // Otherwise all sides *except* the target side are connectable
         return EnumSet.complementOf(EnumSet.of(pushDirection));
     }
 
@@ -130,7 +126,6 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
 
         super.onReady();
         this.logic.updatePatterns();
-
         this.updateState();
     }
 
@@ -144,12 +139,11 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
     public void loadTag(CompoundTag data) {
         super.loadTag(data);
 
-        // Remove in 1.20.1+: Convert legacy NBT orientation to blockstate
         if (data.getBoolean("omniDirectional")) {
             pendingPushDirectionChange = PushDirection.ALL;
         } else if (data.contains("forward", Tag.TAG_STRING)) {
             try {
-                var forward = Direction.valueOf(data.getString("forward").toUpperCase(Locale.ROOT));
+                Direction forward = Direction.valueOf(data.getString("forward").toUpperCase(Locale.ROOT));
                 pendingPushDirectionChange = PushDirection.fromDirection(forward);
             } catch (IllegalArgumentException ignored) {
             }
@@ -170,12 +164,11 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
 
     @Override
     public EnumSet<Direction> getTargets() {
-        var pushDirection = getPushDirection();
+        PushDirection pushDirection = getPushDirection();
         if (pushDirection.getDirection() == null) {
             return EnumSet.allOf(Direction.class);
-        } else {
-            return EnumSet.of(pushDirection.getDirection());
         }
+        return EnumSet.of(pushDirection.getDirection());
     }
 
     @Override
@@ -190,8 +183,7 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
 
         if (mode == SettingsFrom.MEMORY_CARD) {
             logic.exportSettings(output);
-
-            var pushDirection = getPushDirection();
+            PushDirection pushDirection = getPushDirection();
             output.putByte("push_direction", (byte) pushDirection.ordinal());
         }
     }
@@ -204,11 +196,10 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
         if (mode == SettingsFrom.MEMORY_CARD) {
             logic.importSettings(input, player);
 
-            // Restore push direction blockstate
             if (input.contains(PatternProviderBlock.PUSH_DIRECTION.getName(), Tag.TAG_BYTE)) {
-                var pushDirection = input.getByte(PatternProviderBlock.PUSH_DIRECTION.getName());
+                byte pushDirection = input.getByte(PatternProviderBlock.PUSH_DIRECTION.getName());
                 if (pushDirection >= 0 && pushDirection < PushDirection.values().length) {
-                    var level = getLevel();
+                    Level level = getLevel();
                     if (level != null) {
                         level.setBlockAndUpdate(
                                 getBlockPos(),
@@ -224,7 +215,7 @@ public class AdvPatternProviderEntity extends AENetworkBlockEntity implements Ad
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> cap, @javax.annotation.Nullable Direction side) {
-        var lo = logic.getCapability(cap);
+        LazyOptional<T> lo = logic.getCapability(cap);
         if (lo.isPresent()) {
             return lo;
         }
