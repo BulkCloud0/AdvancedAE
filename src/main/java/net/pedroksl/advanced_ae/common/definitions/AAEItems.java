@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.items.AdvPatternEncoderItem;
@@ -21,7 +22,6 @@ import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
 import net.pedroksl.ae2addonlib.util.AddonEnum;
 
 import appeng.api.parts.IPart;
-import appeng.api.parts.IPartItem;
 import appeng.items.materials.MaterialItem;
 import appeng.items.parts.PartItem;
 import appeng.items.tools.powered.WirelessTerminalItem;
@@ -188,7 +188,7 @@ public class AAEItems extends ItemRegistry {
     }
 
     protected static <T extends IPart> LibItemDefinition<PartItem<T>> part(
-            String englishName, String id, Class<T> partClass, Function<IPartItem<T>, T> factory) {
+            String englishName, String id, Class<T> partClass, Function<ItemStack, T> factory) {
         return part(AdvancedAE.MOD_ID, englishName, id, partClass, factory);
     }
 }
