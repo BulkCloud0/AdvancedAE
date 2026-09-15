@@ -13,13 +13,15 @@ import appeng.client.gui.style.ScreenStyle;
  * <p>The modern implementation duplicated the standard I/O bus controls and
  * relied on newer GuiGraphics/GenericStack APIs. AE2 8.4.x already provides
  * those controls through {@link IOBusScreen}, so use the native screen as the
- * compatibility baseline. The custom numeric stock editor can be layered back
- * on once the part inventory has been ported to AE2 8.4.x.</p>
+ * compatibility baseline.</p>
  */
-public class StockExportBusScreen<M extends StockExportBusMenu> extends IOBusScreen<M> {
+public class StockExportBusScreen extends IOBusScreen {
 
     public StockExportBusScreen(
-            M container, PlayerInventory playerInventory, ITextComponent title, ScreenStyle style) {
+            StockExportBusMenu container,
+            PlayerInventory playerInventory,
+            ITextComponent title,
+            ScreenStyle style) {
         super(container, playerInventory, title, style);
     }
 }
