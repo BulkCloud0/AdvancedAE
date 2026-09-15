@@ -5,7 +5,6 @@ import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
 
-import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
@@ -25,13 +24,13 @@ public class SmallAdvPatternProviderPart extends AdvPatternProviderPart {
     public static final PartModel MODELS_HAS_CHANNEL =
             new PartModel(MODEL_BASE, AppEng.makeId("part/interface_has_channel"));
 
-    public SmallAdvPatternProviderPart(IPartItem<?> partItem) {
+    public SmallAdvPatternProviderPart(ItemStack partItem) {
         super(partItem, 9);
     }
 
     @Override
     public ItemStack getMainMenuIcon() {
-        return new ItemStack(AAEItems.SMALL_ADV_PATTERN_PROVIDER);
+        return AAEItems.SMALL_ADV_PATTERN_PROVIDER.stack();
     }
 
     @Override
