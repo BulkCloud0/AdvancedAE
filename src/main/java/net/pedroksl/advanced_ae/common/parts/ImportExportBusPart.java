@@ -13,7 +13,6 @@ import net.pedroksl.advanced_ae.common.helpers.FilteredImportStackTransferContex
 
 import appeng.api.behaviors.StackImportStrategy;
 import appeng.api.networking.IGrid;
-import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEItems;
@@ -42,7 +41,7 @@ public class ImportExportBusPart extends ExportBusPart {
     @Nullable
     private StackImportStrategy importStrategy;
 
-    public ImportExportBusPart(IPartItem<?> partItem) {
+    public ImportExportBusPart(ItemStack partItem) {
         super(partItem);
     }
 
