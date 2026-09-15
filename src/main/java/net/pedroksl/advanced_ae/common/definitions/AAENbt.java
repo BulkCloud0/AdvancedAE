@@ -15,15 +15,18 @@ public final class AAENbt {
 
     public static final String NIGHT_VISION_ACTIVATED = "night_vision_on";
 
-    public static final Map<UpgradeType, String> UPGRADE_TAG = new HashMap<>();
+    public static final Map<UpgradeType, String> UPGRADE_TAG = new HashMap<UpgradeType, String>();
 
     public static final String UPGRADE_TOGGLE = "enabled";
     public static final String UPGRADE_VALUE = "value";
     public static final String UPGRADE_FILTER = "filter";
     public static final String UPGRADE_EXTRA = "extra";
 
+    private AAENbt() {
+    }
+
     public static void init() {
-        for (var upgrade : UpgradeType.values()) {
+        for (UpgradeType upgrade : UpgradeType.values()) {
             UPGRADE_TAG.put(upgrade, upgrade.name().toLowerCase(Locale.ROOT) + "_tag");
         }
     }
