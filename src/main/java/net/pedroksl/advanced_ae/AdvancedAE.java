@@ -1,13 +1,12 @@
 package net.pedroksl.advanced_ae;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegisterEvent;
 import net.pedroksl.advanced_ae.common.definitions.*;
 import net.pedroksl.advanced_ae.common.items.armors.IGridLinkedItem;
 import net.pedroksl.advanced_ae.common.patterns.AdvPatternDetailsDecoder;
@@ -15,7 +14,6 @@ import net.pedroksl.advanced_ae.events.AAELivingEntityEvents;
 import net.pedroksl.advanced_ae.events.AAEPlayerEvents;
 import net.pedroksl.advanced_ae.network.AAENetworkHandler;
 import net.pedroksl.advanced_ae.recipes.InitRecipeSerializers;
-import net.pedroksl.advanced_ae.recipes.InitRecipeTypes;
 import net.pedroksl.advanced_ae.xmod.Addons;
 import net.pedroksl.advanced_ae.xmod.ae2wtlib.AE2WtLibPlugin;
 import net.pedroksl.advanced_ae.xmod.appflux.AppliedFluxPlugin;
@@ -46,22 +44,13 @@ public class AdvancedAE {
         AAEFluids.INSTANCE.register(eventBus);
         AAEMenus.INSTANCE.register(eventBus);
         AAECreativeTab.INSTANCE.register(eventBus);
+        InitRecipeSerializers.register(eventBus);
 
         eventBus.addListener(this::commonSetup);
+        eventBus.addGenericListener(Item.class, this::onItemRegistry);
         MinecraftForge.EVENT_BUS.register(this);
 
         eventBus.addListener(AdvancedAE::initUpgrades);
-        eventBus.addListener((RegisterEvent event) -> {
-            if (event.getRegistryKey() == Registries.RECIPE_TYPE) {
-                InitRecipeTypes.init(ForgeRegistries.RECIPE_TYPES);
-            } else if (event.getRegistryKey() == Registries.RECIPE_SERIALIZER) {
-                InitRecipeSerializers.init(ForgeRegistries.RECIPE_SERIALIZERS);
-            } else if (event.getRegistryKey() == Registries.ITEM) {
-                if (Addons.AE2WTLIB.isLoaded()) {
-                    AE2WtLibPlugin.commonInit();
-                }
-            }
-        });
 
         AAEHotkeysRegistry.INSTANCE.init();
         AAENbt.init();
@@ -69,6 +58,12 @@ public class AdvancedAE {
 
     public static AdvancedAE instance() {
         return INSTANCE;
+    }
+
+    private void onItemRegistry(final RegistryEvent.Register<Item> event) {
+        if (Addons.AE2WTLIB.isLoaded()) {
+            AE2WtLibPlugin.commonInit();
+        }
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
