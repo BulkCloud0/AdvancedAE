@@ -2,11 +2,11 @@ package net.pedroksl.advanced_ae.common.items.upgrades;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.definitions.AAEConfig;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
@@ -82,7 +82,6 @@ public enum UpgradeType {
             AAEItems.REGENERATION_CARD),
     STRENGTH("Strength", null, SettingType.NONE, 10, ApplicationType.BUFF, AAEItems.STRENGTH_CARD),
     ATTACK_SPEED("Attack Speed", null, SettingType.NONE, 10, ApplicationType.BUFF, AAEItems.ATTACK_SPEED_CARD),
-
     LUCK("Luck Boost", null, SettingType.NONE, 10, ApplicationType.BUFF, AAEItems.LUCK_CARD),
     REACH("Reach Boost", null, SettingType.NUM_INPUT, 10, ApplicationType.BUFF, AAEItems.REACH_CARD),
     SWIM_SPEED(
@@ -178,8 +177,8 @@ public enum UpgradeType {
         return "gui.upgrades." + AdvancedAE.MOD_ID + "." + this.name.replaceAll("\\s+", "") + "Upgrade";
     }
 
-    public Component getTranslatedName() {
-        return Component.translatable(getTranslationKey());
+    public IFormattableTextComponent getTranslatedName() {
+        return new TranslationTextComponent(getTranslationKey());
     }
 
     public UpgradeSettings getSettings() {
@@ -228,7 +227,7 @@ public enum UpgradeType {
         }
     }
 
-    public MutableComponent getTooltip() {
+    public IFormattableTextComponent getTooltip() {
         switch (this) {
             case EMPTY:
                 return AAEText.UpgradeBaseTooltip.text();
@@ -289,6 +288,6 @@ public enum UpgradeType {
 
     @FunctionalInterface
     public interface Ability {
-        boolean execute(Level level, Player player, ItemStack stack);
+        boolean execute(World level, PlayerEntity player, ItemStack stack);
     }
 }
