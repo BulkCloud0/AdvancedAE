@@ -1,112 +1,104 @@
 package net.pedroksl.advanced_ae.common.blocks;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.jetbrains.annotations.NotNull;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition.Builder;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.IntegerProperty;
+import net.minecraft.state.StateContainer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.IWorld;
+import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
-import appeng.block.AEBaseEntityBlock;
-import appeng.block.crafting.ICraftingUnitType;
-import appeng.blockentity.AEBaseBlockEntity;
-import appeng.menu.MenuOpener;
-import appeng.menu.locator.MenuLocators;
+import appeng.block.AEBaseTileBlock;
+import appeng.container.ContainerLocator;
+import appeng.container.ContainerOpener;
+import appeng.tile.AEBaseTileEntity;
 
-public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseBlockEntity> extends AEBaseEntityBlock<T> {
+public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> extends AEBaseTileBlock<T> {
     public static final BooleanProperty FORMED = BooleanProperty.create("formed");
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
     public static final BooleanProperty MULTIBLOCKED = BooleanProperty.create("multiblocked");
     public static final IntegerProperty LIGHT_LEVEL = IntegerProperty.create("light_level", 0, 15);
 
-    public final ICraftingUnitType type;
+    public final AAECraftingUnitType type;
 
-    public AAEAbstractCraftingUnitBlock(Properties props, ICraftingUnitType type) {
+    public AAEAbstractCraftingUnitBlock(AbstractBlock.Properties props, AAECraftingUnitType type) {
         super(props);
         this.type = type;
-        this.registerDefaultState(defaultBlockState()
-                .setValue(FORMED, false)
-                .setValue(POWERED, false)
-                .setValue(MULTIBLOCKED, false)
-                .setValue(LIGHT_LEVEL, 0));
+        this.setDefaultState(getDefaultState()
+                .with(FORMED, false)
+                .with(POWERED, false)
+                .with(MULTIBLOCKED, false)
+                .with(LIGHT_LEVEL, 0));
     }
 
     @Override
-    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder);
-        builder.add(POWERED);
-        builder.add(FORMED);
-        builder.add(MULTIBLOCKED);
-        builder.add(LIGHT_LEVEL);
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+        super.fillStateContainer(builder);
+        builder.add(POWERED, FORMED, MULTIBLOCKED, LIGHT_LEVEL);
     }
 
-    @SuppressWarnings("deprecation")
-    @ParametersAreNonnullByDefault
     @Override
-    public @NotNull BlockState updateShape(
+    public BlockState updatePostPlacement(
             BlockState stateIn,
             Direction facing,
             BlockState facingState,
-            LevelAccessor level,
+            IWorld worldIn,
             BlockPos currentPos,
             BlockPos facingPos) {
-        BlockEntity te = level.getBlockEntity(currentPos);
+        TileEntity te = worldIn.getTileEntity(currentPos);
         if (te != null) {
             te.requestModelDataUpdate();
         }
-        return super.updateShape(stateIn, facing, facingState, level, currentPos, facingPos);
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
     }
 
-    @SuppressWarnings("deprecation")
-    @ParametersAreNonnullByDefault
     @Override
     public void neighborChanged(
-            BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        final AdvCraftingBlockEntity cp = (AdvCraftingBlockEntity) this.getBlockEntity(level, pos);
-        if (cp != null) {
-            cp.updateMultiBlock(fromPos);
+            BlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) this.getTileEntity(world, pos);
+        if (crafting != null) {
+            crafting.updateMultiBlock(fromPos);
         }
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
         if (newState.getBlock() == state.getBlock()) {
-            return; // Just a block state change
+            return;
         }
 
-        final AdvCraftingBlockEntity cp = (AdvCraftingBlockEntity) this.getBlockEntity(level, pos);
-        if (cp != null) {
-            cp.breakCluster();
+        AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) this.getTileEntity(world, pos);
+        if (crafting != null) {
+            crafting.breakCluster();
         }
 
-        super.onRemove(state, level, pos, newState, isMoving);
+        super.onReplaced(state, world, pos, newState, isMoving);
     }
 
     @Override
-    public InteractionResult use(
-            BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (level.getBlockEntity(pos) instanceof AdvCraftingBlockEntity be && be.isFormed() && be.isActive()) {
-            if (!level.isClientSide()) {
-                MenuOpener.open(AAEMenus.QUANTUM_COMPUTER.get(), player, MenuLocators.forBlockEntity(be));
+    public ActionResultType onBlockActivated(
+            BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) this.getTileEntity(world, pos);
+        if (crafting != null && crafting.isFormed() && crafting.isActive()) {
+            if (!world.isRemote()) {
+                ContainerOpener.openContainer(
+                        AAEMenus.QUANTUM_COMPUTER.get(),
+                        player,
+                        ContainerLocator.forTileEntitySide(crafting, hit.getFace()));
             }
-
-            return InteractionResult.sidedSuccess(level.isClientSide());
+            return ActionResultType.func_233537_a_(world.isRemote());
         }
 
-        return super.use(state, level, pos, player, hand, hit);
+        return super.onBlockActivated(state, world, pos, player, hand, hit);
     }
 }
