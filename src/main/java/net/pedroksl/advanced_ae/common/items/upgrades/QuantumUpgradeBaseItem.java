@@ -45,7 +45,7 @@ public class QuantumUpgradeBaseItem extends Item {
         List<QuantumArmorBase> list = QuantumArmorBase.upgradeAvailableFor(type);
         lines.add(Component.empty());
         lines.add(AAEText.UpgradeTooltip.text().withStyle(Tooltips.NORMAL_TOOLTIP_TEXT));
-        for (var equip : list) {
+        for (QuantumArmorBase equip : list) {
             lines.add(Component.translatable(equip.getDescriptionId()).withStyle(Tooltips.NORMAL_TOOLTIP_TEXT));
         }
     }
