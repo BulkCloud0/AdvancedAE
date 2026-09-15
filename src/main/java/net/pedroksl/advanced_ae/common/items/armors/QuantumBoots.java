@@ -42,8 +42,8 @@ public class QuantumBoots extends QuantumArmorBase {
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         if (slotId == EquipmentSlot.FEET.getIndex()
                 && !getPassiveUpgrades(stack).isEmpty()
-                && entity instanceof Player player) {
-            tickUpgrades(level, player, stack);
+                && entity instanceof Player) {
+            tickUpgrades(level, (Player) entity, stack);
         }
     }
 }
