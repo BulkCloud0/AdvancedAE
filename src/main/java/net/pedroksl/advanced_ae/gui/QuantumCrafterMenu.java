@@ -16,11 +16,13 @@ import net.pedroksl.ae2addonlib.gui.OutputDirectionMenu;
 
 import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
+import appeng.api.inventories.InternalInventory;
 import appeng.api.util.IConfigManager;
 import appeng.core.definitions.AEItems;
 import appeng.menu.SlotSemantics;
 import appeng.menu.guisync.GuiSync;
 import appeng.menu.implementations.UpgradeableMenu;
+import appeng.menu.locator.MenuLocator;
 import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.RestrictedInputSlot;
 
@@ -44,15 +46,15 @@ public class QuantumCrafterMenu extends UpgradeableMenu<QuantumCrafterEntity> {
     public QuantumCrafterMenu(int id, Inventory ip, QuantumCrafterEntity host) {
         super(AAEMenus.QUANTUM_CRAFTER.get(), id, ip, host);
 
-        var patterns = host.getPatternInventory();
-        for (var x = 0; x < patterns.size(); x++) {
+        InternalInventory patterns = host.getPatternInventory();
+        for (int x = 0; x < patterns.size(); x++) {
             this.patternSlots[x] = this.addSlot(
                     new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.ENCODED_PATTERN, patterns, x),
                     SlotSemantics.MACHINE_INPUT);
         }
 
-        var outputs = host.getOutputInv();
-        for (var x = 0; x < outputs.size(); x++) {
+        InternalInventory outputs = host.getOutputInv();
+        for (int x = 0; x < outputs.size(); x++) {
             this.addSlot(new AppEngSlot(outputs, x), SlotSemantics.MACHINE_OUTPUT);
         }
 
@@ -92,7 +94,6 @@ public class QuantumCrafterMenu extends UpgradeableMenu<QuantumCrafterEntity> {
 
     public void setEnabledPatterns(List<Boolean> enabledPatterns) {
         this.enabledPatterns = new ArrayList<>(enabledPatterns);
-
         broadcastChanges();
     }
 
@@ -100,7 +101,8 @@ public class QuantumCrafterMenu extends UpgradeableMenu<QuantumCrafterEntity> {
     public void broadcastChanges() {
         super.broadcastChanges();
 
-        if (isServerSide() && getPlayer() instanceof ServerPlayer player) {
+        if (isServerSide() && getPlayer() instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) getPlayer();
             setInvalidPatterns(getHost().getInvalidPatternSlots(), false);
             AAENetworkHandler.INSTANCE.sendTo(
                     new PatternsUpdatePacket(this.invalidPatterns, this.enabledPatterns), player);
@@ -113,11 +115,11 @@ public class QuantumCrafterMenu extends UpgradeableMenu<QuantumCrafterEntity> {
             return;
         }
 
-        var locator = getLocator();
+        MenuLocator locator = getLocator();
         if (locator != null && isServerSide()) {
             OutputDirectionMenu.open(
                     ((ServerPlayer) this.getPlayer()),
-                    getLocator(),
+                    locator,
                     this.getHost().getAllowedOutputs());
         }
     }
@@ -128,16 +130,17 @@ public class QuantumCrafterMenu extends UpgradeableMenu<QuantumCrafterEntity> {
             return;
         }
 
-        var locator = getLocator();
+        MenuLocator locator = getLocator();
         if (locator != null && isServerSide()) {
+            List<ItemStack> inputs = this.getHost().getPatternConfigInputs(index);
+            ItemStack output = this.getHost().getPatternConfigOutput(index);
 
-            var inputs = this.getHost().getPatternConfigInputs(index);
-            var output = this.getHost().getPatternConfigOutput(index);
-
-            if (inputs == null || output == null) return;
+            if (inputs == null || output == null) {
+                return;
+            }
 
             QuantumCrafterConfigPatternMenu.open(
-                    ((ServerPlayer) this.getPlayer()), getLocator(), getHost(), index, inputs, output);
+                    ((ServerPlayer) this.getPlayer()), locator, getHost(), index, inputs, output);
         }
     }
 
@@ -157,7 +160,7 @@ public class QuantumCrafterMenu extends UpgradeableMenu<QuantumCrafterEntity> {
 
     @Override
     public boolean isValidForSlot(Slot s, ItemStack is) {
-        for (var ps : this.patternSlots) {
+        for (Slot ps : this.patternSlots) {
             if (s == ps) {
                 return AEItems.CRAFTING_PATTERN.isSameAs(is);
             }
