@@ -9,7 +9,10 @@ import net.minecraft.world.level.ItemLike;
 
 import appeng.api.features.HotkeyAction;
 
-public record ArmorHotkeyAction(Predicate<ItemStack> locatable, Opener opener) implements HotkeyAction {
+public final class ArmorHotkeyAction implements HotkeyAction {
+    private final Predicate<ItemStack> locatable;
+    private final Opener opener;
+
     public ArmorHotkeyAction(ItemLike item, Opener opener) {
         this((stack) -> stack.is(item.asItem()), opener);
     }
@@ -21,17 +24,14 @@ public record ArmorHotkeyAction(Predicate<ItemStack> locatable, Opener opener) i
 
     @Override
     public boolean run(Player player) {
-        var items = player.getArmorSlots();
+        Iterable<ItemStack> items = player.getArmorSlots();
         int i = 0;
-        for (var item : items) {
-            if (this.locatable.test(item)) {
-                if (opener.open(player, Inventory.INVENTORY_SIZE + i, item)) {
-                    return true;
-                }
+        for (ItemStack item : items) {
+            if (this.locatable.test(item) && opener.open(player, Inventory.INVENTORY_SIZE + i, item)) {
+                return true;
             }
             i++;
         }
-
         return false;
     }
 
@@ -45,6 +45,6 @@ public record ArmorHotkeyAction(Predicate<ItemStack> locatable, Opener opener) i
 
     @FunctionalInterface
     public interface Opener {
-        boolean open(Player var1, int inventorySlot, ItemStack stack);
+        boolean open(Player player, int inventorySlot, ItemStack stack);
     }
 }
