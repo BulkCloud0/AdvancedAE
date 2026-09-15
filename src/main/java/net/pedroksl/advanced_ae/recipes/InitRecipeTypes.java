@@ -3,25 +3,43 @@ package net.pedroksl.advanced_ae.recipes;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
 
-public class InitRecipeTypes {
-    private record ToRegister(RecipeType<?> recipeType, ResourceLocation id) {}
+public final class InitRecipeTypes {
 
-    private static final List<ToRegister> toRegister = new ArrayList<>();
+    private static final class ToRegister {
+        private final IRecipeType<?> recipeType;
+        private final ResourceLocation id;
 
-    public static <T extends Recipe<?>> RecipeType<T> register(String id) {
-        RecipeType<T> type = RecipeType.simple(new ResourceLocation(id));
-        toRegister.add(new ToRegister(type, new ResourceLocation(id)));
+        private ToRegister(IRecipeType<?> recipeType, ResourceLocation id) {
+            this.recipeType = recipeType;
+            this.id = id;
+        }
+    }
+
+    private static final List<ToRegister> TO_REGISTER = new ArrayList<ToRegister>();
+
+    private InitRecipeTypes() {
+    }
+
+    public static <T extends IRecipe<?>> IRecipeType<T> register(String id) {
+        final ResourceLocation resourceLocation = new ResourceLocation(id);
+        IRecipeType<T> type = new IRecipeType<T>() {
+            @Override
+            public String toString() {
+                return resourceLocation.toString();
+            }
+        };
+        TO_REGISTER.add(new ToRegister(type, resourceLocation));
         return type;
     }
 
-    public static void init(IForgeRegistry<RecipeType<?>> registry) {
-        for (var toRegister : toRegister) {
-            registry.register(toRegister.id, toRegister.recipeType);
+    public static void init(IForgeRegistry<IRecipeType<?>> registry) {
+        for (ToRegister entry : TO_REGISTER) {
+            registry.register(entry.id, entry.recipeType);
         }
     }
 }
