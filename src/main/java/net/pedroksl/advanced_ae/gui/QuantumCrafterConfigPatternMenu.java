@@ -57,7 +57,8 @@ public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubM
             Pair<AEKey, Long> output) {
         MenuOpener.open(AAEMenus.CRAFTER_PATTERN_CONFIG.get(), player, locator);
 
-        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu cca) {
+        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu) {
+            QuantumCrafterConfigPatternMenu cca = (QuantumCrafterConfigPatternMenu) player.containerMenu;
             cca.setCrafter(crafter);
             cca.setIndex(index);
             cca.setInputsAndOutput(inputs, output);
@@ -80,7 +81,8 @@ public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubM
         if (isServerSide()
                 && this.inputs != null
                 && this.output != null
-                && getPlayer() instanceof ServerPlayer player) {
+                && getPlayer() instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) getPlayer();
             AAENetworkHandler.INSTANCE.sendTo(new PatternConfigServerUpdatePacket(this.inputs, this.output), player);
         }
     }
