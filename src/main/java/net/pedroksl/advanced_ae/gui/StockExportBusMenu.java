@@ -15,6 +15,7 @@ import appeng.core.definitions.AEItems;
 import appeng.menu.MenuOpener;
 import appeng.menu.SlotSemantics;
 import appeng.menu.implementations.UpgradeableMenu;
+import appeng.menu.locator.MenuLocator;
 
 public class StockExportBusMenu extends UpgradeableMenu<StockExportBusPart> implements ISetAmountMenuHost {
 
@@ -51,15 +52,15 @@ public class StockExportBusMenu extends UpgradeableMenu<StockExportBusPart> impl
             sendClientAction(OPEN_AMOUNT_MENU, slotIndex);
             return;
         }
-        var slot = this.getSlot(slotIndex);
+        Slot slot = this.getSlot(slotIndex);
 
         GenericStack currentStack = GenericStack.fromItemStack(slot.getItem());
         if (currentStack != null) {
-            var locator = getLocator();
+            MenuLocator locator = getLocator();
             if (locator != null && isServerSide()) {
                 SetAmountMenu.open(
                         ((ServerPlayer) this.getPlayer()),
-                        getLocator(),
+                        locator,
                         currentStack,
                         (newStack) -> this.setFilter(slot.index, GenericStack.wrapInItemStack(newStack)),
                         this,
@@ -71,7 +72,8 @@ public class StockExportBusMenu extends UpgradeableMenu<StockExportBusPart> impl
     @Override
     public void returnFromSetAmountMenu() {
         Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (player instanceof ServerPlayer) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             MenuOpener.open(AAEMenus.STOCK_EXPORT_BUS.get(), serverPlayer, getLocator(), true);
         }
     }
