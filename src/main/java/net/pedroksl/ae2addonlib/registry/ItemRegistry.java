@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -52,9 +53,18 @@ public class ItemRegistry {
 
     protected static <T extends Item> LibItemDefinition<T> item(
             String modId, String englishName, String id, Function<Item.Properties, T> factory) {
-        LibItemDefinition<T> definition = new LibItemDefinition<>(
-                englishName,
-                getRegister(modId).register(id, () -> factory.apply(new Item.Properties())));
+        return register(modId, englishName, id, () -> factory.apply(new Item.Properties()));
+    }
+
+    static <T extends Item> LibItemDefinition<T> registerBlockItem(
+            String modId, String englishName, String id, Supplier<T> supplier) {
+        return register(modId, englishName, id, supplier);
+    }
+
+    private static <T extends Item> LibItemDefinition<T> register(
+            String modId, String englishName, String id, Supplier<T> supplier) {
+        LibItemDefinition<T> definition =
+                new LibItemDefinition<>(englishName, getRegister(modId).register(id, supplier));
         ITEMS.get(modId).add(definition);
         return definition;
     }
