@@ -1,5 +1,6 @@
 package net.pedroksl.advanced_ae.mixins.cpu;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
+import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCluster;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 import net.pedroksl.advanced_ae.common.logic.AdvCraftingCPULogic;
 
@@ -62,11 +64,14 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
                     + "Ljava/lang/Object;)V",
             at = @At("TAIL"))
     private void onInit(MenuType<?> menuType, int id, Inventory ip, Object te, CallbackInfo ci) {
-        if (te instanceof AdvCraftingBlockEntity advEntity) {
-            var cluster = advEntity.getCluster();
-            if (cluster == null) return;
+        if (te instanceof AdvCraftingBlockEntity) {
+            AdvCraftingBlockEntity advEntity = (AdvCraftingBlockEntity) te;
+            AdvCraftingCPUCluster cluster = advEntity.getCluster();
+            if (cluster == null) {
+                return;
+            }
 
-            var active = cluster.getActiveCPUs();
+            List<AdvCraftingCPU> active = cluster.getActiveCPUs();
             if (!active.isEmpty()) {
                 this.setCPU(active.get(0));
             } else {
@@ -81,26 +86,22 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
             this.advancedAE$advCpu.craftingLogic.removeListener(cpuChangeListener);
         }
 
-        if (c instanceof AdvCraftingCPU advCPU) {
-            // Clear old cpu listener if it's still valid
+        if (c instanceof AdvCraftingCPU) {
+            AdvCraftingCPU advCPU = (AdvCraftingCPU) c;
             if (this.cpu != null) {
                 this.cpu.craftingLogic.removeListener(cpuChangeListener);
             }
 
-            // Clear helper inside the if statement because it will be cleared normally otherwise
             incrementalUpdateHelper.reset();
-
             this.advancedAE$advCpu = advCPU;
 
-            // Initially send all items as a full-update to the client when the CPU changes
-            var allItems = new KeyCounter();
+            KeyCounter allItems = new KeyCounter();
             this.advancedAE$advCpu.craftingLogic.getAllItems(allItems);
-            for (var entry : allItems) {
+            for (KeyCounter.Entry entry : allItems) {
                 incrementalUpdateHelper.addChange(entry.getKey());
             }
 
             this.advancedAE$advCpu.craftingLogic.addListener(cpuChangeListener);
-
             ci.cancel();
         } else {
             this.advancedAE$advCpu = null;
@@ -109,10 +110,8 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
 
     @Inject(method = "cancelCrafting", at = @At("TAIL"))
     public void onCancelCrafting(CallbackInfo ci) {
-        if (!isClientSide()) {
-            if (this.advancedAE$advCpu != null) {
-                this.advancedAE$advCpu.cancelJob();
-            }
+        if (!isClientSide() && this.advancedAE$advCpu != null) {
+            this.advancedAE$advCpu.cancelJob();
         }
     }
 
@@ -133,7 +132,6 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
                 CraftingStatus status =
                         advancedAE$create(this.incrementalUpdateHelper, this.advancedAE$advCpu.craftingLogic);
                 this.incrementalUpdateHelper.commitChanges();
-
                 sendPacketToClient(new CraftingStatusPacket(status));
             }
         }
@@ -144,18 +142,17 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
         boolean full = changes.isFullUpdate();
 
         ImmutableList.Builder<CraftingStatusEntry> newEntries = ImmutableList.builder();
-        for (var what : changes) {
+        for (AEKey what : changes) {
             long storedCount = logic.getStored(what);
             long activeCount = logic.getWaitingFor(what);
             long pendingCount = logic.getPendingOutputs(what);
 
-            var sentStack = what;
+            AEKey sentStack = what;
             if (!full && changes.getSerial(what) != null) {
-                // The item was already sent to the client, so we can skip the item stack
                 sentStack = null;
             }
 
-            var entry = new CraftingStatusEntry(
+            CraftingStatusEntry entry = new CraftingStatusEntry(
                     changes.getOrAssignSerial(what), sentStack, storedCount, activeCount, pendingCount);
             newEntries.add(entry);
 
