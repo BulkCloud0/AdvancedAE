@@ -41,14 +41,14 @@ public class ElapsedTimeTracker {
     }
 
     private static void readLongByTypeMap(CompoundTag tag, Reference2LongMap<AEKeyType> output) {
-        for (var keyType : AEKeyTypes.getAll()) {
+        for (AEKeyType keyType : AEKeyTypes.getAll()) {
             output.put(keyType, tag.getLong(keyType.getId().toString()));
         }
     }
 
     private static CompoundTag writeLongByTypeMap(Reference2LongMap<AEKeyType> input) {
         CompoundTag result = new CompoundTag();
-        for (var entry : input.reference2LongEntrySet()) {
+        for (Reference2LongMap.Entry<AEKeyType> entry : input.reference2LongEntrySet()) {
             result.putLong(entry.getKey().getId().toString(), entry.getLongValue());
         }
         return result;
@@ -66,7 +66,7 @@ public class ElapsedTimeTracker {
     }
 
     private long saturatedSum(long a, long b) {
-        var result = a + b;
+        long result = a + b;
         return result < 0 ? Long.MAX_VALUE : result;
     }
 
@@ -77,7 +77,7 @@ public class ElapsedTimeTracker {
 
     public long getElapsedTime() {
         boolean allDone = true;
-        for (var keyType : AEKeyTypes.getAll()) {
+        for (AEKeyType keyType : AEKeyTypes.getAll()) {
             if (completedWorkByType.getLong(keyType) < startedWorkByType.getLong(keyType)) {
                 allDone = false;
                 break;
@@ -95,9 +95,9 @@ public class ElapsedTimeTracker {
     public float getProgress() {
         double startedUnits = 0;
         double completedUnits = 0;
-        for (var keyType : AEKeyTypes.getAll()) {
-            var startedForType = startedWorkByType.getLong(keyType);
-            var completedForType = completedWorkByType.getLong(keyType);
+        for (AEKeyType keyType : AEKeyTypes.getAll()) {
+            long startedForType = startedWorkByType.getLong(keyType);
+            long completedForType = completedWorkByType.getLong(keyType);
             startedUnits += startedForType / (double) keyType.getAmountPerUnit();
             completedUnits += completedForType / (double) keyType.getAmountPerUnit();
         }
@@ -105,12 +105,12 @@ public class ElapsedTimeTracker {
         return Mth.clamp((float) (completedUnits / startedUnits), 0, 1);
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public long getRemainingItemCount() {
         return (int) (Integer.MAX_VALUE - (double) getProgress() * Integer.MAX_VALUE);
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public long getStartItemCount() {
         return Integer.MAX_VALUE;
     }
