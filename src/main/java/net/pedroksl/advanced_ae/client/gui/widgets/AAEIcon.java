@@ -1,11 +1,19 @@
 package net.pedroksl.advanced_ae.client.gui.widgets;
 
-import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.Rectangle2d;
+import net.minecraft.util.ResourceLocation;
 import net.pedroksl.advanced_ae.AdvancedAE;
-import net.pedroksl.ae2addonlib.client.widgets.IBlitterIcon;
 
-public enum AAEIcon implements IBlitterIcon {
+import appeng.client.gui.style.Blitter;
+
+/**
+ * Icon atlas entries used by AdvancedAE's 1.16 GUI code.
+ *
+ * The modern addon used ae2addonlib's IBlitterIcon. AE2 8.4.7 already ships
+ * the Blitter utility we need, so keeping the atlas description local avoids
+ * an unnecessary runtime/compile-time dependency.
+ */
+public enum AAEIcon {
     ME_EXPORT_ON(0, 0),
     ME_EXPORT_OFF(16, 0),
     DIRECTION_OUTPUT(32, 0),
@@ -35,15 +43,15 @@ public enum AAEIcon implements IBlitterIcon {
     TOOLBAR_BUTTON_BACKGROUND(176, 128, 18, 18),
     TOOLBAR_BUTTON_ENABLED(194, 128, 18, 18);
 
+    public static final ResourceLocation TEXTURE = AdvancedAE.makeId("textures/guis/states.png");
+    public static final int TEXTURE_WIDTH = 256;
+    public static final int TEXTURE_HEIGHT = 256;
+
     public final int x;
     public final int y;
     public final int width;
     public final int height;
     private final TextureSource textureSource;
-
-    public static final ResourceLocation TEXTURE = AdvancedAE.makeId("textures/guis/states.png");
-    public static final int TEXTURE_WIDTH = 256;
-    public static final int TEXTURE_HEIGHT = 256;
 
     AAEIcon(int x, int y) {
         this(x, y, 16, 16);
@@ -65,25 +73,20 @@ public enum AAEIcon implements IBlitterIcon {
         this.textureSource = textureSource;
     }
 
-    @Override
     public ResourceLocation getTexture() {
-        switch (textureSource) {
-            case AE2:
-                return appeng.client.gui.Icon.TEXTURE;
-            case CUSTOM:
-            default:
-                return TEXTURE;
+        if (textureSource == TextureSource.AE2) {
+            return appeng.client.gui.Icon.TEXTURE;
         }
+        return TEXTURE;
     }
 
-    @Override
-    public Size getTextureSize() {
-        return new Size(TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    public Rectangle2d getRect() {
+        return new Rectangle2d(x, y, width, height);
     }
 
-    @Override
-    public Rect2i getRect() {
-        return new Rect2i(x, y, width, height);
+    public Blitter getBlitter() {
+        return Blitter.texture(getTexture(), TEXTURE_WIDTH, TEXTURE_HEIGHT)
+                .src(x, y, width, height);
     }
 
     private enum TextureSource {
