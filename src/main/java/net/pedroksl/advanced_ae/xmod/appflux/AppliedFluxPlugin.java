@@ -54,23 +54,22 @@ public class AppliedFluxPlugin {
     public static double rechargeAeStorageItem(
             IGrid grid, double neededPower, Player player, ItemStack stack, IAEItemPowerStorage aePowerStorage) {
         try {
-            var storage = grid.getStorageService();
+            double neededFePower = PowerMultiplier.CONFIG.divide(neededPower);
 
-            var mult = PowerMultiplier.CONFIG;
-            var neededFePower = mult.divide(neededPower);
-
-            var extracted = mult.multiply(storage.getInventory()
+            double extracted = PowerMultiplier.CONFIG.multiply(grid.getStorageService()
+                    .getInventory()
                     .extract(
                             FluxKey.of(EnergyType.FE),
                             (long) neededFePower,
                             Actionable.MODULATE,
                             IActionSource.ofPlayer(player)));
 
-            var remainder = aePowerStorage.injectAEPower(stack, extracted, Actionable.MODULATE);
-            storage.getInventory()
+            double remainder = aePowerStorage.injectAEPower(stack, extracted, Actionable.MODULATE);
+            grid.getStorageService()
+                    .getInventory()
                     .insert(
                             FluxKey.of(EnergyType.FE),
-                            (long) mult.divide(remainder),
+                            (long) PowerMultiplier.CONFIG.divide(remainder),
                             Actionable.MODULATE,
                             IActionSource.ofPlayer(player));
 
@@ -83,12 +82,13 @@ public class AppliedFluxPlugin {
 
     public static void rechargeEnergyStorage(IGrid grid, int afRate, IActionSource source, IEnergyStorage cap) {
         try {
-            var storage = grid.getStorageService();
-
-            var extracted =
-                    storage.getInventory().extract(FluxKey.of(EnergyType.FE), afRate, Actionable.MODULATE, source);
-            var inserted = cap.receiveEnergy((int) extracted, false);
-            storage.getInventory().insert(FluxKey.of(EnergyType.FE), extracted - inserted, Actionable.MODULATE, source);
+            long extracted = grid.getStorageService()
+                    .getInventory()
+                    .extract(FluxKey.of(EnergyType.FE), afRate, Actionable.MODULATE, source);
+            int inserted = cap.receiveEnergy((int) extracted, false);
+            grid.getStorageService()
+                    .getInventory()
+                    .insert(FluxKey.of(EnergyType.FE), extracted - inserted, Actionable.MODULATE, source);
         } catch (Throwable ignored) {
             // NO_OP
         }
@@ -96,7 +96,8 @@ public class AppliedFluxPlugin {
 
     public static void notifyBlockUpdate(Object obj, BlockPos self, BlockPos from) {
         try {
-            if (obj instanceof INeighborListener listener) {
+            if (obj instanceof INeighborListener) {
+                INeighborListener listener = (INeighborListener) obj;
                 AFUtil.notifyNeighbor(listener, self, from);
             }
         } catch (Throwable ignored) {
@@ -106,8 +107,9 @@ public class AppliedFluxPlugin {
 
     public static void notifyBlockUpdate(Object obj, Direction face, BlockPos self, BlockPos from) {
         try {
-            var d = AFUtil.getBlockDirection(self, from);
-            if (d == face && d != null && obj instanceof INeighborListener listener) {
+            Direction d = AFUtil.getBlockDirection(self, from);
+            if (d == face && d != null && obj instanceof INeighborListener) {
+                INeighborListener listener = (INeighborListener) obj;
                 listener.onChange(d);
             }
         } catch (Throwable ignored) {
