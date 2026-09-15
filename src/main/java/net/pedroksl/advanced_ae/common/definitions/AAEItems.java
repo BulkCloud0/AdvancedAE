@@ -2,9 +2,11 @@ package net.pedroksl.advanced_ae.common.definitions;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Rarity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Rarity;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.items.AdvPatternEncoderItem;
 import net.pedroksl.advanced_ae.common.items.AdvPatternProviderCapacityUpgradeItem;
@@ -20,8 +22,6 @@ import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
 import net.pedroksl.ae2addonlib.util.AddonEnum;
 
 import appeng.api.parts.IPart;
-import appeng.api.parts.IPartItem;
-import appeng.items.materials.MaterialItem;
 import appeng.items.parts.PartItem;
 import appeng.items.tools.powered.WirelessTerminalItem;
 
@@ -36,13 +36,13 @@ public class AAEItems extends ItemRegistry {
     public static List<LibItemDefinition<?>> getQuantumArmor() {
         return INSTANCE.getItems().stream()
                 .filter(item -> item.stack().getItem() instanceof QuantumArmorBase)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public static List<LibItemDefinition<?>> getQuantumCards() {
         return INSTANCE.getItems().stream()
                 .filter(item -> item.stack().getItem() instanceof QuantumUpgradeBaseItem)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public static final LibItemDefinition<PartItem<AdvPatternProviderPart>> ADV_PATTERN_PROVIDER = part(
@@ -83,22 +83,22 @@ public class AAEItems extends ItemRegistry {
             "Advanced Pattern Provider Capacity Upgrade",
             "adv_pattern_provider_capacity_upgrade",
             AdvPatternProviderCapacityUpgradeItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_INFUSED_DUST =
-            item("Quantum Infused Dust", "quantum_infused_dust", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_ALLOY =
-            item("Quantum Alloy", "quantum_alloy", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_ALLOY_PLATE =
-            item("Quantum Alloy Plate", "quantum_alloy_plate", p -> new MaterialItem(p.rarity(Rarity.EPIC)));
-    public static final LibItemDefinition<MaterialItem> SHATTERED_SINGULARITY =
-            item("Shattered Singularity", "shattered_singularity", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_PROCESSOR_PRESS =
-            item("Inscriber Quantum Press", "quantum_processor_press", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_PROCESSOR_PRINT =
-            item("Printed Quantum Circuit", "printed_quantum_processor", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_PROCESSOR =
-            item("Quantum Processor", "quantum_processor", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_STORAGE_COMPONENT =
-            item("Quantum Storage Component", "quantum_storage_component", MaterialItem::new);
+    public static final LibItemDefinition<Item> QUANTUM_INFUSED_DUST =
+            item("Quantum Infused Dust", "quantum_infused_dust", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_ALLOY =
+            item("Quantum Alloy", "quantum_alloy", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_ALLOY_PLATE =
+            item("Quantum Alloy Plate", "quantum_alloy_plate", p -> new Item(p.rarity(Rarity.EPIC)));
+    public static final LibItemDefinition<Item> SHATTERED_SINGULARITY =
+            item("Shattered Singularity", "shattered_singularity", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_PROCESSOR_PRESS =
+            item("Inscriber Quantum Press", "quantum_processor_press", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_PROCESSOR_PRINT =
+            item("Printed Quantum Circuit", "printed_quantum_processor", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_PROCESSOR =
+            item("Quantum Processor", "quantum_processor", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_STORAGE_COMPONENT =
+            item("Quantum Storage Component", "quantum_storage_component", Item::new);
 
     public static final LibItemDefinition<AdvPatternEncoderItem> ADV_PATTERN_ENCODER =
             item("Advanced Pattern Encoder", "adv_pattern_encoder", AdvPatternEncoderItem::new);
@@ -167,16 +167,13 @@ public class AAEItems extends ItemRegistry {
             p -> new QuantumUpgradeBaseItem(UpgradeType.WORKBENCH, p));
     public static final LibItemDefinition<QuantumUpgradeBaseItem> PICK_CRAFT_CARD =
             item("Pick Craft Card", "pick_craft_card", p -> new QuantumUpgradeBaseItem(UpgradeType.PICK_CRAFT, p));
-    //    public static final ItemDefinition<QuantumUpgradeBaseItem> HUD_CARD =
-    //            item("HUD Card", "hud_card", p -> new QuantumUpgradeBaseItem(UpgradeType.HUD, p));
 
     @SuppressWarnings("unchecked")
     private static <T extends Item> LibItemDefinition<T> conditionalItem(
             AddonEnum addon, String englishName, String id, String itemClass) {
         if (addon.isLoaded()) {
             try {
-                var instance =
-                        (T) Class.forName(itemClass).getDeclaredConstructor().newInstance();
+                T instance = (T) Class.forName(itemClass).getDeclaredConstructor().newInstance();
                 return item(AdvancedAE.MOD_ID, englishName, id, p -> instance);
             } catch (Exception ignored) {
             }
@@ -186,11 +183,11 @@ public class AAEItems extends ItemRegistry {
 
     protected static <T extends Item> LibItemDefinition<T> item(
             String englishName, String id, Function<Item.Properties, T> factory) {
-        return item(AdvancedAE.MOD_ID, englishName, id, factory);
+        return ItemRegistry.item(AdvancedAE.MOD_ID, englishName, id, factory);
     }
 
     protected static <T extends IPart> LibItemDefinition<PartItem<T>> part(
-            String englishName, String id, Class<T> partClass, Function<IPartItem<T>, T> factory) {
-        return part(AdvancedAE.MOD_ID, englishName, id, partClass, factory);
+            String englishName, String id, Class<T> partClass, Function<ItemStack, T> factory) {
+        return ItemRegistry.part(AdvancedAE.MOD_ID, englishName, id, factory);
     }
 }
