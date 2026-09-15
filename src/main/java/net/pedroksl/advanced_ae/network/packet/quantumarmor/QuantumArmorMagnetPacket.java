@@ -19,9 +19,9 @@ public class QuantumArmorMagnetPacket extends AddonPacket {
     public QuantumArmorMagnetPacket(FriendlyByteBuf stream) {
         currentValue = stream.readInt();
 
-        var size = stream.readInt();
+        int size = stream.readInt();
         List<GenericStack> list = new ArrayList<>();
-        for (var i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             list.add(GenericStack.readBuffer(stream));
         }
         filter = list;
@@ -49,7 +49,8 @@ public class QuantumArmorMagnetPacket extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer serverPlayer) {
-        if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu menu) {
+        if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu) {
+            QuantumArmorConfigMenu menu = (QuantumArmorConfigMenu) serverPlayer.containerMenu;
             menu.openMagnetScreen(currentValue, filter, blacklist);
         }
     }
