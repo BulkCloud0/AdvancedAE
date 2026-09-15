@@ -85,7 +85,7 @@ public class AdvCraftingCPULogic {
 
         // Set CPU link and job.
         var playerId = src.player()
-                .map(p -> p instanceof ServerPlayer serverPlayer ? IPlayerRegistry.getPlayerId(serverPlayer) : null)
+                .map(p -> p instanceof ServerPlayer ? IPlayerRegistry.getPlayerId((ServerPlayer) p) : null)
                 .orElse(null);
         var craftId = UUID.randomUUID();
         var linkCpu = new CraftingLink(CraftingCpuHelper.generateLinkData(craftId, requester == null, false), cpu);
