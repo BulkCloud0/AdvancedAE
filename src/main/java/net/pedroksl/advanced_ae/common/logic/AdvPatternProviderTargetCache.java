@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -42,15 +44,15 @@ class AdvPatternProviderTargetCache {
     PatternProviderTarget find(Direction fromSide) {
         // our capability first: allows any storage channel
         Direction side = fromSide == null ? direction : fromSide;
-        var meStorage = cache.find(side);
+        MEStorage meStorage = cache.find(side);
         if (meStorage != null) {
             return wrapMeStorage(meStorage);
         }
 
         // otherwise fall back to the platform capability
-        var externalStorages = new IdentityHashMap<AEKeyType, MEStorage>(2);
-        for (var entry : strategiesMap.get(side).entrySet()) {
-            var wrapper = entry.getValue().createWrapper(false, () -> {});
+        IdentityHashMap<AEKeyType, MEStorage> externalStorages = new IdentityHashMap<AEKeyType, MEStorage>(2);
+        for (Map.Entry<AEKeyType, ExternalStorageStrategy> entry : strategiesMap.get(side).entrySet()) {
+            MEStorage wrapper = entry.getValue().createWrapper(false, () -> {});
             if (wrapper != null) {
                 externalStorages.put(entry.getKey(), wrapper);
             }
@@ -72,7 +74,7 @@ class AdvPatternProviderTargetCache {
 
             @Override
             public boolean containsPatternInput(Set<AEKey> patternInputs) {
-                for (var stack : storage.getAvailableStacks()) {
+                for (Object2LongMap.Entry<AEKey> stack : storage.getAvailableStacks()) {
                     if (patternInputs.contains(stack.getKey().dropSecondary())) {
                         return true;
                     }
