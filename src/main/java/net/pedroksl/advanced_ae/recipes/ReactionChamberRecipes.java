@@ -23,18 +23,19 @@ public final class ReactionChamberRecipes {
     @Nullable
     public static ReactionChamberRecipe findRecipe(Level level, List<ItemStack> inputs, GenericStack fluid) {
         List<ItemStack> machineInputs = new ArrayList<>();
-        for (var stack : inputs)
+        for (ItemStack stack : inputs) {
             if (!stack.isEmpty()) {
                 machineInputs.add(stack);
             }
+        }
 
-        for (var recipe : getRecipes(level)) {
-            var validInputs = recipe.getValidInputs();
+        for (ReactionChamberRecipe recipe : getRecipes(level)) {
+            List<IngredientStack<?, ?>> validInputs = recipe.getValidInputs();
 
             boolean failed = false;
-            for (var input : validInputs) {
+            for (IngredientStack<?, ?> input : validInputs) {
                 boolean found = false;
-                for (var machineInput : machineInputs) {
+                for (ItemStack machineInput : machineInputs) {
                     if (input.checkType(machineInput)) {
                         if (((IngredientStack.Item) input).test(machineInput)
                                 && input.getAmount() <= machineInput.getCount()) {
@@ -44,8 +45,10 @@ public final class ReactionChamberRecipes {
                     }
                 }
 
-                if (input instanceof IngredientStack.Fluid fluidIn) {
-                    if (fluid != null && fluid.what() instanceof AEFluidKey key) {
+                if (input instanceof IngredientStack.Fluid) {
+                    IngredientStack.Fluid fluidIn = (IngredientStack.Fluid) input;
+                    if (fluid != null && fluid.what() instanceof AEFluidKey) {
+                        AEFluidKey key = (AEFluidKey) fluid.what();
                         FluidStack fluidStack = key.toStack((int) fluid.amount());
                         if (fluidIn.test(fluidStack) && input.getAmount() <= fluid.amount()) {
                             found = true;
@@ -69,7 +72,7 @@ public final class ReactionChamberRecipes {
     }
 
     public static boolean isValidIngredient(ItemStack stack, Level level) {
-        for (var recipe : getRecipes(level)) {
+        for (ReactionChamberRecipe recipe : getRecipes(level)) {
             if (recipe.containsIngredient(stack)) {
                 return true;
             }
@@ -78,7 +81,7 @@ public final class ReactionChamberRecipes {
     }
 
     public static boolean isValidIngredient(FluidStack stack, Level level) {
-        for (var recipe : getRecipes(level)) {
+        for (ReactionChamberRecipe recipe : getRecipes(level)) {
             if (recipe.containsIngredient(stack)) {
                 return true;
             }
