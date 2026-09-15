@@ -17,13 +17,13 @@ public class PatternsUpdatePacket extends AddonPacket {
         List<Boolean> invalidList = new ArrayList<>();
         List<Boolean> enabledList = new ArrayList<>();
 
-        var size = stream.readInt();
-        for (var x = 0; x < size; x++) {
+        int size = stream.readInt();
+        for (int x = 0; x < size; x++) {
             invalidList.add(stream.readBoolean());
         }
 
         size = stream.readInt();
-        for (var x = 0; x < size; x++) {
+        for (int x = 0; x < size; x++) {
             enabledList.add(stream.readBoolean());
         }
 
@@ -39,19 +39,20 @@ public class PatternsUpdatePacket extends AddonPacket {
     @Override
     public void write(FriendlyByteBuf stream) {
         stream.writeInt(this.invalidPatterns.size());
-        for (var entry : this.invalidPatterns) {
+        for (Boolean entry : this.invalidPatterns) {
             stream.writeBoolean(entry);
         }
 
         stream.writeInt(this.enabledPatterns.size());
-        for (var entry : this.enabledPatterns) {
+        for (Boolean entry : this.enabledPatterns) {
             stream.writeBoolean(entry);
         }
     }
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumCrafterScreen screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumCrafterScreen) {
+            QuantumCrafterScreen screen = (QuantumCrafterScreen) Minecraft.getInstance().screen;
             screen.updateInvalidButtons(this.invalidPatterns);
             screen.updateEnabledButtons(this.enabledPatterns);
         }
