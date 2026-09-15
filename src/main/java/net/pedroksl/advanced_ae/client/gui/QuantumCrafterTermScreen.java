@@ -166,15 +166,17 @@ public class QuantumCrafterTermScreen<C extends QuantumCrafterTermMenu> extends 
         int i = 0;
         for (; i < this.visibleRows; ++i) {
             if (scrollLevel + i < this.rows.size()) {
-                var row = this.rows.get(scrollLevel + i);
-                if (row instanceof ConfigRow configRow) {
+                Row row = this.rows.get(scrollLevel + i);
+                if (row instanceof ConfigRow) {
+                    ConfigRow configRow = (ConfigRow) row;
                     var configMap = this.configButtons.get(configRow.serverId);
                     for (int col = 0; col < configRow.slots; col++) {
                         var button = configMap.get(col);
                         button.setPosition(offsetX + col * SLOT_SIZE + GUI_PADDING_X, offsetY + (i + 1) * SLOT_SIZE);
                     }
                     configMap.forEach((key, value) -> setVisibility(value, true));
-                } else if (row instanceof SlotsRow slotsRow) {
+                } else if (row instanceof SlotsRow) {
+                    SlotsRow slotsRow = (SlotsRow) row;
                     // Note: We have to shift everything after the header up by 1 to avoid black line duplication.
                     for (int col = 0; col < slotsRow.slots; col++) {
                         var slot = new PatternSlot(
@@ -191,17 +193,19 @@ public class QuantumCrafterTermScreen<C extends QuantumCrafterTermMenu> extends 
                             guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, 0x7fff0000);
                         }
                     }
-                } else if (row instanceof EnabledRow enabledRow
-                        && this.enableButtons.containsKey(enabledRow.container.getServerId())) {
-                    var buttonMap = this.enableButtons.get(enabledRow.container.getServerId());
-                    for (int col = 0; col < enabledRow.slots; col++) {
-                        var button = buttonMap.get(col);
-                        button.setPosition(
-                                offsetX + col * SLOT_SIZE + GUI_PADDING_X + 1, offsetY + (i + 1) * SLOT_SIZE);
-                        button.setSelected(
-                                enabledRow.container.getEnabledArray().get(enabledRow.offset + col));
+                } else if (row instanceof EnabledRow) {
+                    EnabledRow enabledRow = (EnabledRow) row;
+                    if (this.enableButtons.containsKey(enabledRow.container.getServerId())) {
+                        var buttonMap = this.enableButtons.get(enabledRow.container.getServerId());
+                        for (int col = 0; col < enabledRow.slots; col++) {
+                            var button = buttonMap.get(col);
+                            button.setPosition(
+                                    offsetX + col * SLOT_SIZE + GUI_PADDING_X + 1, offsetY + (i + 1) * SLOT_SIZE);
+                            button.setSelected(
+                                    enabledRow.container.getEnabledArray().get(enabledRow.offset + col));
+                        }
+                        buttonMap.forEach((key, value) -> setVisibility(value, true));
                     }
-                    buttonMap.forEach((key, value) -> setVisibility(value, true));
                 }
             }
         }
@@ -219,7 +223,8 @@ public class QuantumCrafterTermScreen<C extends QuantumCrafterTermMenu> extends 
 
     @Override
     protected void slotClicked(Slot slot, int slotIdx, int mouseButton, ClickType clickType) {
-        if (slot instanceof PatternSlot machineSlot) {
+        if (slot instanceof PatternSlot) {
+            PatternSlot machineSlot = (PatternSlot) slot;
             InventoryAction action = null;
 
             switch (clickType) {
@@ -278,8 +283,9 @@ public class QuantumCrafterTermScreen<C extends QuantumCrafterTermMenu> extends 
             Rect2i bbox = selectRowBackgroundBox(false, firstLine, lastLine);
             blit(guiGraphics, offsetX, currentY, bbox);
             if (scrollLevel + i < this.rows.size()) {
-                var row = this.rows.get(scrollLevel + i);
-                if (row instanceof SlotsRow slotsRow) {
+                Row row = this.rows.get(scrollLevel + i);
+                if (row instanceof SlotsRow) {
+                    SlotsRow slotsRow = (SlotsRow) row;
                     bbox = selectRowBackgroundBox(true, firstLine, lastLine);
                     bbox.setWidth(GUI_PADDING_X + SLOT_SIZE * slotsRow.slots - 1);
                     blit(guiGraphics, offsetX, currentY, bbox);
@@ -571,17 +577,45 @@ public class QuantumCrafterTermScreen<C extends QuantumCrafterTermMenu> extends 
         return visibleRows;
     }
 
-    sealed interface Row {}
+    interface Row {}
 
     /**
      * A row containing a header for a group.
      */
-    record ConfigRow(long serverId, int slots) implements Row {}
+    static final class ConfigRow implements Row {
+        final long serverId;
+        final int slots;
+
+        ConfigRow(long serverId, int slots) {
+            this.serverId = serverId;
+            this.slots = slots;
+        }
+    }
 
     /**
      * A row containing slots for a subset of a pattern container inventory.
      */
-    record SlotsRow(AutoCrafterContainerRecord container, int offset, int slots) implements Row {}
+    static final class SlotsRow implements Row {
+        final AutoCrafterContainerRecord container;
+        final int offset;
+        final int slots;
 
-    record EnabledRow(AutoCrafterContainerRecord container, int offset, int slots) implements Row {}
+        SlotsRow(AutoCrafterContainerRecord container, int offset, int slots) {
+            this.container = container;
+            this.offset = offset;
+            this.slots = slots;
+        }
+    }
+
+    static final class EnabledRow implements Row {
+        final AutoCrafterContainerRecord container;
+        final int offset;
+        final int slots;
+
+        EnabledRow(AutoCrafterContainerRecord container, int offset, int slots) {
+            this.container = container;
+            this.offset = offset;
+            this.slots = slots;
+        }
+    }
 }
