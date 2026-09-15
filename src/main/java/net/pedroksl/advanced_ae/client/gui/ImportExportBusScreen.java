@@ -10,7 +10,7 @@ import appeng.client.gui.style.ScreenStyle;
 /**
  * 1.16.5 import/export bus screen backed by AE2 8.4.x I/O controls.
  */
-public class ImportExportBusScreen extends IOBusScreen<ImportExportBusMenu> {
+public class ImportExportBusScreen extends IOBusScreen {
 
     public ImportExportBusScreen(
             ImportExportBusMenu container,
