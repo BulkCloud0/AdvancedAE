@@ -1,108 +1,44 @@
 package net.pedroksl.advanced_ae.gui;
 
-import java.util.LinkedHashMap;
-
-import com.mojang.datafixers.util.Pair;
-
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.ContainerType;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
-import net.pedroksl.advanced_ae.common.helpers.AutoCraftingContainer;
-import net.pedroksl.advanced_ae.network.AAENetworkHandler;
-import net.pedroksl.advanced_ae.network.packet.PatternConfigServerUpdatePacket;
 
-import appeng.api.stacks.AEKey;
-import appeng.api.storage.ISubMenuHost;
-import appeng.menu.AEBaseMenu;
-import appeng.menu.ISubMenu;
-import appeng.menu.MenuOpener;
-import appeng.menu.locator.MenuLocator;
+import appeng.container.AEBaseContainer;
 
-public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubMenu {
+/**
+ * 1.16.5 compatibility container for per-pattern quantum-crafter settings.
+ *
+ * <p>The modern screen exchanges AEKey-based configuration maps and uses the
+ * generic submenu framework. AE2 8.4.x predates both APIs. Keep the container
+ * identity and host linkage here; stock/limit editing is restored when the
+ * quantum crafter storage model is converted to IAEItemStack.</p>
+ */
+public class QuantumCrafterConfigPatternMenu extends AEBaseContainer {
 
-    private int index;
-    private final ISubMenuHost host;
-    private AutoCraftingContainer crafter;
+    private final Object host;
+    private int patternIndex = -1;
 
-    private final String SET_MAX_CRAFTED = "set_max_crafted";
-
-    public LinkedHashMap<AEKey, Long> inputs = new LinkedHashMap<>();
-    public Pair<AEKey, Long> output;
-
-    public QuantumCrafterConfigPatternMenu(int id, Inventory ip, ISubMenuHost host) {
-        this(AAEMenus.CRAFTER_PATTERN_CONFIG.get(), id, ip, host);
+    public QuantumCrafterConfigPatternMenu(int id, PlayerInventory playerInventory, Object host) {
+        this(AAEMenus.CRAFTER_PATTERN_CONFIG.get(), id, playerInventory, host);
     }
 
-    protected QuantumCrafterConfigPatternMenu(
-            MenuType<? extends QuantumCrafterConfigPatternMenu> type, int id, Inventory ip, ISubMenuHost host) {
-        super(type, id, ip, host);
+    public QuantumCrafterConfigPatternMenu(
+            ContainerType<?> type, int id, PlayerInventory playerInventory, Object host) {
+        super(type, id, playerInventory, host);
         this.host = host;
-
-        registerClientAction(SET_MAX_CRAFTED, Long.class, this::setMaxCrafted);
+        createPlayerInventorySlots(playerInventory);
     }
 
-    @Override
-    public ISubMenuHost getHost() {
+    public Object getHost() {
         return host;
     }
 
-    public static void open(
-            ServerPlayer player,
-            MenuLocator locator,
-            AutoCraftingContainer crafter,
-            int index,
-            LinkedHashMap<AEKey, Long> inputs,
-            Pair<AEKey, Long> output) {
-        MenuOpener.open(AAEMenus.CRAFTER_PATTERN_CONFIG.get(), player, locator);
-
-        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu) {
-            QuantumCrafterConfigPatternMenu cca = (QuantumCrafterConfigPatternMenu) player.containerMenu;
-            cca.setCrafter(crafter);
-            cca.setIndex(index);
-            cca.setInputsAndOutput(inputs, output);
-            cca.broadcastChanges();
-        }
+    public int getPatternIndex() {
+        return patternIndex;
     }
 
-    private void setCrafter(AutoCraftingContainer crafter) {
-        this.crafter = crafter;
-    }
-
-    private void setIndex(int index) {
-        this.index = index;
-    }
-
-    private void setInputsAndOutput(LinkedHashMap<AEKey, Long> inputs, Pair<AEKey, Long> output) {
-        this.inputs = new LinkedHashMap<>(inputs);
-        this.output = new Pair<>(output.getFirst(), output.getSecond());
-
-        if (isServerSide()
-                && this.inputs != null
-                && this.output != null
-                && getPlayer() instanceof ServerPlayer) {
-            ServerPlayer player = (ServerPlayer) getPlayer();
-            AAENetworkHandler.INSTANCE.sendTo(new PatternConfigServerUpdatePacket(this.inputs, this.output), player);
-        }
-    }
-
-    public Level getLevel() {
-        return this.getPlayerInventory().player.level();
-    }
-
-    public void setStockAmount(int inputIndex, long amount) {
-        crafter.setStockAmount(this.index, inputIndex, amount);
-        setInputsAndOutput(crafter.getPatternConfigInputs(this.index), crafter.getPatternConfigOutput(this.index));
-    }
-
-    public void setMaxCrafted(long amount) {
-        if (isClientSide()) {
-            sendClientAction(SET_MAX_CRAFTED, amount);
-            return;
-        }
-
-        crafter.setMaxCrafted(this.index, amount);
-        setInputsAndOutput(crafter.getPatternConfigInputs(this.index), crafter.getPatternConfigOutput(this.index));
+    public void setPatternIndex(int patternIndex) {
+        this.patternIndex = patternIndex;
     }
 }
