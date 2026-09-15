@@ -1,6 +1,6 @@
 package net.pedroksl.advanced_ae.common.items.upgrades;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.PacketBuffer;
 
 public class UpgradeSettings {
 
@@ -44,16 +44,16 @@ public class UpgradeSettings {
         return defaultValue;
     }
 
-    public static UpgradeSettings fromBytes(FriendlyByteBuf stream) {
-        var minValue = stream.readInt();
-        var maxValue = stream.readInt();
-        var multiplier = stream.readFloat();
-        var defaultValue = stream.readInt();
+    public static UpgradeSettings fromBytes(PacketBuffer stream) {
+        int minValue = stream.readInt();
+        int maxValue = stream.readInt();
+        float multiplier = stream.readFloat();
+        int defaultValue = stream.readInt();
 
         return new UpgradeSettings(minValue, maxValue, multiplier, defaultValue);
     }
 
-    public void toBytes(FriendlyByteBuf data) {
+    public void toBytes(PacketBuffer data) {
         data.writeInt(minValue);
         data.writeInt(maxValue);
         data.writeFloat(multiplier);
