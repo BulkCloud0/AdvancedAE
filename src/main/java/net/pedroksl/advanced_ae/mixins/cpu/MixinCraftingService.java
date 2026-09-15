@@ -3,13 +3,18 @@ package net.pedroksl.advanced_ae.mixins.cpu;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,13 +22,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import net.minecraft.nbt.CompoundTag;
+import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCluster;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
-import appeng.api.networking.crafting.*;
+import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.crafting.ICraftingLink;
+import appeng.api.networking.crafting.ICraftingPlan;
+import appeng.api.networking.crafting.ICraftingRequester;
+import appeng.api.networking.crafting.ICraftingSubmitResult;
+import appeng.api.networking.crafting.UnsuitableCpus;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
@@ -77,18 +88,17 @@ public class MixinCraftingService {
 
     @Inject(
             method = "onServerEndTick",
-            at =
-                    @At(
-                            value = "FIELD",
-                            target = "Lappeng/me/service/CraftingService;lastProcessedCraftingLogicChangeTick:J",
-                            opcode = Opcodes.GETFIELD,
-                            ordinal = 0),
+            at = @At(
+                    value = "FIELD",
+                    target = "Lappeng/me/service/CraftingService;lastProcessedCraftingLogicChangeTick:J",
+                    opcode = Opcodes.GETFIELD,
+                    ordinal = 0),
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void tickAdvClusters1(CallbackInfo ci, long latestChange) {
         long latestChangeLocal = 0;
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
             if (cluster != null) {
-                for (var cpu : cluster.getActiveCPUs()) {
+                for (AdvCraftingCPU cpu : cluster.getActiveCPUs()) {
                     cpu.craftingLogic.tickCraftingLogic(energyGrid, (CraftingService) (Object) this);
                     latestChangeLocal = Math.max(latestChangeLocal, cpu.craftingLogic.getLastModifiedOnTick());
                 }
@@ -96,24 +106,21 @@ public class MixinCraftingService {
         }
 
         if (latestChangeLocal > latestChange) {
-            // our crafting CPUs did something, fire notifications
             this.lastProcessedCraftingLogicChangeTick = -1;
         }
     }
 
     @Inject(
             method = "onServerEndTick",
-            at =
-                    @At(
-                            value = "FIELD",
-                            target =
-                                    "Lappeng/me/service/CraftingService;interests:Lcom/google/common/collect/Multimap;",
-                            opcode = Opcodes.GETFIELD,
-                            ordinal = 0))
+            at = @At(
+                    value = "FIELD",
+                    target = "Lappeng/me/service/CraftingService;interests:Lcom/google/common/collect/Multimap;",
+                    opcode = Opcodes.GETFIELD,
+                    ordinal = 0))
     private void tickAdvClusters2(CallbackInfo ci) {
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
             if (cluster != null) {
-                for (var cpu : cluster.getActiveCPUs()) {
+                for (AdvCraftingCPU cpu : cluster.getActiveCPUs()) {
                     cpu.craftingLogic.getAllWaitingFor(this.currentlyCrafting);
                 }
             }
@@ -138,12 +145,12 @@ public class MixinCraftingService {
     private void onUpdateCPUClusters(CallbackInfo ci) {
         this.advancedAE$advCraftingCPUClusters.clear();
 
-        for (var blockEntity : this.grid.getMachines(AdvCraftingBlockEntity.class)) {
-            final AdvCraftingCPUCluster cluster = blockEntity.getCluster();
+        for (AdvCraftingBlockEntity blockEntity : this.grid.getMachines(AdvCraftingBlockEntity.class)) {
+            AdvCraftingCPUCluster cluster = blockEntity.getCluster();
             if (cluster != null) {
                 this.advancedAE$advCraftingCPUClusters.add(cluster);
 
-                for (var cpu : cluster.getActiveCPUs()) {
+                for (AdvCraftingCPU cpu : cluster.getActiveCPUs()) {
                     ICraftingLink maybeLink = cpu.craftingLogic.getLastLink();
                     if (maybeLink != null) {
                         this.addLink((CraftingLink) maybeLink);
@@ -153,20 +160,16 @@ public class MixinCraftingService {
         }
     }
 
-    /**
-     * @author Pedroksl
-     * @reason Add Advanced CPU Clusters to this method
-     */
     @Overwrite
     public long insertIntoCpus(AEKey what, long amount, Actionable type) {
         long inserted = 0;
-        for (var cpu : this.craftingCPUClusters) {
+        for (CraftingCPUCluster cpu : this.craftingCPUClusters) {
             inserted += cpu.craftingLogic.insert(what, amount - inserted, type);
         }
 
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
             if (cluster != null) {
-                for (var cpu : cluster.getActiveCPUs()) {
+                for (AdvCraftingCPU cpu : cluster.getActiveCPUs()) {
                     inserted += cpu.craftingLogic.insert(what, amount - inserted, type);
                 }
             }
@@ -176,13 +179,12 @@ public class MixinCraftingService {
 
     @Inject(
             method = "submitJob",
-            at =
-                    @At(
-                            value = "INVOKE_ASSIGN",
-                            target = "appeng/me/service/CraftingService.findSuitableCraftingCPU "
-                                    + "(Lappeng/api/networking/crafting/ICraftingPlan;ZLappeng/api/networking/security/IActionSource;"
-                                    + "Lorg/apache/commons/lang3/mutable/MutableObject;)"
-                                    + "Lappeng/me/cluster/implementations/CraftingCPUCluster;"),
+            at = @At(
+                    value = "INVOKE_ASSIGN",
+                    target = "appeng/me/service/CraftingService.findSuitableCraftingCPU "
+                            + "(Lappeng/api/networking/crafting/ICraftingPlan;ZLappeng/api/networking/security/IActionSource;"
+                            + "Lorg/apache/commons/lang3/mutable/MutableObject;)"
+                            + "Lappeng/me/cluster/implementations/CraftingCPUCluster;"),
             cancellable = true,
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void onSubmitJob(
@@ -194,16 +196,16 @@ public class MixinCraftingService {
             CallbackInfoReturnable<ICraftingSubmitResult> cir,
             CraftingCPUCluster cpuCluster,
             MutableObject<UnsuitableCpus> unsuitableCpusResult) {
-        if (target instanceof AdvCraftingCPUCluster advCpuCluster) {
+        if (target instanceof AdvCraftingCPUCluster) {
+            AdvCraftingCPUCluster advCpuCluster = (AdvCraftingCPUCluster) target;
             cir.setReturnValue(advCpuCluster.submitJob(this.grid, job, src, requestingMachine));
         } else {
-            var advCluster = advancedAE$findSuitableAdvCraftingCPU(job, src, unsuitableCpusResult);
+            AdvCraftingCPUCluster advCluster = advancedAE$findSuitableAdvCraftingCPU(job, src, unsuitableCpusResult);
             if (advCluster != null) {
                 updateList = true;
                 cir.setReturnValue(advCluster.submitJob(this.grid, job, src, requestingMachine));
             } else if (cpuCluster == null) {
-                var unsuitableCpus = unsuitableCpusResult.getValue();
-                // If no CPUs were unsuitable, but we couldn't find one, that means there aren't any
+                UnsuitableCpus unsuitableCpus = unsuitableCpusResult.getValue();
                 if (unsuitableCpus == null) {
                     cir.setReturnValue(CraftingSubmitResult.NO_CPU_FOUND);
                 } else {
@@ -216,12 +218,13 @@ public class MixinCraftingService {
     @Unique
     private AdvCraftingCPUCluster advancedAE$findSuitableAdvCraftingCPU(
             ICraftingPlan job, IActionSource src, MutableObject<UnsuitableCpus> unsuitableCpusResult) {
-        var validCpusClusters = new ArrayList<AdvCraftingCPUCluster>(this.advancedAE$advCraftingCPUClusters.size());
+        List<AdvCraftingCPUCluster> validCpusClusters =
+                new ArrayList<AdvCraftingCPUCluster>(this.advancedAE$advCraftingCPUClusters.size());
         int offline = 0;
         int tooSmall = 0;
         int excluded = 0;
 
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
             if (!cluster.isActive()) {
                 offline++;
                 continue;
@@ -245,14 +248,11 @@ public class MixinCraftingService {
         }
 
         validCpusClusters.sort((a, b) -> {
-            // Prioritize sorting by selected mode
-            var firstPreferred = a.isPreferredFor(src);
-            var secondPreferred = b.isPreferredFor(src);
+            boolean firstPreferred = a.isPreferredFor(src);
+            boolean secondPreferred = b.isPreferredFor(src);
             if (firstPreferred != secondPreferred) {
-                // Sort such that preferred comes first, not preferred second
                 return Boolean.compare(secondPreferred, firstPreferred);
             }
-
             return FAST_FIRST_COMPARATOR.compare(a, b);
         });
 
@@ -262,8 +262,8 @@ public class MixinCraftingService {
     @Inject(method = "getCpus", at = @At("RETURN"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
     private void onGetCpus(
             CallbackInfoReturnable<ImmutableSet<ICraftingCPU>> cir, ImmutableSet.Builder<ICraftingCPU> cpus) {
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
-            for (var cpu : cluster.getActiveCPUs()) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
+            for (AdvCraftingCPU cpu : cluster.getActiveCPUs()) {
                 cpus.add(cpu);
             }
             cpus.add(cluster.getRemainingCapacityCPU());
@@ -277,19 +277,18 @@ public class MixinCraftingService {
             cancellable = true,
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void onGetRequestedAmount(AEKey what, CallbackInfoReturnable<Long> cir, long requested) {
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
-            for (var cpu : cluster.getActiveCPUs()) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
+            for (AdvCraftingCPU cpu : cluster.getActiveCPUs()) {
                 requested += cpu.craftingLogic.getWaitingFor(what);
             }
         }
-
         cir.setReturnValue(requested);
     }
 
     @Inject(method = "hasCpu", at = @At("HEAD"), cancellable = true)
     private void onHasCpu(ICraftingCPU cpu, CallbackInfoReturnable<Boolean> cir) {
-        for (var cluster : this.advancedAE$advCraftingCPUClusters) {
-            for (var activeCpu : cluster.getActiveCPUs()) {
+        for (AdvCraftingCPUCluster cluster : this.advancedAE$advCraftingCPUClusters) {
+            for (AdvCraftingCPU activeCpu : cluster.getActiveCPUs()) {
                 if (activeCpu == cpu) {
                     cir.setReturnValue(true);
                     return;
