@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
@@ -72,16 +73,20 @@ public class AdvPatternEncoderMenu extends AEBaseMenu {
     private void decodeInputPattern() {
         ItemStack stack = this.inputSlot.getItem();
 
-        IPatternDetails details =
-                PatternDetailsHelper.decodePattern(stack, this.getPlayer().level(), false);
+        IPatternDetails details = PatternDetailsHelper.decodePattern(stack, this.getPlayer().level(), false);
 
-        if (details == null) return;
+        if (details == null) {
+            return;
+        }
+        if (!(details instanceof AEProcessingPattern)) {
+            return;
+        }
 
-        if (!(details instanceof AEProcessingPattern pattern)) return;
+        AEProcessingPattern pattern = (AEProcessingPattern) details;
         boolean advPattern = details instanceof AdvProcessingPattern;
         AdvProcessingPattern advDetails = advPattern ? (AdvProcessingPattern) details : null;
 
-        var sparseInputs = pattern.getSparseInputs();
+        GenericStack[] sparseInputs = pattern.getSparseInputs();
 
         LinkedHashMap<AEKey, Direction> inputList = new LinkedHashMap<>();
         for (GenericStack input : sparseInputs) {
@@ -98,19 +103,21 @@ public class AdvPatternEncoderMenu extends AEBaseMenu {
         if (advPattern) {
             this.outputSlot.set(stack.copy());
         } else {
-            var newAdvPattern = AdvPatternDetailsEncoder.encodeProcessingPattern(
+            ItemStack newAdvPattern = AdvPatternDetailsEncoder.encodeProcessingPattern(
                     pattern.getSparseInputs(), pattern.getSparseOutputs(), inputList);
             this.outputSlot.set(newAdvPattern);
         }
 
-        if (this.getPlayer() instanceof ServerPlayer sp) {
-            AAENetworkHandler.INSTANCE.sendTo(new AdvPatternEncoderPacket(inputList), sp);
+        if (this.getPlayer() instanceof ServerPlayer) {
+            ServerPlayer serverPlayer = (ServerPlayer) this.getPlayer();
+            AAENetworkHandler.INSTANCE.sendTo(new AdvPatternEncoderPacket(inputList), serverPlayer);
         }
     }
 
     private void clearDecodedPattern() {
-        if (this.getPlayer() instanceof ServerPlayer sp) {
-            AAENetworkHandler.INSTANCE.sendTo(new AdvPatternEncoderPacket(), sp);
+        if (this.getPlayer() instanceof ServerPlayer) {
+            ServerPlayer serverPlayer = (ServerPlayer) this.getPlayer();
+            AAENetworkHandler.INSTANCE.sendTo(new AdvPatternEncoderPacket(), serverPlayer);
         }
     }
 
@@ -119,19 +126,21 @@ public class AdvPatternEncoderMenu extends AEBaseMenu {
             copyItemToOutputSlot();
         }
 
-        var item = this.outputSlot.getItem().getItem();
-        if (item instanceof AdvProcessingPatternItem patternItem) {
+        Item item = this.outputSlot.getItem().getItem();
+        if (item instanceof AdvProcessingPatternItem) {
+            AdvProcessingPatternItem patternItem = (AdvProcessingPatternItem) item;
             AdvProcessingPattern pattern = patternItem.decode(
                     this.outputSlot.getItem(), this.getPlayer().level(), false);
             if (pattern != null) {
-                var dirMap = pattern.getDirectionMap();
+                LinkedHashMap<AEKey, Direction> dirMap = pattern.getDirectionMap();
                 dirMap.put(key, dir);
-                var newPattern = AdvPatternDetailsEncoder.encodeProcessingPattern(
+                ItemStack newPattern = AdvPatternDetailsEncoder.encodeProcessingPattern(
                         pattern.getSparseInputs(), pattern.getSparseOutputs(), dirMap);
                 this.outputSlot.set(newPattern);
 
-                if (this.getPlayer() instanceof ServerPlayer sp) {
-                    AAENetworkHandler.INSTANCE.sendTo(new AdvPatternEncoderPacket(dirMap), sp);
+                if (this.getPlayer() instanceof ServerPlayer) {
+                    ServerPlayer serverPlayer = (ServerPlayer) this.getPlayer();
+                    AAENetworkHandler.INSTANCE.sendTo(new AdvPatternEncoderPacket(dirMap), serverPlayer);
                 }
             }
         }
@@ -140,18 +149,22 @@ public class AdvPatternEncoderMenu extends AEBaseMenu {
     public void copyItemToOutputSlot() {
         ItemStack stack = this.inputSlot.getItem();
 
-        IPatternDetails details =
-                PatternDetailsHelper.decodePattern(stack, this.getPlayer().level(), false);
+        IPatternDetails details = PatternDetailsHelper.decodePattern(stack, this.getPlayer().level(), false);
 
-        if (details == null) return;
+        if (details == null) {
+            return;
+        }
+        if (!(details instanceof AEProcessingPattern)) {
+            return;
+        }
 
-        if (!(details instanceof AEProcessingPattern pattern)) return;
+        AEProcessingPattern pattern = (AEProcessingPattern) details;
         boolean advPattern = details instanceof AdvProcessingPattern;
 
         if (advPattern) {
             this.outputSlot.set(stack);
         } else {
-            var newAdvPattern =
+            ItemStack newAdvPattern =
                     AAEItems.ADV_PROCESSING_PATTERN.get().encode(pattern.getSparseInputs(), pattern.getSparseOutputs());
             this.outputSlot.set(newAdvPattern);
         }
