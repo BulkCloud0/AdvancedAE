@@ -1,6 +1,7 @@
 package net.pedroksl.advanced_ae.mixins.eae;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.glodblock.github.extendedae.container.ContainerPatternModifier;
 import com.glodblock.github.extendedae.util.Ae2Reflect;
@@ -13,10 +14,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.common.patterns.AdvPatternDetailsEncoder;
 import net.pedroksl.advanced_ae.common.patterns.AdvProcessingPattern;
 
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -64,33 +67,32 @@ public class MixinContainerPatternModifier extends AEBaseMenu {
     @Shadow(remap = false)
     private void modifyStacks(GenericStack[] stacks, GenericStack[] des, int scale, boolean div) {}
 
-    /**
-     * @author pedroksl
-     * @reason Enabled replace method to keep adv patterns custom tags
-     */
     @Overwrite(remap = false)
     public void replace() {
-        var replace = this.replaceTarget.getItem();
-        var with = this.replaceWith.getItem();
+        ItemStack replace = this.replaceTarget.getItem();
+        ItemStack with = this.replaceWith.getItem();
         if (replace.isEmpty() || with.isEmpty()) {
             return;
         }
-        for (var slot : this.getSlots(SlotSemantics.ENCODED_PATTERN)) {
-            var stack = slot.getItem();
-            if (stack.getItem() instanceof EncodedPatternItem pattern) {
-                var detail = pattern.decode(stack, this.getPlayer().level(), false);
-                if (detail instanceof AEProcessingPattern process) {
-                    var input = process.getSparseInputs();
-                    var output = process.getOutputs();
-                    var replaceInput = new GenericStack[input.length];
-                    var replaceOutput = new GenericStack[output.length];
+
+        for (Slot slot : this.getSlots(SlotSemantics.ENCODED_PATTERN)) {
+            ItemStack stack = slot.getItem();
+            if (stack.getItem() instanceof EncodedPatternItem) {
+                EncodedPatternItem pattern = (EncodedPatternItem) stack.getItem();
+                IPatternDetails detail = pattern.decode(stack, this.getPlayer().level(), false);
+                if (detail instanceof AEProcessingPattern) {
+                    AEProcessingPattern process = (AEProcessingPattern) detail;
+                    GenericStack[] input = process.getSparseInputs();
+                    GenericStack[] output = process.getOutputs();
+                    GenericStack[] replaceInput = new GenericStack[input.length];
+                    GenericStack[] replaceOutput = new GenericStack[output.length];
                     this.replace(input, replaceInput, AEItemKey.of(replace), AEItemKey.of(with));
                     this.replace(output, replaceOutput, AEItemKey.of(replace), AEItemKey.of(with));
-                    // Start edit
-                    if (detail instanceof AdvProcessingPattern advPattern) {
-                        var dirMap = advPattern.getDirectionMap();
-                        var newDirMap = new HashMap<AEKey, Direction>();
-                        for (var entry : dirMap.entrySet()) {
+
+                    if (detail instanceof AdvProcessingPattern) {
+                        AdvProcessingPattern advPattern = (AdvProcessingPattern) detail;
+                        HashMap<AEKey, Direction> newDirMap = new HashMap<>();
+                        for (Map.Entry<AEKey, Direction> entry : advPattern.getDirectionMap().entrySet()) {
                             if (AEItemKey.matches(entry.getKey(), replace)) {
                                 newDirMap.put(AEItemKey.of(with), entry.getValue());
                             } else {
@@ -101,32 +103,27 @@ public class MixinContainerPatternModifier extends AEBaseMenu {
                                 replaceInput, replaceOutput, newDirMap);
                         slot.set(newPattern);
                     } else {
-                        ItemStack newPattern =
-                                PatternDetailsHelper.encodeProcessingPattern(replaceInput, replaceOutput);
+                        ItemStack newPattern = PatternDetailsHelper.encodeProcessingPattern(replaceInput, replaceOutput);
                         slot.set(newPattern);
                     }
-                    // End edit
-                } else if (detail instanceof AECraftingPattern craft) {
-                    var input = craft.getSparseInputs();
-                    var output = craft.getPrimaryOutput();
-                    var replaceInput = new GenericStack[input.length];
+                } else if (detail instanceof AECraftingPattern) {
+                    AECraftingPattern craft = (AECraftingPattern) detail;
+                    GenericStack[] input = craft.getSparseInputs();
+                    GenericStack output = craft.getPrimaryOutput();
+                    GenericStack[] replaceInput = new GenericStack[input.length];
                     this.replace(input, replaceInput, AEItemKey.of(replace), AEItemKey.of(with));
                     try {
-                        var newPattern = PatternDetailsHelper.encodeCraftingPattern(
+                        ItemStack newPattern = PatternDetailsHelper.encodeCraftingPattern(
                                 Ae2Reflect.getCraftRecipe(craft),
                                 itemize(replaceInput),
                                 itemize(output),
                                 craft.canSubstitute,
                                 craft.canSubstituteFluids);
-                        //noinspection DataFlowIssue
-                        var check = new AECraftingPattern(
-                                AEItemKey.of(newPattern), this.getPlayer().level());
-                        //noinspection ConstantValue
+                        AECraftingPattern check = new AECraftingPattern(AEItemKey.of(newPattern), this.getPlayer().level());
                         if (check != null) {
                             slot.set(newPattern);
                         }
                     } catch (Exception e) {
-                        // It is an invalid change
                         return;
                     }
                 }
@@ -134,38 +131,36 @@ public class MixinContainerPatternModifier extends AEBaseMenu {
         }
     }
 
-    /**
-     * @author pedroksl
-     * @reason Enabled modify method to keep adv patterns custom tags
-     */
     @Overwrite(remap = false)
     public void modify(int scale, boolean div) {
         if (scale <= 0) {
             return;
         }
-        for (var slot : this.getSlots(SlotSemantics.ENCODED_PATTERN)) {
-            var stack = slot.getItem();
-            if (stack.getItem() instanceof EncodedPatternItem pattern) {
-                var detail = pattern.decode(stack, this.getPlayer().level(), false);
-                if (detail instanceof AEProcessingPattern process) {
-                    var input = process.getSparseInputs();
-                    var output = process.getOutputs();
+
+        for (Slot slot : this.getSlots(SlotSemantics.ENCODED_PATTERN)) {
+            ItemStack stack = slot.getItem();
+            if (stack.getItem() instanceof EncodedPatternItem) {
+                EncodedPatternItem pattern = (EncodedPatternItem) stack.getItem();
+                IPatternDetails detail = pattern.decode(stack, this.getPlayer().level(), false);
+                if (detail instanceof AEProcessingPattern) {
+                    AEProcessingPattern process = (AEProcessingPattern) detail;
+                    GenericStack[] input = process.getSparseInputs();
+                    GenericStack[] output = process.getOutputs();
                     if (checkModify(input, scale, div) && checkModify(output, scale, div)) {
-                        var mulInput = new GenericStack[input.length];
-                        var mulOutput = new GenericStack[output.length];
+                        GenericStack[] mulInput = new GenericStack[input.length];
+                        GenericStack[] mulOutput = new GenericStack[output.length];
                         modifyStacks(input, mulInput, scale, div);
                         modifyStacks(output, mulOutput, scale, div);
-                        // Start edit
-                        if (detail instanceof AdvProcessingPattern advPattern) {
-                            var dirMap = advPattern.getDirectionMap();
-                            ItemStack newPattern =
-                                    AdvPatternDetailsEncoder.encodeProcessingPattern(mulInput, mulOutput, dirMap);
+
+                        if (detail instanceof AdvProcessingPattern) {
+                            AdvProcessingPattern advPattern = (AdvProcessingPattern) detail;
+                            ItemStack newPattern = AdvPatternDetailsEncoder.encodeProcessingPattern(
+                                    mulInput, mulOutput, advPattern.getDirectionMap());
                             slot.set(newPattern);
                         } else {
                             ItemStack newPattern = PatternDetailsHelper.encodeProcessingPattern(mulInput, mulOutput);
                             slot.set(newPattern);
                         }
-                        // End edit
                     }
                 }
             }
