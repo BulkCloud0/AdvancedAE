@@ -1,9 +1,7 @@
 package net.pedroksl.advanced_ae;
 
-import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -15,7 +13,6 @@ import net.pedroksl.advanced_ae.events.AAEPlayerEvents;
 import net.pedroksl.advanced_ae.network.AAENetworkHandler;
 import net.pedroksl.advanced_ae.recipes.InitRecipeSerializers;
 import net.pedroksl.advanced_ae.xmod.Addons;
-import net.pedroksl.advanced_ae.xmod.ae2wtlib.AE2WtLibPlugin;
 import net.pedroksl.advanced_ae.xmod.appflux.AppliedFluxPlugin;
 
 import appeng.api.crafting.PatternDetailsHelper;
@@ -47,7 +44,6 @@ public class AdvancedAE {
         InitRecipeSerializers.register(eventBus);
 
         eventBus.addListener(this::commonSetup);
-        eventBus.addGenericListener(Item.class, this::onItemRegistry);
         MinecraftForge.EVENT_BUS.register(this);
 
         eventBus.addListener(AdvancedAE::initUpgrades);
@@ -58,12 +54,6 @@ public class AdvancedAE {
 
     public static AdvancedAE instance() {
         return INSTANCE;
-    }
-
-    private void onItemRegistry(final RegistryEvent.Register<Item> event) {
-        if (Addons.AE2WTLIB.isLoaded()) {
-            AE2WtLibPlugin.commonInit();
-        }
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -79,9 +69,6 @@ public class AdvancedAE {
         GridLinkables.register(AAEItems.QUANTUM_CHESTPLATE, IGridLinkedItem.LINKABLE_HANDLER);
         GridLinkables.register(AAEItems.QUANTUM_LEGGINGS, IGridLinkedItem.LINKABLE_HANDLER);
         GridLinkables.register(AAEItems.QUANTUM_BOOTS, IGridLinkedItem.LINKABLE_HANDLER);
-        if (Addons.AE2WTLIB.isLoaded()) {
-            AE2WtLibPlugin.initGridLinkables();
-        }
     }
 
     private static void initUpgrades(FMLCommonSetupEvent event) {
@@ -107,10 +94,6 @@ public class AdvancedAE {
 
             if (Addons.APPFLUX.isLoaded()) {
                 AppliedFluxPlugin.init();
-            }
-
-            if (Addons.AE2WTLIB.isLoaded()) {
-                AE2WtLibPlugin.initUpgrades();
             }
         });
     }

@@ -29,8 +29,6 @@ import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.events.AAEClientPlayerEvents;
 import net.pedroksl.advanced_ae.gui.QuantumCrafterTermMenu;
 import net.pedroksl.advanced_ae.gui.StockExportBusMenu;
-import net.pedroksl.advanced_ae.xmod.Addons;
-import net.pedroksl.advanced_ae.xmod.ae2wtlib.AE2WtLibPlugin;
 import net.pedroksl.ae2addonlib.registry.helpers.LibTags;
 import net.pedroksl.ae2addonlib.util.Colors;
 
@@ -124,9 +122,6 @@ public class AAEClient extends AdvancedAE {
                 AAEMenus.QUANTUM_CRAFTER_TERMINAL.get(),
                 QuantumCrafterTermScreen::new,
                 "/screens/quantum_crafter_terminal.json");
-        if (Addons.AE2WTLIB.isLoaded()) {
-            AE2WtLibPlugin.initScreen();
-        }
 
         InitScreens.register(
                 AAEMenus.QUANTUM_ARMOR_CONFIG.get(),
