@@ -20,6 +20,7 @@ package net.pedroksl.advanced_ae.common.patterns;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
@@ -81,7 +82,7 @@ class AdvPatternEncoding {
             CompoundTag compTag = tag.getCompound(x);
             AEKey key = AEKey.fromTagGeneric(compTag.getCompound("aekey"));
 
-            var intTag = compTag.getInt("dir");
+            int intTag = compTag.getInt("dir");
             Direction dir = intTag == -1 ? null : Direction.from3DDataValue(intTag);
 
             dirMap.put(key, dir);
@@ -119,7 +120,7 @@ class AdvPatternEncoding {
 
     private static ListTag encodeDirectionList(HashMap<AEKey, Direction> dirMap) {
         ListTag tag = new ListTag();
-        for (var entry : dirMap.entrySet()) {
+        for (Map.Entry<AEKey, Direction> entry : dirMap.entrySet()) {
             CompoundTag dirTag = new CompoundTag();
             dirTag.put("aekey", entry.getKey().toTagGeneric());
             Direction dir = entry.getValue();
