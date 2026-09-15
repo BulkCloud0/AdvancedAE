@@ -234,7 +234,8 @@ public class ReactionChamberEntity extends AENetworkPowerBlockEntity
         FluidStack fluidStack = null;
         if (fluid != null) {
             AEKey aeKey = fluid.what();
-            if (aeKey instanceof AEFluidKey key) {
+            if (aeKey instanceof AEFluidKey) {
+                AEFluidKey key = (AEFluidKey) aeKey;
                 fluidStack = key.toStack((int) fluid.amount());
             }
         }
@@ -345,14 +346,25 @@ public class ReactionChamberEntity extends AENetworkPowerBlockEntity
                 IEnergyService eg = grid.getEnergyService();
                 IEnergySource src = this;
 
-                final int speedFactor =
-                        switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {
-                            default -> 2; // 116 ticks
-                            case 1 -> 3; // 83 ticks
-                            case 2 -> 5; // 56 ticks
-                            case 3 -> 10; // 36 ticks
-                            case 4 -> 50; // 20 ticks
-                        };
+                final int installedSpeedCards = this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD);
+                final int speedFactor;
+                switch (installedSpeedCards) {
+                    case 1:
+                        speedFactor = 3; // 83 ticks
+                        break;
+                    case 2:
+                        speedFactor = 5; // 56 ticks
+                        break;
+                    case 3:
+                        speedFactor = 10; // 36 ticks
+                        break;
+                    case 4:
+                        speedFactor = 50; // 20 ticks
+                        break;
+                    default:
+                        speedFactor = 2; // 116 ticks
+                        break;
+                }
 
                 final int progressReq = MAX_PROCESSING_STEPS - this.getProcessingTime();
                 final float powerRatio = progressReq < speedFactor ? (float) progressReq / speedFactor : 1;
@@ -424,7 +436,8 @@ public class ReactionChamberEntity extends AENetworkPowerBlockEntity
                         FluidStack fluidStack = null;
                         if (fluid != null) {
                             AEKey aeKey = fluid.what();
-                            if (aeKey instanceof AEFluidKey key) {
+                            if (aeKey instanceof AEFluidKey) {
+                                AEFluidKey key = (AEFluidKey) aeKey;
                                 fluidStack = key.toStack((int) fluid.amount());
                             }
                         }
@@ -628,10 +641,12 @@ public class ReactionChamberEntity extends AENetworkPowerBlockEntity
         super.exportSettings(mode, output, player);
 
         if (mode == SettingsFrom.MEMORY_CARD) {
-            var outputs = getAllowedOutputs();
-            var sides = new IntArrayTag(outputs.stream()
-                    .map(o -> o.getUnrotatedSide().get3DDataValue())
-                    .toList());
+            EnumSet<RelativeSide> outputs = getAllowedOutputs();
+            List<Integer> outputSides = new ArrayList<Integer>();
+            for (RelativeSide outputSide : outputs) {
+                outputSides.add(outputSide.getUnrotatedSide().get3DDataValue());
+            }
+            IntArrayTag sides = new IntArrayTag(outputSides);
             output.put(NBT_ALLOWED_SIDES, sides);
         }
     }
@@ -641,15 +656,16 @@ public class ReactionChamberEntity extends AENetworkPowerBlockEntity
         super.importSettings(mode, input, player);
 
         if (mode == SettingsFrom.MEMORY_CARD) {
-            var tag = input.get(NBT_ALLOWED_SIDES);
-            if (tag instanceof IntArrayTag list) {
-                var level = getLevel();
+            Tag tag = input.get(NBT_ALLOWED_SIDES);
+            if (tag instanceof IntArrayTag) {
+                IntArrayTag list = (IntArrayTag) tag;
+                Level level = getLevel();
                 if (level != null) {
-                    var be = level.getBlockEntity(getBlockPos());
-                    if (be instanceof IDirectionalOutputHost host) {
-
-                        var outputs = EnumSet.noneOf(RelativeSide.class);
-                        for (var item : list) {
+                    net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(getBlockPos());
+                    if (be instanceof IDirectionalOutputHost) {
+                        IDirectionalOutputHost host = (IDirectionalOutputHost) be;
+                        EnumSet<RelativeSide> outputs = EnumSet.noneOf(RelativeSide.class);
+                        for (IntTag item : list) {
                             outputs.add(RelativeSide.fromUnrotatedSide(Direction.from3DDataValue(item.getAsInt())));
                         }
                         host.updateOutputSides(outputs);
