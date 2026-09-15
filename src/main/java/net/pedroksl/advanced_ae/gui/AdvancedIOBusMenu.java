@@ -34,7 +34,8 @@ public class AdvancedIOBusMenu extends StockExportBusMenu {
     @Override
     public void returnFromSetAmountMenu() {
         Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (player instanceof ServerPlayer) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             MenuOpener.open(AAEMenus.ADVANCED_IO_BUS.get(), serverPlayer, getLocator(), true);
         }
     }
