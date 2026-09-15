@@ -1,25 +1,17 @@
 package net.pedroksl.advanced_ae.common.entities;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.Set;
 
-import net.minecraft.Util;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.ModelData;
+import javax.annotation.Nonnull;
+
+import net.minecraft.block.BlockState;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockReader;
 import net.pedroksl.advanced_ae.common.blocks.AAEAbstractCraftingUnitBlock;
-import net.pedroksl.advanced_ae.common.blocks.AAECraftingUnitBlock;
 import net.pedroksl.advanced_ae.common.blocks.AAECraftingUnitType;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCluster;
@@ -27,44 +19,47 @@ import net.pedroksl.advanced_ae.common.definitions.AAEBlocks;
 
 import appeng.api.implementations.IPowerChannelState;
 import appeng.api.networking.GridFlags;
-import appeng.api.networking.IGridMultiblock;
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.IGridNodeListener;
-import appeng.api.orientation.BlockOrientation;
-import appeng.api.util.IConfigManager;
-import appeng.api.util.IConfigurableObject;
-import appeng.blockentity.crafting.CraftingCubeModelData;
-import appeng.blockentity.grid.AENetworkBlockEntity;
+import appeng.api.networking.events.MENetworkChannelsChanged;
+import appeng.api.networking.events.MENetworkEventSubscribe;
+import appeng.api.networking.events.MENetworkPowerStatusChange;
 import appeng.me.cluster.IAEMultiBlock;
-import appeng.util.NullConfigManager;
-import appeng.util.Platform;
-import appeng.util.iterators.ChainedIterator;
+import appeng.me.helpers.AENetworkProxy;
+import appeng.me.helpers.AENetworkProxyMultiblock;
+import appeng.tile.crafting.CraftingCubeModelData;
+import appeng.tile.grid.AENetworkTileEntity;
+import net.minecraftforge.client.model.data.IModelData;
 
-public class AdvCraftingBlockEntity extends AENetworkBlockEntity
-        implements IAEMultiBlock<AdvCraftingCPUCluster>, IPowerChannelState, IConfigurableObject {
+public class AdvCraftingBlockEntity extends AENetworkTileEntity
+        implements IAEMultiBlock<AdvCraftingCPUCluster>, IPowerChannelState {
 
     private final AdvCraftingCPUCalculator calc = new AdvCraftingCPUCalculator(this);
-    private CompoundTag previousState = null;
-    private boolean isCoreBlock = false;
+    private CompoundNBT previousState;
+    private boolean isCoreBlock;
     private AdvCraftingCPUCluster cluster;
 
-    public AdvCraftingBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
-        super(blockEntityType, pos, blockState);
-        this.getMainNode()
-                .setFlags(GridFlags.MULTIBLOCK, GridFlags.REQUIRE_CHANNEL)
-                .addService(IGridMultiblock.class, this::getMultiblockNodes);
+    /**
+     * The addon registry keeps the newer constructor shape so block-entity method
+     * references do not need special adapters. On 1.16.5 the position/state are
+     * supplied by Minecraft after construction, so only the type is forwarded.
+     */
+    public AdvCraftingBlockEntity(TileEntityType<?> tileEntityType, BlockPos ignoredPos, BlockState ignoredState) {
+        super(tileEntityType);
+        this.getProxy().setFlags(GridFlags.MULTIBLOCK, GridFlags.REQUIRE_CHANNEL);
+        this.getProxy().setValidSides(EnumSet.noneOf(Direction.class));
     }
 
     @Override
-    protected Item getItemFromBlockEntity() {
-        if (this.level == null) {
-            return Items.AIR;
-        }
-        return getUnitBlock().type.getItemFromType();
+    protected AENetworkProxy createProxy() {
+        return new AENetworkProxyMultiblock(this, "proxy", this.getItemFromTile(this), true);
     }
 
     @Override
-    public void setName(String name) {
+    protected ItemStack getItemFromTile(final Object obj) {
+        return new ItemStack(getUnitBlock().type.getItemFromType());
+    }
+
+    @Override
+    public void setName(final String name) {
         super.setName(name);
         if (this.cluster != null) {
             this.cluster.updateName();
@@ -72,13 +67,15 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
     }
 
     public AAEAbstractCraftingUnitBlock<?> getUnitBlock() {
-        if (this.level == null || this.notLoaded() || this.isRemoved()) {
+        if (this.world == null || this.notLoaded() || this.isRemoved()) {
             return AAEBlocks.QUANTUM_UNIT.block();
         }
-        var block = this.level.getBlockState(this.worldPosition).getBlock();
-        return block instanceof AAEAbstractCraftingUnitBlock
-                ? (AAEAbstractCraftingUnitBlock<?>) block
-                : AAEBlocks.QUANTUM_UNIT.block();
+
+        if (this.world.getBlockState(this.pos).getBlock() instanceof AAEAbstractCraftingUnitBlock) {
+            return (AAEAbstractCraftingUnitBlock<?>) this.world.getBlockState(this.pos).getBlock();
+        }
+
+        return AAEBlocks.QUANTUM_UNIT.block();
     }
 
     public long getStorageBytes() {
@@ -86,7 +83,7 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
     }
 
     public int getStorageMultiplier() {
-        return ((AAECraftingUnitType) getUnitBlock().type).getStorageMultiplier();
+        return getUnitBlock().type.getStorageMultiplier();
     }
 
     public int getAcceleratorThreads() {
@@ -94,98 +91,89 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
     }
 
     public int getAccelerationMultiplier() {
-        return ((AAECraftingUnitType) getUnitBlock().type).getAccelerationMultiplier();
+        return getUnitBlock().type.getAccelerationMultiplier();
     }
 
     @Override
     public void onReady() {
         super.onReady();
-        this.getMainNode().setVisualRepresentation(this.getItemFromBlockEntity());
-        if (level instanceof ServerLevel serverLevel) {
-            this.calc.calculateMultiblock(serverLevel, worldPosition);
+        this.getProxy().setVisualRepresentation(this.getItemFromTile(this));
+        if (this.world != null) {
+            this.calc.calculateMultiblock(this.world, this.pos);
         }
     }
 
-    public void updateMultiBlock(BlockPos changedPos) {
-        if (level instanceof ServerLevel serverLevel) {
-            this.calc.updateMultiblockAfterNeighborUpdate(serverLevel, worldPosition, changedPos);
+    public void updateMultiBlock(final BlockPos changedPos) {
+        if (this.world != null) {
+            this.calc.updateMultiblockAfterNeighborUpdate(this.world, this.pos, changedPos);
         }
     }
 
-    public void updateStatus(AdvCraftingCPUCluster c) {
-        if (this.cluster != null && this.cluster != c) {
+    public void updateStatus(final AdvCraftingCPUCluster newCluster) {
+        if (this.cluster != null && this.cluster != newCluster) {
             this.cluster.breakCluster();
         }
 
-        this.cluster = c;
+        this.cluster = newCluster;
         this.updateSubType(true);
     }
 
-    public void updateSubType(boolean updateFormed) {
-        if (this.level == null || this.notLoaded() || this.isRemoved()) {
+    public void updateSubType(final boolean updateFormed) {
+        if (this.world == null || this.notLoaded() || this.isRemoved()) {
             return;
         }
 
         final boolean formed = this.isFormed();
-        boolean power = this.getMainNode().isOnline();
+        final boolean power = this.getProxy().isReady() && this.getProxy().isActive();
+        final BlockState current = this.world.getBlockState(this.pos);
 
-        final BlockState current = this.level.getBlockState(this.worldPosition);
-
-        // The block entity might try to update while being destroyed
         if (current.getBlock() instanceof AAEAbstractCraftingUnitBlock) {
-            var type = this.getUnitBlock().type;
+            final AAECraftingUnitType type = this.getUnitBlock().type;
             int lightLevel = type == AAECraftingUnitType.QUANTUM_CORE ? 12 : 0;
             lightLevel = formed && power ? lightLevel : 0;
-            boolean multiblocked = this.cluster != null && this.cluster.numBlockEntities() > 1;
+            final boolean multiblocked = this.cluster != null && this.cluster.numBlockEntities() > 1;
 
-            final BlockState newState = current.setValue(AAEAbstractCraftingUnitBlock.POWERED, power)
-                    .setValue(AAEAbstractCraftingUnitBlock.FORMED, formed)
-                    .setValue(AAECraftingUnitBlock.LIGHT_LEVEL, lightLevel)
-                    .setValue(AAECraftingUnitBlock.MULTIBLOCKED, multiblocked);
+            final BlockState newState = current.with(AAEAbstractCraftingUnitBlock.POWERED, power)
+                    .with(AAEAbstractCraftingUnitBlock.FORMED, formed)
+                    .with(AAEAbstractCraftingUnitBlock.LIGHT_LEVEL, lightLevel)
+                    .with(AAEAbstractCraftingUnitBlock.MULTIBLOCKED, multiblocked);
 
             if (current != newState) {
-                // Not using flag 2 here (only send to clients, prevent block update) will cause
-                // infinite loops
-                // In case there is an inconsistency in the crafting clusters.
-                this.level.setBlock(this.worldPosition, newState, Block.UPDATE_CLIENTS);
+                this.world.setBlockState(this.pos, newState, 2);
             }
         }
 
         if (updateFormed) {
-            onGridConnectableSidesChanged();
-        }
-    }
-
-    @Override
-    public Set<Direction> getGridConnectableSides(BlockOrientation orientation) {
-        if (isFormed()) {
-            return getUnitBlock().type == AAECraftingUnitType.QUANTUM_CORE
-                    ? EnumSet.of(Direction.UP, Direction.DOWN)
-                    : EnumSet.allOf(Direction.class);
-        } else {
-            return EnumSet.noneOf(Direction.class);
+            if (!formed) {
+                this.getProxy().setValidSides(EnumSet.noneOf(Direction.class));
+            } else if (getUnitBlock().type == AAECraftingUnitType.QUANTUM_CORE) {
+                this.getProxy().setValidSides(EnumSet.of(Direction.UP, Direction.DOWN));
+            } else {
+                this.getProxy().setValidSides(EnumSet.allOf(Direction.class));
+            }
         }
     }
 
     public boolean isFormed() {
-        if (isClientSide()) {
-            return getBlockState().getValue(AAEAbstractCraftingUnitBlock.FORMED);
+        if (isRemote()) {
+            return this.world != null && this.world.getBlockState(this.pos).get(AAEAbstractCraftingUnitBlock.FORMED);
         }
         return this.cluster != null;
     }
 
     @Override
-    public void saveAdditional(CompoundTag data) {
-        super.saveAdditional(data);
+    public CompoundNBT write(final CompoundNBT data) {
+        super.write(data);
         data.putBoolean("core", this.isCoreBlock());
         if (this.isCoreBlock() && this.cluster != null) {
             this.cluster.writeToNBT(data);
         }
+        return data;
     }
 
     @Override
-    public void loadTag(CompoundTag data) {
-        super.loadTag(data);
+    public void read(final BlockState blockState, final CompoundNBT data) {
+        super.read(blockState, data);
         this.setCoreBlock(data.getBoolean("core"));
         if (this.isCoreBlock()) {
             if (this.cluster != null) {
@@ -197,7 +185,7 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
     }
 
     @Override
-    public void disconnect(boolean update) {
+    public void disconnect(final boolean update) {
         if (this.cluster != null) {
             this.cluster.destroy();
             if (update) {
@@ -216,74 +204,51 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
         return true;
     }
 
-    @Override
-    public void onMainNodeStateChanged(IGridNodeListener.State reason) {
-        if (reason != IGridNodeListener.State.GRID_BOOT) {
-            this.updateSubType(false);
-        }
+    @MENetworkEventSubscribe
+    public void onPowerStateChange(final MENetworkChannelsChanged event) {
+        this.updateSubType(false);
     }
 
+    @MENetworkEventSubscribe
+    public void onPowerStateChange(final MENetworkPowerStatusChange event) {
+        this.updateSubType(false);
+    }
+
+    /**
+     * The 1.20 implementation drops every per-job crafting inventory here. The
+     * equivalent inventories are part of the remaining AdvCraftingCPU/cluster port,
+     * so cancellation/destruction is kept centralized until those classes use the
+     * AE2 8 storage API. This avoids retaining references to 1.20 GenericStack APIs
+     * in the tile itself.
+     */
     public void breakCluster() {
+        this.updateContainingBlockInfo();
         if (this.cluster != null) {
             this.cluster.cancelJobs();
-            var inventories = this.cluster.getInventories();
-
-            // Drop stacks
-            var places = new ArrayList<BlockPos>();
-
-            for (var blockEntity : (Iterable<AdvCraftingBlockEntity>) this.cluster::getBlockEntities) {
-                if (this == blockEntity) {
-                    places.add(worldPosition);
-                } else {
-                    for (var d : Direction.values()) {
-                        var p = blockEntity.worldPosition.relative(d);
-
-                        if (this.level.isEmptyBlock(p)) {
-                            places.add(p);
-                        }
-                    }
-                }
-            }
-
-            if (places.isEmpty()) {
-                throw new IllegalStateException(
-                        this.cluster + " does not contain any kind of blocks, which were destroyed.");
-            }
-
-            for (var inv : inventories) {
-                for (var entry : inv.list) {
-                    var position = Util.getRandom(places, level.getRandom());
-                    var stacks = new ArrayList<ItemStack>();
-                    entry.getKey().addDrops(entry.getLongValue(), stacks, this.level, position);
-                    Platform.spawnDrops(this.level, position, stacks);
-                }
-
-                inv.clear(); // Ensure items only ever get dropped once
-            }
-
             this.cluster.destroy();
         }
     }
 
     @Override
     public boolean isPowered() {
-        if (isClientSide()) {
-            return this.level.getBlockState(this.worldPosition).getValue(AAEAbstractCraftingUnitBlock.POWERED);
+        if (isRemote()) {
+            return this.world != null && this.world.getBlockState(this.pos).get(AAEAbstractCraftingUnitBlock.POWERED);
         }
-        return this.getMainNode().isActive();
+        return this.getProxy().isActive();
     }
 
     public boolean isMultiblocked() {
-        if (isClientSide()) {
-            return this.level.getBlockState(this.worldPosition).getValue(AAEAbstractCraftingUnitBlock.MULTIBLOCKED);
+        if (isRemote()) {
+            return this.world != null
+                    && this.world.getBlockState(this.pos).get(AAEAbstractCraftingUnitBlock.MULTIBLOCKED);
         }
-        return this.getCluster().numBlockEntities() > 1;
+        return this.cluster != null && this.cluster.numBlockEntities() > 1;
     }
 
     @Override
     public boolean isActive() {
-        if (!isClientSide()) {
-            return this.getMainNode().isActive();
+        if (!isRemote()) {
+            return this.getProxy().isActive();
         }
         return this.isPowered() && this.isFormed();
     }
@@ -292,77 +257,46 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
         return this.isCoreBlock;
     }
 
-    public void setCoreBlock(boolean isCoreBlock) {
-        this.isCoreBlock = isCoreBlock;
+    public void setCoreBlock(final boolean coreBlock) {
+        this.isCoreBlock = coreBlock;
     }
 
-    public CompoundTag getPreviousState() {
+    public CompoundNBT getPreviousState() {
         return this.previousState;
     }
 
-    public void setPreviousState(CompoundTag previousState) {
+    public void setPreviousState(final CompoundNBT previousState) {
         this.previousState = previousState;
     }
 
+    @Nonnull
     @Override
-    public ModelData getModelData() {
-        return CraftingCubeModelData.create(getConnections());
+    public IModelData getModelData() {
+        return new CraftingCubeModelData(getUp(), getForward(), getConnections());
     }
 
     protected EnumSet<Direction> getConnections() {
-        if (level == null) {
+        if (this.world == null) {
             return EnumSet.noneOf(Direction.class);
         }
 
-        EnumSet<Direction> connections = EnumSet.noneOf(Direction.class);
-
-        for (Direction facing : Direction.values()) {
-            if (this.isConnected(level, worldPosition, facing)) {
+        final EnumSet<Direction> connections = EnumSet.noneOf(Direction.class);
+        for (final Direction facing : Direction.values()) {
+            if (this.isConnected(this.world, this.pos, facing)) {
                 connections.add(facing);
             }
         }
-
         return connections;
     }
 
-    private boolean isConnected(BlockGetter level, BlockPos pos, Direction side) {
-        BlockPos adjacentPos = pos.relative(side);
+    private boolean isConnected(final IBlockReader level, final BlockPos pos, final Direction side) {
+        final BlockPos adjacentPos = pos.offset(side);
         return level.getBlockState(adjacentPos).getBlock() instanceof AAEAbstractCraftingUnitBlock;
     }
 
-    /**
-     * When the block state changes (i.e. becoming formed or unformed), we need to update the model data since it
-     * contains connections to neighboring block entities.
-     */
     @Override
-    public void setBlockState(BlockState state) {
-        super.setBlockState(state);
+    public void updateContainingBlockInfo() {
+        super.updateContainingBlockInfo();
         requestModelDataUpdate();
-    }
-
-    private Iterator<IGridNode> getMultiblockNodes() {
-        if (this.getCluster() == null) {
-            return new ChainedIterator<>();
-        }
-        var nodes = new ArrayList<IGridNode>();
-        var it = this.getCluster().getBlockEntities();
-        while (it.hasNext()) {
-            var node = it.next().getGridNode();
-            if (node != null) {
-                nodes.add(node);
-            }
-        }
-        return nodes.iterator();
-    }
-
-    @Override
-    public IConfigManager getConfigManager() {
-        var cluster = this.getCluster();
-
-        if (cluster != null) {
-            return this.getCluster().getConfigManager();
-        } else {
-            return NullConfigManager.INSTANCE;
-        }
     }
 }
