@@ -4,6 +4,7 @@ import static appeng.api.stacks.AEKey.readKey;
 import static appeng.api.stacks.AEKey.writeKey;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.mojang.datafixers.util.Pair;
 
@@ -20,10 +21,10 @@ public class PatternConfigServerUpdatePacket extends AddonPacket {
     private final Pair<AEKey, Long> output;
 
     public PatternConfigServerUpdatePacket(FriendlyByteBuf stream) {
-        var inputs = new LinkedHashMap<AEKey, Long>();
+        LinkedHashMap<AEKey, Long> inputs = new LinkedHashMap<>();
 
-        var size = stream.readInt();
-        for (var x = 0; x < size; x++) {
+        int size = stream.readInt();
+        for (int x = 0; x < size; x++) {
             AEKey key = readKey(stream);
             inputs.put(key, stream.readLong());
         }
@@ -41,7 +42,7 @@ public class PatternConfigServerUpdatePacket extends AddonPacket {
     @Override
     public void write(FriendlyByteBuf stream) {
         stream.writeInt(this.inputs.size());
-        for (var entry : this.inputs.entrySet()) {
+        for (Map.Entry<AEKey, Long> entry : this.inputs.entrySet()) {
             writeKey(stream, entry.getKey());
             stream.writeLong(entry.getValue());
         }
@@ -52,7 +53,8 @@ public class PatternConfigServerUpdatePacket extends AddonPacket {
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumCrafterConfigPatternScreen screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumCrafterConfigPatternScreen) {
+            QuantumCrafterConfigPatternScreen screen = (QuantumCrafterConfigPatternScreen) Minecraft.getInstance().screen;
             screen.update(this.inputs, this.output);
         }
     }
