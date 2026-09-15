@@ -1,6 +1,8 @@
 package net.pedroksl.advanced_ae.common.logic;
 
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -9,6 +11,8 @@ import com.google.common.base.Preconditions;
 
 import org.jetbrains.annotations.Nullable;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -16,10 +20,12 @@ import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.features.IPlayerRegistry;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.crafting.ICraftingPlan;
+import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.crafting.ICraftingSubmitResult;
 import appeng.api.networking.energy.IEnergyService;
@@ -27,6 +33,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.MEStorage;
 import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.CraftingJobStatusPacket;
@@ -54,7 +61,7 @@ public class AdvCraftingCPULogic {
      */
     private final int[] usedOps = new int[3];
 
-    private final Set<Consumer<AEKey>> listeners = new HashSet<>();
+    private final Set<Consumer<AEKey>> listeners = new HashSet<Consumer<AEKey>>();
     /**
      * True if the CPU is currently trying to clear its inventory but is not able to.
      */
@@ -80,15 +87,16 @@ public class AdvCraftingCPULogic {
         if (!inventory.list.isEmpty()) AELog.warn("Crafting CPU inventory is not empty yet a job was submitted.");
 
         // Try to extract required items.
-        var missingIngredient = CraftingCpuHelper.tryExtractInitialItems(plan, grid, inventory, src);
+        GenericStack missingIngredient = CraftingCpuHelper.tryExtractInitialItems(plan, grid, inventory, src);
         if (missingIngredient != null) return CraftingSubmitResult.missingIngredient(missingIngredient);
 
         // Set CPU link and job.
-        var playerId = src.player()
+        Integer playerId = src.player()
                 .map(p -> p instanceof ServerPlayer ? IPlayerRegistry.getPlayerId((ServerPlayer) p) : null)
                 .orElse(null);
-        var craftId = UUID.randomUUID();
-        var linkCpu = new CraftingLink(CraftingCpuHelper.generateLinkData(craftId, requester == null, false), cpu);
+        UUID craftId = UUID.randomUUID();
+        CraftingLink linkCpu =
+                new CraftingLink(CraftingCpuHelper.generateLinkData(craftId, requester == null, false), cpu);
         this.job = new ExecutingCraftingJob(plan, this::postChange, linkCpu, playerId);
         cpu.updateOutput(plan.finalOutput());
         cpu.markDirty();
@@ -99,9 +107,9 @@ public class AdvCraftingCPULogic {
 
         // Non-standalone jobs need another link for the requester, and both links need to be submitted to the cache.
         if (requester != null) {
-            var linkReq = new CraftingLink(CraftingCpuHelper.generateLinkData(craftId, false, true), requester);
+            CraftingLink linkReq = new CraftingLink(CraftingCpuHelper.generateLinkData(craftId, false, true), requester);
 
-            var craftingService = (CraftingService) grid.getCraftingService();
+            CraftingService craftingService = (CraftingService) grid.getCraftingService();
             craftingService.addLink(linkCpu);
             craftingService.addLink(linkReq);
 
@@ -133,12 +141,12 @@ public class AdvCraftingCPULogic {
             return;
         }
 
-        var remainingOperations = cpu.getCoProcessors() + 1 - (this.usedOps[0] + this.usedOps[1] + this.usedOps[2]);
-        final var started = remainingOperations;
+        int remainingOperations = cpu.getCoProcessors() + 1 - (this.usedOps[0] + this.usedOps[1] + this.usedOps[2]);
+        final int started = remainingOperations;
 
         if (remainingOperations > 0) {
             do {
-                var pushedPatterns = executeCrafting(remainingOperations, cc, eg, cpu.getLevel());
+                int pushedPatterns = executeCrafting(remainingOperations, cc, eg, cpu.getLevel());
 
                 if (pushedPatterns > 0) {
                     remainingOperations -= pushedPatterns;
@@ -159,34 +167,35 @@ public class AdvCraftingCPULogic {
      */
     public int executeCrafting(
             int maxPatterns, CraftingService craftingService, IEnergyService energyService, Level level) {
-        var job = this.job;
-        if (job == null) return 0;
+        ExecutingCraftingJob currentJob = this.job;
+        if (currentJob == null) return 0;
 
-        var pushedPatterns = 0;
+        int pushedPatterns = 0;
 
-        var it = job.tasks.entrySet().iterator();
+        Iterator<Map.Entry<IPatternDetails, ExecutingCraftingJob.TaskProgress>> it =
+                currentJob.tasks.entrySet().iterator();
         taskLoop:
         while (it.hasNext()) {
-            var task = it.next();
+            Map.Entry<IPatternDetails, ExecutingCraftingJob.TaskProgress> task = it.next();
             if (task.getValue().value <= 0) {
                 it.remove();
                 continue;
             }
 
-            var details = task.getKey();
-            var expectedOutputs = new KeyCounter();
-            var expectedContainerItems = new KeyCounter();
+            IPatternDetails details = task.getKey();
+            KeyCounter expectedOutputs = new KeyCounter();
+            KeyCounter expectedContainerItems = new KeyCounter();
             // Contains the inputs for the pattern.
             @Nullable
-            var craftingContainer = CraftingCpuHelper.extractPatternInputs(
+            KeyCounter[] craftingContainer = CraftingCpuHelper.extractPatternInputs(
                     details, inventory, level, expectedOutputs, expectedContainerItems);
 
             // Try to push to each provider.
-            for (var provider : craftingService.getProviders(details)) {
+            for (ICraftingProvider provider : craftingService.getProviders(details)) {
                 if (craftingContainer == null) break;
                 if (provider.isBusy()) continue;
 
-                var patternPower = CraftingCpuHelper.calculatePatternPower(craftingContainer);
+                double patternPower = CraftingCpuHelper.calculatePatternPower(craftingContainer);
 
                 if (energyService.extractAEPower(patternPower, Actionable.SIMULATE, PowerMultiplier.CONFIG)
                         < patternPower - 0.01) break;
@@ -195,16 +204,16 @@ public class AdvCraftingCPULogic {
                     energyService.extractAEPower(patternPower, Actionable.MODULATE, PowerMultiplier.CONFIG);
                     pushedPatterns++;
 
-                    for (var expectedOutput : expectedOutputs) {
-                        job.waitingFor.insert(
+                    for (Object2LongMap.Entry<AEKey> expectedOutput : expectedOutputs) {
+                        currentJob.waitingFor.insert(
                                 expectedOutput.getKey(), expectedOutput.getLongValue(), Actionable.MODULATE);
                     }
-                    for (var expectedContainerItem : expectedContainerItems) {
-                        job.waitingFor.insert(
+                    for (Object2LongMap.Entry<AEKey> expectedContainerItem : expectedContainerItems) {
+                        currentJob.waitingFor.insert(
                                 expectedContainerItem.getKey(),
                                 expectedContainerItem.getLongValue(),
                                 Actionable.MODULATE);
-                        job.timeTracker.addMaxItems(
+                        currentJob.timeTracker.addMaxItems(
                                 expectedContainerItem.getLongValue(),
                                 expectedContainerItem.getKey().getType());
                     }
@@ -249,7 +258,7 @@ public class AdvCraftingCPULogic {
         if (what == null || job == null) return 0;
 
         // Only accept items we are waiting for.
-        var waitingFor = job.waitingFor.extract(what, amount, Actionable.SIMULATE);
+        long waitingFor = job.waitingFor.extract(what, amount, Actionable.SIMULATE);
         if (waitingFor <= 0) {
             return 0;
         }
@@ -318,8 +327,8 @@ public class AdvCraftingCPULogic {
         // Clear waitingFor list and post all the relevant changes.
         job.waitingFor.clear();
         // Notify opened menus of cancelled scheduled tasks.
-        for (var entry : job.tasks.entrySet()) {
-            for (var output : entry.getKey().getOutputs()) {
+        for (Map.Entry<IPatternDetails, ExecutingCraftingJob.TaskProgress> entry : job.tasks.entrySet()) {
+            for (GenericStack output : entry.getKey().getOutputs()) {
                 postChange(output.what());
             }
         }
@@ -355,14 +364,14 @@ public class AdvCraftingCPULogic {
         // Short-circuit if there is nothing to do.
         if (this.inventory.list.isEmpty()) return;
 
-        var g = cpu.getGrid();
+        IGrid g = cpu.getGrid();
         if (g == null) return;
 
-        var storage = g.getStorageService().getInventory();
+        MEStorage storage = g.getStorageService().getInventory();
 
-        for (var entry : this.inventory.list) {
+        for (Object2LongMap.Entry<AEKey> entry : this.inventory.list) {
             this.postChange(entry.getKey());
-            var inserted = storage.insert(entry.getKey(), entry.getLongValue(), Actionable.MODULATE, cpu.getSrc());
+            long inserted = storage.insert(entry.getKey(), entry.getLongValue(), Actionable.MODULATE, cpu.getSrc());
 
             // The network was unable to receive all of the items, i.e. no or not enough storage space left
             entry.setValue(entry.getLongValue() - inserted);
@@ -374,7 +383,7 @@ public class AdvCraftingCPULogic {
 
     private void postChange(AEKey what) {
         lastModifiedOnTick = TickHandler.instance().getCurrentTick();
-        for (var listener : listeners) {
+        for (Consumer<AEKey> listener : listeners) {
             listener.accept(what);
         }
     }
@@ -457,7 +466,7 @@ public class AdvCraftingCPULogic {
 
     public void getAllWaitingFor(Set<AEKey> waitingFor) {
         if (this.job != null) {
-            for (var entry : this.job.waitingFor.list) {
+            for (Object2LongMap.Entry<AEKey> entry : this.job.waitingFor.list) {
                 waitingFor.add(entry.getKey());
             }
         }
@@ -466,8 +475,8 @@ public class AdvCraftingCPULogic {
     public long getPendingOutputs(AEKey template) {
         long count = 0;
         if (this.job != null) {
-            for (var t : job.tasks.entrySet()) {
-                for (var output : t.getKey().getOutputs()) {
+            for (Map.Entry<IPatternDetails, ExecutingCraftingJob.TaskProgress> t : job.tasks.entrySet()) {
+                for (GenericStack output : t.getKey().getOutputs()) {
                     if (template.matches(output)) {
                         count += output.amount() * t.getValue().value;
                     }
@@ -484,8 +493,8 @@ public class AdvCraftingCPULogic {
         out.addAll(this.inventory.list);
         if (this.job != null) {
             out.addAll(job.waitingFor.list);
-            for (var t : job.tasks.entrySet()) {
-                for (var output : t.getKey().getOutputs()) {
+            for (Map.Entry<IPatternDetails, ExecutingCraftingJob.TaskProgress> t : job.tasks.entrySet()) {
+                for (GenericStack output : t.getKey().getOutputs()) {
                     out.add(output.what(), output.amount() * t.getValue().value);
                 }
             }
@@ -499,19 +508,17 @@ public class AdvCraftingCPULogic {
     private void notifyJobOwner(ExecutingCraftingJob job, CraftingJobStatusPacket.Status status) {
         this.lastModifiedOnTick = TickHandler.instance().getCurrentTick();
 
-        var playerId = job.playerId;
+        Integer playerId = job.playerId;
         if (playerId == null) {
             return;
         }
 
-        var server = cpu.getLevel().getServer();
-        var connectedPlayer = IPlayerRegistry.getConnected(server, playerId);
+        ServerPlayer connectedPlayer = IPlayerRegistry.getConnected(cpu.getLevel().getServer(), playerId);
         if (connectedPlayer != null && job.finalOutput != null) {
-            var jobId = job.link.getCraftingID();
             NetworkHandler.instance()
                     .sendTo(
                             new CraftingJobStatusPacket(
-                                    jobId,
+                                    job.link.getCraftingID(),
                                     job.finalOutput.what(),
                                     job.finalOutput.amount(),
                                     job.remainingAmount,
