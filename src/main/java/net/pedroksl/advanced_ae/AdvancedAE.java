@@ -37,7 +37,6 @@ public class AdvancedAE {
         AAEBlocks.INSTANCE.register(eventBus);
         AAEBlockEntities.INSTANCE.register(eventBus);
         AAEFluids.INSTANCE.register(eventBus);
-        AAEMenus.INSTANCE.register(eventBus);
         AAECreativeTab.INSTANCE.register(eventBus);
         InitRecipeSerializers.register(eventBus);
 

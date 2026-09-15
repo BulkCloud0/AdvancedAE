@@ -2,17 +2,9 @@
   "required": false,
   "minVersion": "0.8.3",
   "package": "net.pedroksl.advanced_ae.mixins",
-  "plugin": "net.pedroksl.advanced_ae.mixins.AAEMixinPlugin",
   "refmap": "mixins.aae.refmap.json",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "MixinIOBusPartInvoker",
-    "MixinPatternEncodingTermMenu",
-    "MixinPatternProviderLogic",
-    "cpu.MixinCraftingCPUMenu",
-    "cpu.MixinCraftingService",
-    "eae.MixinContainerPatternModifier"
-  ],
+  "mixins": [],
   "client": [],
   "server": []
 }
