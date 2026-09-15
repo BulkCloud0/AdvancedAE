@@ -43,7 +43,8 @@ public class PatternSlot extends AppEngSlot {
     public ItemStack getDisplayStack() {
         if (isRemote()) {
             final ItemStack is = super.getDisplayStack();
-            if (!is.isEmpty() && is.getItem() instanceof EncodedPatternItem iep) {
+            if (!is.isEmpty() && is.getItem() instanceof EncodedPatternItem) {
+                final EncodedPatternItem iep = (EncodedPatternItem) is.getItem();
                 final ItemStack out = iep.getOutput(is);
                 if (!out.isEmpty()) {
                     return out;
