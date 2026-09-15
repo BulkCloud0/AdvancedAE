@@ -32,7 +32,8 @@ public class QuantumArmorUpgradeStatePacket extends AddonPacket {
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumArmorConfigScreen screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumArmorConfigScreen) {
+            QuantumArmorConfigScreen screen = (QuantumArmorConfigScreen) Minecraft.getInstance().screen;
             screen.refreshList(selectedIndex, stack);
         }
     }
