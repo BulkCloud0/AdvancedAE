@@ -1,5 +1,6 @@
 package net.pedroksl.advanced_ae;
 
+import com.glodblock.github.extendedae.ExtendedAE;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -57,6 +58,10 @@ public class AdvancedAE {
         AAEFluids.INSTANCE.register(eventBus);
         AAEMenus.INSTANCE.register(eventBus);
         AAECreativeTab.INSTANCE.register(eventBus);
+
+        // ExtendedAE is not a second Forge mod anymore. Its original registries,
+        // recipes, networking and hooks are initialized inside this mod container.
+        ExtendedAE.bootstrap();
 
         eventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
