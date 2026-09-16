@@ -1,12 +1,13 @@
 package net.pedroksl.advanced_ae.xmod;
 
 import net.minecraftforge.fml.ModList;
+import net.pedroksl.ae2addonlib.integration.AddonEnum;
 
 /**
  * Lightweight 1.16.5 replacement for the AE2AddonLib addon descriptor.
  * Keeps optional integrations lazy so missing companion mods never prevent startup.
  */
-public enum Addons {
+public enum Addons implements AddonEnum {
     EXPATTERNPROVIDER("expatternprovider", "Extended AE"),
     APPMEK("appmek", "Applied Mekanistics"),
     AE2WTLIB("ae2wtlib", "AE2 Wireless Terminals Lib"),
@@ -25,14 +26,17 @@ public enum Addons {
         this.modName = modName;
     }
 
+    @Override
     public String getModId() {
         return this.modId;
     }
 
+    @Override
     public String getModName() {
         return this.modName;
     }
 
+    @Override
     public boolean isLoaded() {
         return ModList.get().isLoaded(this.modId);
     }
