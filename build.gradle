@@ -19,7 +19,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 version = mod_version
 group = mod_group_id
-archivesBaseName = 'AdvancedAE'
+archivesBaseName = 'ExpansionAE'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -32,23 +32,26 @@ minecraft {
         client {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'info'
-            mods { advanced_ae { source sourceSets.main } }
+            mods { expansionae { source sourceSets.main } }
             arg '-mixin.config=mixins.aae.json'
+            arg '-mixin.config=mixins.epp.json'
         }
         server {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'info'
-            mods { advanced_ae { source sourceSets.main } }
+            mods { expansionae { source sourceSets.main } }
             arg '-mixin.config=mixins.aae.json'
+            arg '-mixin.config=mixins.epp.json'
         }
         data {
             workingDirectory project.file('run')
             args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-            mods { advanced_ae { source sourceSets.main } }
+            mods { expansionae { source sourceSets.main } }
         }
     }
 }
 
+sourceSets.main.java.srcDir 'vendor/ExtendedAE/src/main/java'
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
@@ -66,7 +69,6 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     implementation fg.deobf("appeng:appliedenergistics2:${ae2_version}")
 
-    // 1.16.5-native libraries retained by the backport.
     implementation fg.deobf('curse.maven:geckolib-388172:4182600')
     implementation fg.deobf('curse.maven:curios-309927:4419403')
     compileOnly fg.deobf('curse.maven:jei-238222:5534622')
@@ -77,10 +79,19 @@ dependencies {
 mixin {
     add sourceSets.main, 'mixins.aae.refmap.json'
     config 'mixins.aae.json'
+    config 'mixins.epp.json'
 }
 
 processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.property 'version', project.version
+
+    from('vendor/ExtendedAE/src/main/resources') {
+        exclude 'META-INF/mods.toml'
+        exclude 'logo.png'
+        exclude 'pack.mcmeta'
+    }
+
     filesMatching('META-INF/mods.toml') {
         expand project.properties
     }
@@ -95,7 +106,7 @@ jar {
                 'Implementation-Title': project.name,
                 'Implementation-Version': project.version,
                 'Implementation-Vendor': mod_authors,
-                'MixinConfigs': 'mixins.aae.json'
+                'MixinConfigs': 'mixins.aae.json,mixins.epp.json'
         ])
     }
 }
