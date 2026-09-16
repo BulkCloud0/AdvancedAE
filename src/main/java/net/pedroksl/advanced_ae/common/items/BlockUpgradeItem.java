@@ -22,8 +22,8 @@ public class BlockUpgradeItem extends Item {
         world.setBlock(pos, newBlock, 3);
         world.setBlockEntity(newTile);
         newTile.deserializeNBT(contents);
-        if (newTile instanceof AEBaseBlockEntity aeTile) {
-            aeTile.markForUpdate();
+        if (newTile instanceof AEBaseBlockEntity) {
+            ((AEBaseBlockEntity) newTile).markForUpdate();
         } else {
             newTile.setChanged();
         }
