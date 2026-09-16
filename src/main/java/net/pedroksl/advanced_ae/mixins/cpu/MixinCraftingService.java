@@ -7,6 +7,8 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
+import lombok.var;
+
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
@@ -96,7 +98,6 @@ public class MixinCraftingService {
         }
 
         if (latestChangeLocal > latestChange) {
-            // our crafting CPUs did something, fire notifications
             this.lastProcessedCraftingLogicChangeTick = -1;
         }
     }
@@ -153,10 +154,6 @@ public class MixinCraftingService {
         }
     }
 
-    /**
-     * @author Pedroksl
-     * @reason Add Advanced CPU Clusters to this method
-     */
     @Overwrite
     public long insertIntoCpus(AEKey what, long amount, Actionable type) {
         long inserted = 0;
@@ -194,7 +191,8 @@ public class MixinCraftingService {
             CallbackInfoReturnable<ICraftingSubmitResult> cir,
             CraftingCPUCluster cpuCluster,
             MutableObject<UnsuitableCpus> unsuitableCpusResult) {
-        if (target instanceof AdvCraftingCPUCluster advCpuCluster) {
+        if (target instanceof AdvCraftingCPUCluster) {
+            AdvCraftingCPUCluster advCpuCluster = (AdvCraftingCPUCluster) target;
             cir.setReturnValue(advCpuCluster.submitJob(this.grid, job, src, requestingMachine));
         } else {
             var advCluster = advancedAE$findSuitableAdvCraftingCPU(job, src, unsuitableCpusResult);
@@ -203,7 +201,6 @@ public class MixinCraftingService {
                 cir.setReturnValue(advCluster.submitJob(this.grid, job, src, requestingMachine));
             } else if (cpuCluster == null) {
                 var unsuitableCpus = unsuitableCpusResult.getValue();
-                // If no CPUs were unsuitable, but we couldn't find one, that means there aren't any
                 if (unsuitableCpus == null) {
                     cir.setReturnValue(CraftingSubmitResult.NO_CPU_FOUND);
                 } else {
@@ -245,14 +242,11 @@ public class MixinCraftingService {
         }
 
         validCpusClusters.sort((a, b) -> {
-            // Prioritize sorting by selected mode
             var firstPreferred = a.isPreferredFor(src);
             var secondPreferred = b.isPreferredFor(src);
             if (firstPreferred != secondPreferred) {
-                // Sort such that preferred comes first, not preferred second
                 return Boolean.compare(secondPreferred, firstPreferred);
             }
-
             return FAST_FIRST_COMPARATOR.compare(a, b);
         });
 
@@ -282,7 +276,6 @@ public class MixinCraftingService {
                 requested += cpu.craftingLogic.getWaitingFor(what);
             }
         }
-
         cir.setReturnValue(requested);
     }
 
