@@ -44,7 +44,7 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/patterns/**'
             exclude 'net/pedroksl/advanced_ae/common/fluids/**'
             exclude 'net/pedroksl/advanced_ae/common/items/armors/**'
-            exclude 'net/pedroksl/advanced_ae/common/items/upgrades/**'
+            exclude 'net/pedroksl/advanced_ae/common/items/upgrades/UpgradeCards.java'
             exclude 'net/pedroksl/advanced_ae/common/items/AdvPatternEncoderItem.java'
             exclude 'net/pedroksl/advanced_ae/common/items/AAECraftingBlockItem.java'
             exclude 'net/pedroksl/advanced_ae/common/items/BlockUpgradeItem.java'

@@ -10,6 +10,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
 import net.pedroksl.advanced_ae.AdvancedAE;
+import net.pedroksl.advanced_ae.common.items.upgrades.QuantumUpgradeBaseItem;
+import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
 import net.pedroksl.advanced_ae.common.parts.AdvancedIOBusPart;
 import net.pedroksl.advanced_ae.common.parts.ImportExportBusPart;
 import net.pedroksl.advanced_ae.common.parts.StockExportBusPart;
@@ -71,33 +73,63 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<ArmorItem> QUANTUM_BOOTS = item(
             "Quantum Boots", "quantum_boots",
             p -> new ArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.FEET, p.rarity(Rarity.EPIC)));
-    public static final LibItemDefinition<Item> QUANTUM_UPGRADE_BASE = item("Quantum Upgrade Base Card", "quantum_upgrade_base", Item::new);
-    public static final LibItemDefinition<Item> WALK_SPEED_CARD = item("Walk Speed Card", "walk_speed_card", Item::new);
-    public static final LibItemDefinition<Item> SPRINT_SPEED_CARD = item("Sprint Speed Card", "sprint_speed_card", Item::new);
-    public static final LibItemDefinition<Item> STEP_ASSIST_CARD = item("Step Assist Card", "step_assist_card", Item::new);
-    public static final LibItemDefinition<Item> JUMP_HEIGHT_CARD = item("Jump Height Card", "jump_height_card", Item::new);
-    public static final LibItemDefinition<Item> LAVA_IMMUNITY_CARD = item("Lava Immunity Card", "lava_immunity_card", Item::new);
-    public static final LibItemDefinition<Item> FLIGHT_CARD = item("Flight Card", "flight_card", Item::new);
-    public static final LibItemDefinition<Item> WATER_BREATHING_CARD = item("Water Breathing Card", "water_breathing_card", Item::new);
-    public static final LibItemDefinition<Item> AUTO_FEED_CARD = item("Auto Feeding Card", "auto_feeding_card", Item::new);
-    public static final LibItemDefinition<Item> AUTO_STOCK_CARD = item("Auto Stock Card", "auto_stock_card", Item::new);
-    public static final LibItemDefinition<Item> MAGNET_CARD = item("Magnet Card", "magnet_card", Item::new);
-    public static final LibItemDefinition<Item> HP_BUFFER_CARD = item("HP Buffer Card", "hp_buffer_card", Item::new);
-    public static final LibItemDefinition<Item> EVASION_CARD = item("Evasion Card", "evasion_card", Item::new);
-    public static final LibItemDefinition<Item> REGENERATION_CARD = item("Regeneration Card", "regeneration_card", Item::new);
-    public static final LibItemDefinition<Item> STRENGTH_CARD = item("Strength Card", "strength_card", Item::new);
-    public static final LibItemDefinition<Item> ATTACK_SPEED_CARD = item("Attack Speed Card", "attack_speed_card", Item::new);
-    public static final LibItemDefinition<Item> LUCK_CARD = item("Luck Card", "luck_card", Item::new);
-    public static final LibItemDefinition<Item> REACH_CARD = item("Reach Card", "reach_card", Item::new);
-    public static final LibItemDefinition<Item> SWIM_SPEED_CARD = item("Swim Speed Card", "swim_speed_card", Item::new);
-    public static final LibItemDefinition<Item> NIGHT_VISION_CARD = item("Night Vision Card", "night_vision_card", Item::new);
-    public static final LibItemDefinition<Item> FLIGHT_DRIFT_CARD = item("Flight Drift Card", "flight_drift_card", Item::new);
-    public static final LibItemDefinition<Item> RECHARGING_CARD = item("ME Recharging Card", "recharging_card", Item::new);
-    public static final LibItemDefinition<Item> WORKBENCH_CARD = item("Portable Workbench Card", "portable_workbench_card", Item::new);
-    public static final LibItemDefinition<Item> PICK_CRAFT_CARD = item("Pick Craft Card", "pick_craft_card", Item::new);
+
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> QUANTUM_UPGRADE_BASE = upgrade(
+            "Quantum Upgrade Base Card", "quantum_upgrade_base", UpgradeType.EMPTY);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> WALK_SPEED_CARD = upgrade(
+            "Walk Speed Card", "walk_speed_card", UpgradeType.WALK_SPEED);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> SPRINT_SPEED_CARD = upgrade(
+            "Sprint Speed Card", "sprint_speed_card", UpgradeType.SPRINT_SPEED);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> STEP_ASSIST_CARD = upgrade(
+            "Step Assist Card", "step_assist_card", UpgradeType.STEP_ASSIST);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> JUMP_HEIGHT_CARD = upgrade(
+            "Jump Height Card", "jump_height_card", UpgradeType.JUMP_HEIGHT);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> LAVA_IMMUNITY_CARD = upgrade(
+            "Lava Immunity Card", "lava_immunity_card", UpgradeType.LAVA_IMMUNITY);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> FLIGHT_CARD = upgrade(
+            "Flight Card", "flight_card", UpgradeType.FLIGHT);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> WATER_BREATHING_CARD = upgrade(
+            "Water Breathing Card", "water_breathing_card", UpgradeType.WATER_BREATHING);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> AUTO_FEED_CARD = upgrade(
+            "Auto Feeding Card", "auto_feeding_card", UpgradeType.AUTO_FEED);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> AUTO_STOCK_CARD = upgrade(
+            "Auto Stock Card", "auto_stock_card", UpgradeType.AUTO_STOCK);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> MAGNET_CARD = upgrade(
+            "Magnet Card", "magnet_card", UpgradeType.MAGNET);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> HP_BUFFER_CARD = upgrade(
+            "HP Buffer Card", "hp_buffer_card", UpgradeType.HP_BUFFER);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> EVASION_CARD = upgrade(
+            "Evasion Card", "evasion_card", UpgradeType.EVASION);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> REGENERATION_CARD = upgrade(
+            "Regeneration Card", "regeneration_card", UpgradeType.REGENERATION);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> STRENGTH_CARD = upgrade(
+            "Strength Card", "strength_card", UpgradeType.STRENGTH);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> ATTACK_SPEED_CARD = upgrade(
+            "Attack Speed Card", "attack_speed_card", UpgradeType.ATTACK_SPEED);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> LUCK_CARD = upgrade(
+            "Luck Card", "luck_card", UpgradeType.LUCK);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> REACH_CARD = upgrade(
+            "Reach Card", "reach_card", UpgradeType.REACH);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> SWIM_SPEED_CARD = upgrade(
+            "Swim Speed Card", "swim_speed_card", UpgradeType.SWIM_SPEED);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> NIGHT_VISION_CARD = upgrade(
+            "Night Vision Card", "night_vision_card", UpgradeType.NIGHT_VISION);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> FLIGHT_DRIFT_CARD = upgrade(
+            "Flight Drift Card", "flight_drift_card", UpgradeType.FLIGHT_DRIFT);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> RECHARGING_CARD = upgrade(
+            "ME Recharging Card", "recharging_card", UpgradeType.CHARGING);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> WORKBENCH_CARD = upgrade(
+            "Portable Workbench Card", "portable_workbench_card", UpgradeType.WORKBENCH);
+    public static final LibItemDefinition<QuantumUpgradeBaseItem> PICK_CRAFT_CARD = upgrade(
+            "Pick Craft Card", "pick_craft_card", UpgradeType.PICK_CRAFT);
 
     protected static <T extends Item> LibItemDefinition<T> item(String englishName, String id, Function<Item.Properties, T> factory) {
         return item(AdvancedAE.MOD_ID, englishName, id, factory);
+    }
+
+    private static LibItemDefinition<QuantumUpgradeBaseItem> upgrade(
+            String englishName, String id, UpgradeType type) {
+        return item(englishName, id, properties -> new QuantumUpgradeBaseItem(type, properties));
     }
 
     protected static <T extends IPart> LibItemDefinition<PartItem<T>> part(
