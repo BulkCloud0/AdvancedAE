@@ -2,10 +2,10 @@ package net.pedroksl.advanced_ae.common.items.armors;
 
 import java.util.List;
 
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -33,6 +34,7 @@ import net.pedroksl.advanced_ae.network.AAENetworkHandler;
 import net.pedroksl.advanced_ae.network.packet.MenuSelectionPacket;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
+import appeng.api.networking.IGrid;
 import appeng.api.parts.SelectedPart;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -71,12 +73,12 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
-        if (entity instanceof Player player) {
+        if (entity instanceof Player) {
+            Player player = (Player) entity;
             if (slotId == EquipmentSlot.CHEST.getIndex()) {
                 if (!getPassiveUpgrades(stack).isEmpty()) {
                     tickUpgrades(level, player, stack);
                 }
-
                 if (level.isClientSide()) {
                     toggleBoneVisibilities(stack, player);
                 }
@@ -97,10 +99,12 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
 
     @OnlyIn(Dist.CLIENT)
     private void toggleBoneVisibilities(ItemStack stack, Player player) {
-        var item = (QuantumArmorBase) stack.getItem();
-        var renderer = IClientItemExtensions.of(item).getHumanoidArmorModel(player, stack, EquipmentSlot.CHEST, null);
-        if (renderer instanceof QuantumArmorRenderer quantumRenderer) {
-            var visible = item.hasUpgrade(stack, UpgradeType.STRENGTH);
+        QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+        HumanoidModel<?> renderer = IClientItemExtensions.of(item)
+                .getHumanoidArmorModel(player, stack, EquipmentSlot.CHEST, null);
+        if (renderer instanceof QuantumArmorRenderer) {
+            boolean visible = item.hasUpgrade(stack, UpgradeType.STRENGTH);
+            QuantumArmorRenderer quantumRenderer = (QuantumArmorRenderer) renderer;
             quantumRenderer.setBoneVisible(QuantumArmorRenderer.LEFT_BLADE_BONE, visible);
             quantumRenderer.setBoneVisible(QuantumArmorRenderer.RIGHT_BLADE_BONE, visible);
         }
@@ -109,7 +113,8 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
     @Override
     public boolean openFromEquipmentSlot(
             Player player, int inventorySlot, ItemStack stack, boolean returningFromSubmenu) {
-        if (player instanceof ServerPlayer serverPlayer && checkPreconditions(stack)) {
+        if (player instanceof ServerPlayer && checkPreconditions(stack)) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             player.getPersistentData().putInt(MENU_TYPE, MenuId.STANDARD.id);
             AAENetworkHandler.INSTANCE.sendTo(new MenuSelectionPacket(MENU_TYPE, MenuId.STANDARD.id), serverPlayer);
         }
@@ -117,12 +122,13 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
     }
 
     public boolean attemptCraftingTarget(Player player, int inventorySlot, ItemStack stack) {
-        if (player instanceof ServerPlayer serverPlayer && checkPreconditions(stack)) {
-            var chestStack = (QuantumChestplate) stack.getItem();
-            var upgrade = UpgradeType.PICK_CRAFT;
+        if (player instanceof ServerPlayer && checkPreconditions(stack)) {
+            ServerPlayer serverPlayer = (ServerPlayer) player;
+            QuantumChestplate chestStack = (QuantumChestplate) stack.getItem();
+            UpgradeType upgrade = UpgradeType.PICK_CRAFT;
             if (chestStack.hasUpgrade(stack, upgrade)) {
                 if (chestStack.isUpgradeEnabled(stack, upgrade)) {
-                    var key = targetKey(player);
+                    AEKey key = targetKey(player);
                     if (key != null) {
                         if (keyIsCraftable(player, stack, key)) {
                             player.getPersistentData().putInt(MENU_TYPE, MenuId.CRAFTING.id);
@@ -130,21 +136,15 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
                                     new MenuSelectionPacket(MENU_TYPE, MenuId.CRAFTING.id), serverPlayer);
                             CraftAmountMenu.open(serverPlayer, MenuLocators.forInventorySlot(inventorySlot), key, 1);
                         }
-                    }
-                    // No available target
-                    else {
+                    } else {
                         player.displayClientMessage(AAEText.NoAvailableTarget.text(), true);
                     }
-                }
-                // Upgrade disabled
-                else {
-                    var id = Component.translatable(upgrade.item().asItem().getDescriptionId());
+                } else {
+                    Component id = Component.translatable(upgrade.item().asItem().getDescriptionId());
                     player.displayClientMessage(AAEText.UpgradeNotEnabledMessage.text(id), true);
                 }
-            }
-            // Upgrade disabled
-            else {
-                var id = Component.translatable(upgrade.item().asItem().getDescriptionId());
+            } else {
+                Component id = Component.translatable(upgrade.item().asItem().getDescriptionId());
                 player.displayClientMessage(AAEText.UpgradeNotInstalledMessage.text(id), true);
             }
         }
@@ -163,23 +163,21 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
     }
 
     private AEKey targetKey(Player player) {
-        var hitResult = player.pick(player.getBlockReach(), 0f, false);
-        if (hitResult instanceof BlockHitResult blockHitResult && blockHitResult.getType() == HitResult.Type.BLOCK) {
-            var blockPos = blockHitResult.getBlockPos();
-            var blockState = player.level().getBlockState(blockPos);
+        HitResult hitResult = player.pick(player.getBlockReach(), 0f, false);
+        if (hitResult instanceof BlockHitResult && hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+            BlockPos blockPos = blockHitResult.getBlockPos();
+            BlockState blockState = player.level().getBlockState(blockPos);
             ItemStack itemStack = blockState.getBlock().asItem().getDefaultInstance();
             if (blockState.hasBlockEntity()) {
                 BlockEntity blockEntity = player.level().getBlockEntity(blockPos);
-                if (blockEntity != null) {
-                    if (blockEntity instanceof CableBusBlockEntity cable) {
-                        var part = getSelectedPart(cable, hitResult);
-                        if (part != null && part.part != null) {
-                            itemStack = new ItemStack(part.part.getPartItem().asItem(), 1);
-                        }
-
-                    } else {
-                        blockEntity.saveToItem(itemStack);
+                if (blockEntity instanceof CableBusBlockEntity) {
+                    SelectedPart part = getSelectedPart((CableBusBlockEntity) blockEntity, hitResult);
+                    if (part != null && part.part != null) {
+                        itemStack = new ItemStack(part.part.getPartItem().asItem(), 1);
                     }
+                } else if (blockEntity != null) {
+                    blockEntity.saveToItem(itemStack);
                 }
             }
             return AEItemKey.of(itemStack.getItem().getDefaultInstance());
@@ -188,28 +186,23 @@ public class QuantumChestplate extends QuantumArmorBase implements GeoItem, ISub
     }
 
     private static SelectedPart getSelectedPart(CableBusBlockEntity cable, HitResult hitResult) {
-        var loc = hitResult.getLocation();
-        var x = loc.x - (int) loc.x;
+        Vec3 loc = hitResult.getLocation();
+        double x = loc.x - (int) loc.x;
         if (x < 0) x++;
-        var y = loc.y - (int) loc.y;
+        double y = loc.y - (int) loc.y;
         if (y < 0) y++;
-        var z = loc.z - (int) loc.z;
+        double z = loc.z - (int) loc.z;
         if (z < 0) z++;
-        var vec = new Vec3(x, y, z);
-        return cable.selectPartLocal(vec);
+        return cable.selectPartLocal(new Vec3(x, y, z));
     }
 
     public boolean keyIsCraftable(Player player, ItemStack stack, AEKey whatToCraft) {
-        MutableObject<Component> errorHolder = new MutableObject<>();
-        var grid = this.getLinkedGrid(stack, player.level(), player);
+        IGrid grid = this.getLinkedGrid(stack, player.level(), player);
         if (grid != null) {
             if (grid.getCraftingService().isCraftable(whatToCraft)) {
                 return true;
             }
-            // Item is not craftable
-            else {
-                player.displayClientMessage(AAEText.ItemNotCraftable.text(), true);
-            }
+            player.displayClientMessage(AAEText.ItemNotCraftable.text(), true);
         }
         return false;
     }

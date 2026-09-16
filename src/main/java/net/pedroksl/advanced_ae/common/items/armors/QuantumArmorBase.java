@@ -1,6 +1,10 @@
 package net.pedroksl.advanced_ae.common.items.armors;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
@@ -18,6 +22,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,7 +30,11 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
@@ -35,7 +44,11 @@ import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.pedroksl.advanced_ae.client.AAEHotkeys;
 import net.pedroksl.advanced_ae.client.renderer.QuantumArmorRenderer;
-import net.pedroksl.advanced_ae.common.definitions.*;
+import net.pedroksl.advanced_ae.common.definitions.AAEHotkeysRegistry;
+import net.pedroksl.advanced_ae.common.definitions.AAEItems;
+import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
+import net.pedroksl.advanced_ae.common.definitions.AAENbt;
+import net.pedroksl.advanced_ae.common.definitions.AAEText;
 import net.pedroksl.advanced_ae.common.helpers.AAEColor;
 import net.pedroksl.advanced_ae.common.inventory.QuantumArmorMenuHost;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
@@ -43,6 +56,7 @@ import net.pedroksl.advanced_ae.xmod.Addons;
 import net.pedroksl.advanced_ae.xmod.apoth.ApoEnchPlugin;
 import net.pedroksl.advanced_ae.xmod.mekansim.MekanismPlugin;
 import net.pedroksl.ae2addonlib.registry.helpers.ICreativeTabItem;
+import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
 
 import appeng.api.implementations.menuobjects.IMenuItem;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
@@ -66,7 +80,7 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
 
     protected static final int DEFAULT_TINT_COLOR = AAEColor.PURPLE.argb();
 
-    protected final List<UpgradeType> possibleUpgrades = new ArrayList<>();
+    protected final List<UpgradeType> possibleUpgrades = new ArrayList<UpgradeType>();
 
     protected static final UUID ATTACK_DAMAGE_MOD = UUID.fromString("7c305230-fd62-4f14-8364-934bfc86ce74");
     protected static final UUID ATTACK_SPEED_MOD = UUID.fromString("47e9e666-e9a4-4bd7-8cce-ea2774b3fbc5");
@@ -98,11 +112,9 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
     }
 
     public int getTintColor(ItemStack stack) {
-        var tag = stack.getTag();
-        if (tag != null) {
-            if (tag.contains(AAENbt.TINT_COLOR_TAG)) {
-                return tag.getInt(AAENbt.TINT_COLOR_TAG);
-            }
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(AAENbt.TINT_COLOR_TAG)) {
+            return tag.getInt(AAENbt.TINT_COLOR_TAG);
         }
         return DEFAULT_TINT_COLOR;
     }
@@ -111,10 +123,10 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
         stack.getOrCreateTag().putInt(AAENbt.TINT_COLOR_TAG, color);
 
         if (player.level().isClientSide()) {
-            var renderer = IClientItemExtensions.of(stack)
+            HumanoidModel<?> renderer = IClientItemExtensions.of(stack)
                     .getHumanoidArmorModel(player, stack, stack.getEquipmentSlot(), null);
-            if (renderer instanceof QuantumArmorRenderer quantumRenderer) {
-                quantumRenderer.setTintColor(color);
+            if (renderer instanceof QuantumArmorRenderer) {
+                ((QuantumArmorRenderer) renderer).setTintColor(color);
             }
         }
     }
@@ -125,10 +137,14 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
             ItemStack stack, @NotNull Level context, List<Component> lines, TooltipFlag advancedTooltips) {
         super.appendHoverText(stack, context, lines, advancedTooltips);
 
-        var hotkey = AAEHotkeys.INSTANCE.getHotkeyMapping(AAEHotkeysRegistry.Keys.ARMOR_CONFIG.getId());
-        if (hotkey != null) {
+        if (AAEHotkeys.INSTANCE.getHotkeyMapping(AAEHotkeysRegistry.Keys.ARMOR_CONFIG.getId()) != null) {
             lines.add(AAEText.QuantumArmorHotkeyTooltip.text(
-                            hotkey.mapping().getTranslatedKeyMessage().copy().withStyle(ChatFormatting.GRAY))
+                            AAEHotkeys.INSTANCE
+                                    .getHotkeyMapping(AAEHotkeysRegistry.Keys.ARMOR_CONFIG.getId())
+                                    .mapping()
+                                    .getTranslatedKeyMessage()
+                                    .copy()
+                                    .withStyle(ChatFormatting.GRAY))
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
 
@@ -142,9 +158,8 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
 
         lines.add(Component.empty());
         lines.add(AAEText.QuantumArmorTooltip.text().withStyle(Tooltips.NORMAL_TOOLTIP_TEXT));
-        for (var upgrade : possibleUpgrades) {
-            var upgradeComponent =
-                    Component.translatable(upgrade.item().asItem().getDescriptionId());
+        for (UpgradeType upgrade : possibleUpgrades) {
+            MutableComponent upgradeComponent = Component.translatable(upgrade.item().asItem().getDescriptionId());
             if (!hasUpgrade(stack, upgrade)) {
                 upgradeComponent.append(AAEText.UpgradeNotInstalled.text());
                 upgradeComponent.withStyle(Tooltips.MUTED_COLOR);
@@ -158,58 +173,61 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
     @Override
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         Multimap<Attribute, AttributeModifier> modifiers = super.getAttributeModifiers(slot, stack);
-        if (!(stack.getItem() instanceof QuantumArmorBase armor)) {
+        if (!(stack.getItem() instanceof QuantumArmorBase)) {
             return modifiers;
         }
+        QuantumArmorBase armor = (QuantumArmorBase) stack.getItem();
 
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
         builder.putAll(modifiers);
 
         switch (slot) {
-            case HEAD -> {
+            case HEAD:
                 if (armor.isUpgradeEnabledAndPowered(stack, UpgradeType.LUCK)) {
                     int value = armor.getUpgradeValue(stack, UpgradeType.LUCK, 0);
-                    var att = new AttributeModifier(LUCK_MOD, "aae_luck", value, AttributeModifier.Operation.ADDITION);
+                    AttributeModifier att = new AttributeModifier(LUCK_MOD, "aae_luck", value, AttributeModifier.Operation.ADDITION);
                     builder.put(Attributes.LUCK, att);
                 }
-            }
-            case CHEST -> {
+                break;
+            case CHEST:
                 if (armor.isUpgradeEnabledAndPowered(stack, UpgradeType.HP_BUFFER)) {
                     int value = armor.getUpgradeValue(stack, UpgradeType.HP_BUFFER, 0);
-                    var att = new AttributeModifier(
+                    AttributeModifier att = new AttributeModifier(
                             HP_BUFFER_MOD, "aae_hp_buffer", value, AttributeModifier.Operation.ADDITION);
                     builder.put(Attributes.MAX_HEALTH, att);
                 }
                 if (armor.isUpgradeEnabledAndPowered(stack, UpgradeType.STRENGTH)) {
                     int value = armor.getUpgradeValue(stack, UpgradeType.STRENGTH, 0);
-                    var att = new AttributeModifier(
+                    AttributeModifier att = new AttributeModifier(
                             ATTACK_DAMAGE_MOD, "aae_strength_boost", value, AttributeModifier.Operation.ADDITION);
                     builder.put(Attributes.ATTACK_DAMAGE, att);
                 }
                 if (armor.isUpgradeEnabledAndPowered(stack, UpgradeType.ATTACK_SPEED)) {
                     int value = armor.getUpgradeValue(stack, UpgradeType.ATTACK_SPEED, 0);
-                    var att = new AttributeModifier(
+                    AttributeModifier att = new AttributeModifier(
                             ATTACK_SPEED_MOD, "aae_attack_speed", value, AttributeModifier.Operation.ADDITION);
                     builder.put(Attributes.ATTACK_SPEED, att);
                 }
-            }
-            case LEGS -> {
+                break;
+            case LEGS:
                 if (armor.isUpgradeEnabledAndPowered(stack, UpgradeType.REACH)) {
                     int value = armor.getUpgradeValue(stack, UpgradeType.REACH, 0);
-                    var att = new AttributeModifier(
+                    AttributeModifier att = new AttributeModifier(
                             REACH_MOD, "aae_reach_boost", value, AttributeModifier.Operation.ADDITION);
                     builder.put(ForgeMod.BLOCK_REACH.get(), att);
                     builder.put(ForgeMod.ENTITY_REACH.get(), att);
                 }
-            }
-            case FEET -> {
+                break;
+            case FEET:
                 if (armor.isUpgradeEnabledAndPowered(stack, UpgradeType.STEP_ASSIST)) {
                     int value = armor.getUpgradeValue(stack, UpgradeType.STEP_ASSIST, 0);
-                    var att = new AttributeModifier(
+                    AttributeModifier att = new AttributeModifier(
                             STEP_ASSIST_MOD, "aae_step_assist", value, AttributeModifier.Operation.ADDITION);
                     builder.put(ForgeMod.STEP_HEIGHT_ADDITION.get(), att);
                 }
-            }
+                break;
+            default:
+                break;
         }
         return builder.build();
     }
@@ -233,10 +251,10 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-        if (Addons.APOTHIC_ENCHANTING.isLoaded()) {
-            if (ApoEnchPlugin.isSameAs(enchantment, ApoEnchPlugin.Enchantment.STABLE_FOOTING)) return false;
+        if (Addons.APOTHIC_ENCHANTING.isLoaded()
+                && ApoEnchPlugin.isSameAs(enchantment, ApoEnchPlugin.Enchantment.STABLE_FOOTING)) {
+            return false;
         }
-
         return super.canApplyAtEnchantingTable(stack, enchantment);
     }
 
@@ -259,8 +277,8 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
     @Override
     public <T extends LivingEntity> int damageItem(
             ItemStack stack, int amount, @Nullable T entity, Consumer<T> onBroken) {
-        if (entity instanceof Player player) {
-            consumeEnergy(player, stack, amount);
+        if (entity instanceof Player) {
+            consumeEnergy((Player) entity, stack, amount);
         }
         return 0;
     }
@@ -276,12 +294,11 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
                     ItemStack itemStack,
                     EquipmentSlot equipmentSlot,
                     HumanoidModel<?> original) {
-                if (this.renderer == null) this.renderer = new QuantumArmorRenderer();
-
+                if (this.renderer == null) {
+                    this.renderer = new QuantumArmorRenderer();
+                }
                 this.renderer.setTintColor(getTintColor(itemStack));
-
                 this.renderer.prepForRender(livingEntity, itemStack, equipmentSlot, original);
-
                 return this.renderer;
             }
         });
@@ -292,13 +309,17 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
         controllers.add(new AnimationController<GeoAnimatable>(this, 20, state -> {
             state.getController().setAnimation(RawAnimation.begin().thenLoop("animation.quantum_armor.idle"));
             Entity entity = state.getData(DataTickets.ENTITY);
-            if (!(entity instanceof Player player)) return PlayState.CONTINUE;
+            if (!(entity instanceof Player)) {
+                return PlayState.CONTINUE;
+            }
+            Player player = (Player) entity;
 
-            Set<Item> wornArmor = new ObjectOpenHashSet<>();
-            for (ItemStack stack : player.getArmorSlots()) {
-                if (stack.isEmpty()) return PlayState.STOP;
-
-                wornArmor.add(stack.getItem());
+            Set<Item> wornArmor = new ObjectOpenHashSet<Item>();
+            for (ItemStack wornStack : player.getArmorSlots()) {
+                if (wornStack.isEmpty()) {
+                    return PlayState.STOP;
+                }
+                wornArmor.add(wornStack.getItem());
             }
 
             boolean isFullSet = wornArmor.containsAll(ObjectArrayList.of(
@@ -306,7 +327,6 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
                     AAEItems.QUANTUM_LEGGINGS.get(),
                     AAEItems.QUANTUM_CHESTPLATE.get(),
                     AAEItems.QUANTUM_HELMET.get()));
-
             return isFullSet ? PlayState.CONTINUE : PlayState.STOP;
         }));
     }
@@ -323,27 +343,24 @@ public class QuantumArmorBase extends PoweredItem implements GeoItem, IMenuItem,
     }
 
     public static List<QuantumArmorBase> upgradeAvailableFor(UpgradeType type) {
-        List<QuantumArmorBase> list = new ArrayList<>();
-
-        for (var equip : AAEItems.getQuantumArmor()) {
-            var armor = ((QuantumArmorBase) equip.stack().getItem());
+        List<QuantumArmorBase> list = new ArrayList<QuantumArmorBase>();
+        for (LibItemDefinition<?> equip : AAEItems.getQuantumArmor()) {
+            QuantumArmorBase armor = (QuantumArmorBase) equip.stack().getItem();
             if (armor.possibleUpgrades.contains(type)) {
                 list.add(armor);
             }
         }
-
         return list;
     }
 
     @Override
     public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
         if (Addons.MEKANISM.isLoaded()) {
-            var cap = MekanismPlugin.attachCapability(stack);
+            ICapabilityProvider cap = MekanismPlugin.attachCapability(stack);
             if (cap != null) {
                 return cap;
             }
         }
-
         return super.initCapabilities(stack, nbt);
     }
 }
