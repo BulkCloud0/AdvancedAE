@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  compile:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,8 +36,8 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Compile
-        run: ./gradlew compileJava --stacktrace --no-daemon
+      - name: Build
+        run: ./gradlew build --stacktrace --no-daemon
 
       - name: Save Gradle cache
         if: always()
