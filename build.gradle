@@ -1,352 +1,107 @@
-import com.hypherionmc.modpublisher.properties.ModLoader
-
 buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
     dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.65', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
-plugins {
-    id 'idea'
-    id 'maven-publish'
-    id "net.neoforged.moddev.legacyforge"
-    id 'com.diffplug.spotless'
-    id "com.hypherionmc.modutils.modpublisher" version '2.2.0'
-}
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'maven-publish'
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
 
 version = mod_version
 group = mod_group_id
+archivesBaseName = 'AdvancedAE'
 
-base {
-    archivesName = mod_name.replace(" ", "")
-}
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-
-println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
-
-legacyForge {
-    version = "${minecraft_version}-${forge_version}"
-
-    accessTransformers {
-        file('src/main/resources/META-INF/accesstransformer.cfg')
-    }
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     runs {
         client {
-            client()
-
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods { advanced_ae { source sourceSets.main } }
+            arg '-mixin.config=mixins.aae.json'
         }
-
         server {
-            server()
-            //programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods { advanced_ae { source sourceSets.main } }
+            arg '-mixin.config=mixins.aae.json'
         }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
         data {
-            data()
-
-            programArguments = [
-                    '--mod', project.mod_id,
-                    '--all',
-                    '--output', file('src/generated/resources/').getAbsolutePath(),
-                    '--existing', file('src/main/resources/').getAbsolutePath(),
-                    "--existing-mod", "ae2",
-                    "--existing-mod", "ae2addonlib"
-            ]
-        }
-
-        // applies to all the run configs above
-        configureEach {
-            // Recommended logging data for a userdev environment
-            // The markers can be added/remove as needed separated by commas.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            systemProperty "guideme.ae2.guide.sources", file('src/main/resources/assets/advanced_ae/ae2guide/aae_intro/').absolutePath
-            //  property "mixin.debug.export", "true"
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        // define mod <-> source bindings
-        // these are used to tell the game which sources are for which mod
-        // multi mod projects should define one per mod
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
+            workingDirectory project.file('run')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            mods { advanced_ae { source sourceSets.main } }
         }
     }
 }
 
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-    exclude '.cache/'
-}
+sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    maven { url = 'https://modmaven.dev/' }
+    maven { url = 'https://maven.blamejared.com/' }
     maven {
-        url = "https://cursemaven.com"
-        content {
-            includeGroup "curse.maven"
-        }
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
     }
-    maven {
-        url = "https://maven.blamejared.com/"
-    }
-    maven {
-        url = "https://dvs1.progwml6.com/files/maven/"
-    }
-    maven {
-        name = "Modmaven"
-        url = "https://modmaven.dev/"
-    }
-    maven {
-        url "https://maven.shedaniel.me/"
-        content {
-            includeGroup "me.shedaniel"
-            includeGroup "me.shedaniel.cloth"
-            includeGroup "dev.architectury"
-        }
-    }
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
 }
 
 dependencies {
-    compileOnly 'org.jetbrains:annotations:24.1.0'
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation fg.deobf("appeng:appliedenergistics2:${ae2_version}")
 
-    jarJar(modImplementation "io.github.pedroksl:ae2addonlib:${ae2addonlib_version}-${minecraft_version}")
-    modImplementation "org.appliedenergistics:guideme:${guideme_version}"
-    modRuntimeOnly "curse.maven:glodium-957920:5226922"
-    modImplementation "curse.maven:applied-flux-965012:6755986"
-    modImplementation "appeng:appliedenergistics2-forge:${ae2_version}"
-    modImplementation "curse.maven:ex-pattern-provider-892005:6870350"
+    // 1.16.5-native libraries retained by the backport.
+    implementation fg.deobf('curse.maven:geckolib-388172:4182600')
+    implementation fg.deobf('curse.maven:curios-309927:4419403')
+    compileOnly fg.deobf('curse.maven:jei-238222:5534622')
 
-    modImplementation "curse.maven:applied-energistics-2-wireless-terminals-459929:7014805"
-
-    modCompileOnly "curse.maven:jei-238222:6600311"
-    modImplementation "curse.maven:jade-324717:6855440"
-    modCompileOnly "curse.maven:emi-580555:6420945"
-    modImplementation "curse.maven:mega-cells-622112:6175008"
-    modImplementation "curse.maven:mekanism-268560:6552911"
-    modImplementation "curse.maven:geckolib-388172:6920925"
-    modImplementation "curse.maven:applied-mekanistics-574300:${appmek_file_id}"
-
-    modImplementation "curse.maven:curios-309927:5843594"
-    modCompileOnly "curse.maven:apotheosis-313970:5753183"
-    modCompileOnly "curse.maven:oculus-581495:5299671"
-
-    modImplementation "dev.architectury:architectury-forge:9.2.14"
-    modImplementation "me.shedaniel.cloth:cloth-config-forge:11.1.136"
-    annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
-
-    modRuntimeOnly "curse.maven:cucumber-272335:6880321"
-    modRuntimeOnly "curse.maven:mystical-agriculture-246640:6880326"
-
-    // rei
-    //modImplementation "me.shedaniel:RoughlyEnoughItems-forge:12.0.622"
-
-    // emi
-    modRuntimeOnly "curse.maven:emi-580555:6420945"
-
-    // jei
-    modRuntimeOnly "curse.maven:jei-238222:6600311"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
-publisher {
-    apiKeys {
-        // Modrinth Token
-        modrinth System.getenv("MODRINTH_TOKEN")
-        // Curseforge Token
-        curseforge System.getenv("CURSE_TOKEN")
-        // GitHub Token
-        github System.getenv("GITHUB_TOKEN")
-    }
-
-    // Enable Debug mode. When enabled, no files will actually be uploaded
-    setDebug(false)
-
-    // Curseforge Project ID
-    setCurseID("1084104")
-
-    // Modrinth Project ID
-    setModrinthID("rxYaglEe")
-
-    // Type of release. beta, alpha or release
-    // You can also use VersionType.BETA, VersionType.ALPHA or VersionType.RELEASE
-    setVersionType("RELEASE")
-
-    // Changelog. This can be a file, string, OR, gist/github url
-    // For example: markdown.md, or "This is my changelog"
-    // Or: https://raw.githubusercontent.com/hypherionmc/changelogs/changelog.md
-    // Or https://gist.githubusercontent.com/hypherionmc/92f825d3c9337964cc77c9c8c9bf65e6/raw/ceeaaee5b98c688a23398864fe480b84796a1651/test_gist.md
-    setChangelog("https://raw.githubusercontent.com/pedroksl/AdvancedAE/refs/heads/forge/1.20.1/CHANGELOG.md")
-
-    // Required for Modrinth/GitHub
-    setProjectVersion("${project.version}")
-
-    // Fancy display name for the upload.
-    // Will default to the project version if not set
-    setDisplayName("AdvancedAE-${project.version}")
-
-    // The supported game versions
-    setGameVersions("${project.minecraft_version}")
-
-    // The modloaders your upload supports.
-    // This can also be an Enum from ModLoader,
-    // like setLoaders(ModLoader.FABRIC, ModLoader.FORGE)
-    setLoaders(ModLoader.FORGE, ModLoader.NEOFORGE)
-
-    // The new Curseforge Environment tag. Optional
-    // Valid values are "server", "client" or "both"
-    // You can also use CurseEnvironment.BOTH, or CurseEnvironment.SERVER or CurseEnvironment.CLIENT
-    setCurseEnvironment("both")
-
-    // The file to be uploaded. This can be a file, task, or string.
-    // setArtifact("build/libs/mymod.jar")
-    // setArtifact(jar.getArchiveFile().get())
-    // If this is a task, the task specified will be executed before publishing
-    setArtifact("build/libs/${project.mod_name.replace(" ", "")}-${project.version}.jar")
-
-    // Disable the built in Fractureizer scanner
-    setDisableMalwareScanner(true)
-
-    // Add supported java versions. Currently only used by CurseForge
-    // Supports anything that can be parsed using JavaVersion.toVersion()
-    setJavaVersions(JavaVersion.VERSION_17, 17)
-
-    // Safety check to check if the artifact contains a valid mod metadata entry,
-    // which could possibly mean that the jar is empty
-    setDisableEmptyJarCheck(true)
-
-    github {
-        repo = "pedroksl/AdvancedAE"
-
-        tag = "${project.version}-forge"
-
-        createTag = true
-        createRelease = true
-        draft = false
-        updateRelease = true
-        target = "forge/1.20.1"
-        setAsLatest = false
-
-        displayName = "AdvancedAE-${project.version}"
-    }
-
-    curseDepends {
-        required "applied-energistics-2", "geckolib"
-    }
-
-    modrinthDepends {
-        required "ae2", "geckolib"
-    }
+mixin {
+    add sourceSets.main, 'mixins.aae.refmap.json'
+    config 'mixins.aae.json'
 }
-
-// This block of code expands all declared replace properties in the specified resource targets.
-// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
-Map<String, String> expansionVariables = [
-        minecraft_version      : minecraft_version,
-        minecraft_version_range: minecraft_version_range,
-        forge_version          : forge_version,
-        forge_version_range    : forge_version_range,
-        loader_version_range   : loader_version_range,
-        mod_id                 : mod_id,
-        mod_name               : mod_name,
-        mod_license            : mod_license,
-        mod_version            : mod_version,
-        mod_authors            : mod_authors,
-        mod_description        : mod_description,
-        ae2_version            : ae2_version
-]
 
 processResources {
-    exclude '.cache'
-    // Ensure the resources get re-evaluate when the version changes
-    for (var entry : expansionVariables.entrySet()) {
-        inputs.property(entry.key, entry.value)
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') {
+        expand project.properties
     }
-
-    filesMatching("META-INF/mods.toml") {
-        expand expansionVariables
-        filter { line ->
-            line.replace('version="0.0.0"', "version=\"${expansionVariables['project_version']}\"")
-        }
-    }
-}
-
-///////////
-// Mixins
-mixin {
-    var refmap = add sourceSets.main, "mixins.aae.refmap.json"
-    jar.from refmap
-    config "mixins.aae.json"
 }
 
 jar {
     manifest {
         attributes([
-                "MixinConfigs"          : "mixins.aae.json"
+                'Specification-Title': mod_name,
+                'Specification-Vendor': mod_authors,
+                'Specification-Version': '1',
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor': mod_authors,
+                'MixinConfigs': 'mixins.aae.json'
         ])
     }
 }
 
-// Example configuration to allow publishing using the maven-publish plugin
-publishing {
-    publications {
-        register('mavenJava', MavenPublication) {
-            artifact jar
-        }
-    }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/mcmodsrepo"
-        }
-    }
-}
+jar.finalizedBy('reobfJar')
 
 tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
-}
-
-spotless {
-//    kotlinGradle {
-//        target("*.kts")
-//        diktat()
-//        indentWithTabs(1)
-//        endWithNewline()
-//    }
-
-    java {
-        target("/src/**/java/**/*.java")
-        endWithNewline()
-        indentWithTabs(1)
-        removeUnusedImports()
-        palantirJavaFormat()
-        importOrderFile(file("aae.importorder"))
-        toggleOffOn()
-
-        bumpThisNumberIfACustomStepChanges(1)
-    }
-
-    json {
-        target('src/**/resources/**/*.json')
-        targetExclude('src/generated/resources/**')
-        biome()
-        indentWithSpaces(2)
-        endWithNewline()
-    }
+    options.encoding = 'UTF-8'
 }
