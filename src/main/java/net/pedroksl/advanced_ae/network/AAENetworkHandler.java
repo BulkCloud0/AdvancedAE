@@ -41,6 +41,12 @@ public final class AAENetworkHandler {
                 KeyStateMessage::decode,
                 KeyStateMessage::handle,
                 NetworkDirection.PLAY_TO_SERVER);
+        register(
+                MenuSelectionMessage.class,
+                MenuSelectionMessage::encode,
+                MenuSelectionMessage::decode,
+                MenuSelectionMessage::handle,
+                NetworkDirection.PLAY_TO_CLIENT);
         initialized = true;
     }
 
