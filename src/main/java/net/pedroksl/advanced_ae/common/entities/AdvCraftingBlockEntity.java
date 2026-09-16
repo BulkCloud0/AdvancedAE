@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import lombok.var;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -101,13 +102,15 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
     public void onReady() {
         super.onReady();
         this.getMainNode().setVisualRepresentation(this.getItemFromBlockEntity());
-        if (level instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel) {
+            ServerLevel serverLevel = (ServerLevel) level;
             this.calc.calculateMultiblock(serverLevel, worldPosition);
         }
     }
 
     public void updateMultiBlock(BlockPos changedPos) {
-        if (level instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel) {
+            ServerLevel serverLevel = (ServerLevel) level;
             this.calc.updateMultiblockAfterNeighborUpdate(serverLevel, worldPosition, changedPos);
         }
     }
@@ -131,7 +134,6 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
 
         final BlockState current = this.level.getBlockState(this.worldPosition);
 
-        // The block entity might try to update while being destroyed
         if (current.getBlock() instanceof AAEAbstractCraftingUnitBlock) {
             var type = this.getUnitBlock().type;
             int lightLevel = type == AAECraftingUnitType.QUANTUM_CORE ? 12 : 0;
@@ -144,9 +146,6 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
                     .setValue(AAECraftingUnitBlock.MULTIBLOCKED, multiblocked);
 
             if (current != newState) {
-                // Not using flag 2 here (only send to clients, prevent block update) will cause
-                // infinite loops
-                // In case there is an inconsistency in the crafting clusters.
                 this.level.setBlock(this.worldPosition, newState, Block.UPDATE_CLIENTS);
             }
         }
@@ -227,8 +226,6 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
         if (this.cluster != null) {
             this.cluster.cancelJobs();
             var inventories = this.cluster.getInventories();
-
-            // Drop stacks
             var places = new ArrayList<BlockPos>();
 
             for (var blockEntity : (Iterable<AdvCraftingBlockEntity>) this.cluster::getBlockEntities) {
@@ -258,7 +255,7 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
                     Platform.spawnDrops(this.level, position, stacks);
                 }
 
-                inv.clear(); // Ensure items only ever get dropped once
+                inv.clear();
             }
 
             this.cluster.destroy();
@@ -330,10 +327,6 @@ public class AdvCraftingBlockEntity extends AENetworkBlockEntity
         return level.getBlockState(adjacentPos).getBlock() instanceof AAEAbstractCraftingUnitBlock;
     }
 
-    /**
-     * When the block state changes (i.e. becoming formed or unformed), we need to update the model data since it
-     * contains connections to neighboring block entities.
-     */
     @Override
     public void setBlockState(BlockState state) {
         super.setBlockState(state);
