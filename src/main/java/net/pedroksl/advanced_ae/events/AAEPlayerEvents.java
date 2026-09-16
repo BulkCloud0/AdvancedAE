@@ -1,5 +1,6 @@
 package net.pedroksl.advanced_ae.events;
 
+import lombok.var;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
@@ -77,7 +78,8 @@ public class AAEPlayerEvents {
         var nv = player.getEffect(MobEffects.NIGHT_VISION);
         ItemStack stack = player.getItemBySlot(EquipmentSlot.HEAD);
         if (!stack.isEmpty()) {
-            if (stack.getItem() instanceof QuantumHelmet helmet) {
+            if (stack.getItem() instanceof QuantumHelmet) {
+                QuantumHelmet helmet = (QuantumHelmet) stack.getItem();
                 if (helmet.isUpgradeEnabledAndPowered(stack, UpgradeType.NIGHT_VISION)) {
                     if (nv == null || nv.getDuration() < 210) {
                         stack.getOrCreateTag().putBoolean(AAENbt.NIGHT_VISION_ACTIVATED, true);
@@ -95,7 +97,8 @@ public class AAEPlayerEvents {
         }
 
         ItemStack bootStack = player.getItemBySlot(EquipmentSlot.FEET);
-        if (bootStack.getItem() instanceof QuantumBoots boots) {
+        if (bootStack.getItem() instanceof QuantumBoots) {
+            QuantumBoots boots = (QuantumBoots) bootStack.getItem();
             var upgrade = UpgradeType.FLIGHT_DRIFT;
             if (player.getAbilities().flying && boots.isUpgradeEnabledAndPowered(bootStack, upgrade)) {
                 if (player.getPersistentData().getBoolean(NO_KEY_DATA)) {
@@ -111,7 +114,8 @@ public class AAEPlayerEvents {
         var downKey = player.getPersistentData().getBoolean(DOWN_KEY_DATA);
         if (upKey != downKey) {
             ItemStack chestStack = player.getItemBySlot(EquipmentSlot.CHEST);
-            if (chestStack.getItem() instanceof QuantumChestplate chest) {
+            if (chestStack.getItem() instanceof QuantumChestplate) {
+                QuantumChestplate chest = (QuantumChestplate) chestStack.getItem();
                 var upgrade = UpgradeType.FLIGHT;
                 if (player.getAbilities().flying && chest.isUpgradeEnabledAndPowered(chestStack, upgrade)) {
                     var value = upgrade.getSettings().multiplier * chest.getUpgradeValue(chestStack, upgrade, 0) / 35f;
@@ -128,7 +132,8 @@ public class AAEPlayerEvents {
         Player player = event.player;
         if (!(player instanceof ServerPlayer)) {
             ItemStack bootStack = player.getItemBySlot(EquipmentSlot.FEET);
-            if (bootStack.getItem() instanceof QuantumBoots boots) {
+            if (bootStack.getItem() instanceof QuantumBoots) {
+                QuantumBoots boots = (QuantumBoots) bootStack.getItem();
                 if (boots.isUpgradeEnabledAndPowered(bootStack, UpgradeType.FLIGHT_DRIFT)) {
                     var options = Minecraft.getInstance().options;
                     var noKey = !options.keyUp.isDown()
@@ -136,7 +141,6 @@ public class AAEPlayerEvents {
                             && !options.keyDown.isDown()
                             && !options.keyLeft.isDown();
                     if (player.getPersistentData().getBoolean(NO_KEY_DATA) != noKey) {
-                        // Send packet to server if data on player is different
                         AAENetworkHandler.INSTANCE.sendToServer(new KeysPressedPacket(NO_KEY_DATA, noKey));
                         player.getPersistentData().putBoolean(NO_KEY_DATA, noKey);
                     }
@@ -148,14 +152,12 @@ public class AAEPlayerEvents {
                 var options = Minecraft.getInstance().options;
                 var downKey = options.keyShift.isDown();
                 if (player.getPersistentData().getBoolean(DOWN_KEY_DATA) != downKey) {
-                    // Send packet to server if data on player is different
                     AAENetworkHandler.INSTANCE.sendToServer(new KeysPressedPacket(DOWN_KEY_DATA, downKey));
                     player.getPersistentData().putBoolean(DOWN_KEY_DATA, downKey);
                 }
 
                 var upKey = options.keyJump.isDown();
                 if (player.getPersistentData().getBoolean(UP_KEY_DATA) != upKey) {
-                    // Send packet to server if data on player is different
                     AAENetworkHandler.INSTANCE.sendToServer(new KeysPressedPacket(UP_KEY_DATA, upKey));
                     player.getPersistentData().putBoolean(UP_KEY_DATA, upKey);
                 }
@@ -164,9 +166,11 @@ public class AAEPlayerEvents {
     }
 
     public static void onStartTracking(PlayerEvent.StartTracking event) {
-        if (event.getEntity() instanceof ServerPlayer serverPlayer
-                && event.getTarget() instanceof ItemEntity item
+        if (event.getEntity() instanceof ServerPlayer
+                && event.getTarget() instanceof ItemEntity
                 && ((ItemEntity) event.getTarget()).thrower != null) {
+            ServerPlayer serverPlayer = (ServerPlayer) event.getEntity();
+            ItemEntity item = (ItemEntity) event.getTarget();
             AAENetworkHandler.INSTANCE.sendTo(new ItemTrackingPacket(item), serverPlayer);
         }
     }
