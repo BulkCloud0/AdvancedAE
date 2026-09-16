@@ -70,7 +70,6 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAEFluids.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAETags.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAESlotSemantics.java'
-            exclude 'net/pedroksl/advanced_ae/common/definitions/AAEMaterials.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAECreativeTab.java'
             exclude 'net/pedroksl/advanced_ae/common/logic/ExecutingCraftingJob.java'
             exclude 'net/pedroksl/advanced_ae/common/logic/ElapsedTimeTracker.java'

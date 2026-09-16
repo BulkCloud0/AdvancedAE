@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ArmorItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
@@ -57,10 +59,18 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<Item> ADV_PATTERN_ENCODER = item("Advanced Pattern Encoder", "adv_pattern_encoder", Item::new);
     public static final LibItemDefinition<Item> MONITOR_CONFIGURATOR = item("Throughput Monitor Configurator", "throughput_monitor_configurator", Item::new);
 
-    public static final LibItemDefinition<Item> QUANTUM_HELMET = item("Quantum Helmet", "quantum_helmet", Item::new);
-    public static final LibItemDefinition<Item> QUANTUM_CHESTPLATE = item("Quantum Chestplate", "quantum_chestplate", Item::new);
-    public static final LibItemDefinition<Item> QUANTUM_LEGGINGS = item("Quantum Leggings", "quantum_leggings", Item::new);
-    public static final LibItemDefinition<Item> QUANTUM_BOOTS = item("Quantum Boots", "quantum_boots", Item::new);
+    public static final LibItemDefinition<ArmorItem> QUANTUM_HELMET = item(
+            "Quantum Helmet", "quantum_helmet",
+            p -> new ArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.HEAD, p.rarity(Rarity.EPIC)));
+    public static final LibItemDefinition<ArmorItem> QUANTUM_CHESTPLATE = item(
+            "Quantum Chestplate", "quantum_chestplate",
+            p -> new ArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.CHEST, p.rarity(Rarity.EPIC)));
+    public static final LibItemDefinition<ArmorItem> QUANTUM_LEGGINGS = item(
+            "Quantum Leggings", "quantum_leggings",
+            p -> new ArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.LEGS, p.rarity(Rarity.EPIC)));
+    public static final LibItemDefinition<ArmorItem> QUANTUM_BOOTS = item(
+            "Quantum Boots", "quantum_boots",
+            p -> new ArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.FEET, p.rarity(Rarity.EPIC)));
     public static final LibItemDefinition<Item> QUANTUM_UPGRADE_BASE = item("Quantum Upgrade Base Card", "quantum_upgrade_base", Item::new);
     public static final LibItemDefinition<Item> WALK_SPEED_CARD = item("Walk Speed Card", "walk_speed_card", Item::new);
     public static final LibItemDefinition<Item> SPRINT_SPEED_CARD = item("Sprint Speed Card", "sprint_speed_card", Item::new);
