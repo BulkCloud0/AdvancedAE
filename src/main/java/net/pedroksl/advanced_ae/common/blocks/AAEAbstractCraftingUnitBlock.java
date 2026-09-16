@@ -15,12 +15,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import appeng.block.AEBaseTileBlock;
-import appeng.container.ContainerLocator;
-import appeng.container.ContainerOpener;
 import appeng.tile.AEBaseTileEntity;
 import appeng.util.InteractionUtil;
 
@@ -77,12 +74,10 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
         if (newState.getBlock() == state.getBlock()) {
             return;
         }
-
         T tile = this.getTileEntity(world, pos);
         if (tile instanceof AdvCraftingBlockEntity) {
             ((AdvCraftingBlockEntity) tile).breakCluster();
         }
-
         super.onReplaced(state, world, pos, newState, isMoving);
     }
 
@@ -93,16 +88,10 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
         if (tile instanceof AdvCraftingBlockEntity) {
             AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) tile;
             if (!InteractionUtil.isInAlternateUseMode(player) && crafting.isFormed() && crafting.isActive()) {
-                if (!world.isRemote()) {
-                    ContainerOpener.openContainer(
-                            AAEMenus.QUANTUM_COMPUTER.get(),
-                            player,
-                            ContainerLocator.forTileEntitySide(crafting, hit.getFace()));
-                }
+                // The custom Quantum Computer menu is deferred during the 1.16.5 baseline port.
                 return ActionResultType.func_233537_a_(world.isRemote());
             }
         }
-
         return super.onBlockActivated(state, world, pos, player, hand, hit);
     }
 }

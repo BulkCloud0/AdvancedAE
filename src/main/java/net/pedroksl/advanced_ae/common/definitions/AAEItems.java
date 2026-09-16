@@ -3,6 +3,7 @@ package net.pedroksl.advanced_ae.common.definitions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Rarity;
@@ -10,21 +11,29 @@ import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.parts.AdvancedIOBusPart;
 import net.pedroksl.advanced_ae.common.parts.ImportExportBusPart;
 import net.pedroksl.advanced_ae.common.parts.StockExportBusPart;
-import net.pedroksl.advanced_ae.xmod.Addons;
 import net.pedroksl.ae2addonlib.registry.ItemRegistry;
 import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
-import net.pedroksl.ae2addonlib.util.AddonEnum;
+
 import appeng.api.parts.IPart;
 import appeng.items.materials.MaterialItem;
 import appeng.items.parts.PartItem;
-import appeng.items.tools.powered.WirelessTerminalItem;
 
 public class AAEItems extends ItemRegistry {
     public static AAEItems INSTANCE = new AAEItems();
     AAEItems() { super(AdvancedAE.MOD_ID); }
 
-    public static List<LibItemDefinition<?>> getQuantumArmor() { return Arrays.<LibItemDefinition<?>>asList(QUANTUM_HELMET, QUANTUM_CHESTPLATE, QUANTUM_LEGGINGS, QUANTUM_BOOTS); }
-    public static List<LibItemDefinition<?>> getQuantumCards() { return Arrays.<LibItemDefinition<?>>asList(QUANTUM_UPGRADE_BASE, WALK_SPEED_CARD, SPRINT_SPEED_CARD, STEP_ASSIST_CARD, JUMP_HEIGHT_CARD, LAVA_IMMUNITY_CARD, FLIGHT_CARD, WATER_BREATHING_CARD, AUTO_FEED_CARD, AUTO_STOCK_CARD, MAGNET_CARD, HP_BUFFER_CARD, EVASION_CARD, REGENERATION_CARD, STRENGTH_CARD, ATTACK_SPEED_CARD, LUCK_CARD, REACH_CARD, SWIM_SPEED_CARD, NIGHT_VISION_CARD, FLIGHT_DRIFT_CARD, RECHARGING_CARD, WORKBENCH_CARD, PICK_CRAFT_CARD); }
+    public static List<LibItemDefinition<?>> getQuantumArmor() {
+        return Arrays.<LibItemDefinition<?>>asList(QUANTUM_HELMET, QUANTUM_CHESTPLATE, QUANTUM_LEGGINGS, QUANTUM_BOOTS);
+    }
+
+    public static List<LibItemDefinition<?>> getQuantumCards() {
+        return Arrays.<LibItemDefinition<?>>asList(
+                QUANTUM_UPGRADE_BASE, WALK_SPEED_CARD, SPRINT_SPEED_CARD, STEP_ASSIST_CARD, JUMP_HEIGHT_CARD,
+                LAVA_IMMUNITY_CARD, FLIGHT_CARD, WATER_BREATHING_CARD, AUTO_FEED_CARD, AUTO_STOCK_CARD,
+                MAGNET_CARD, HP_BUFFER_CARD, EVASION_CARD, REGENERATION_CARD, STRENGTH_CARD,
+                ATTACK_SPEED_CARD, LUCK_CARD, REACH_CARD, SWIM_SPEED_CARD, NIGHT_VISION_CARD,
+                FLIGHT_DRIFT_CARD, RECHARGING_CARD, WORKBENCH_CARD, PICK_CRAFT_CARD);
+    }
 
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER = item("Advanced Extended Pattern Provider", "adv_pattern_provider_part", Item::new);
     public static final LibItemDefinition<Item> SMALL_ADV_PATTERN_PROVIDER = item("Advanced Pattern Provider", "small_adv_pattern_provider_part", Item::new);
@@ -33,7 +42,7 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<PartItem<AdvancedIOBusPart>> ADVANCED_IO_BUS = part("ME Advanced IO Bus", "advanced_io_bus_part", AdvancedIOBusPart.class, AdvancedIOBusPart::new);
     public static final LibItemDefinition<Item> THROUGHPUT_MONITOR = item("ME Throughput Monitor", "throughput_monitor", Item::new);
     public static final LibItemDefinition<Item> QUANTUM_CRAFTER_TERMINAL = item("Quantum Crafter Terminal", "quantum_crafter_terminal", Item::new);
-    public static final LibItemDefinition<WirelessTerminalItem> QUANTUM_CRAFTER_WIRELESS_TERMINAL = conditionalItem(Addons.AE2WTLIB, "Wireless Quantum Crafter Terminal", "wireless_quantum_crafter_terminal", "net.pedroksl.advanced_ae.common.items.QuantumCrafterWirelessTerminalItem");
+    public static final LibItemDefinition<Item> QUANTUM_CRAFTER_WIRELESS_TERMINAL = item("Wireless Quantum Crafter Terminal", "wireless_quantum_crafter_terminal", Item::new);
     public static final LibItemDefinition<Item> ADV_PROCESSING_PATTERN = item("Advanced Processing Pattern", "adv_processing_pattern", Item::new);
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_UPGRADE = item("Advanced Pattern Provider Upgrade", "adv_pattern_provider_upgrade", Item::new);
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_CAPACITY_UPGRADE = item("Advanced Pattern Provider Capacity Upgrade", "adv_pattern_provider_capacity_upgrade", Item::new);
@@ -77,13 +86,12 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<Item> WORKBENCH_CARD = item("Portable Workbench Card", "portable_workbench_card", Item::new);
     public static final LibItemDefinition<Item> PICK_CRAFT_CARD = item("Pick Craft Card", "pick_craft_card", Item::new);
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Item> LibItemDefinition<T> conditionalItem(AddonEnum addon, String englishName, String id, String itemClass) {
-        if (addon.isLoaded()) {
-            try { T instance = (T) Class.forName(itemClass).getDeclaredConstructor().newInstance(); return item(AdvancedAE.MOD_ID, englishName, id, p -> instance); } catch (Exception ignored) {}
-        }
-        return null;
+    protected static <T extends Item> LibItemDefinition<T> item(String englishName, String id, Function<Item.Properties, T> factory) {
+        return item(AdvancedAE.MOD_ID, englishName, id, factory);
     }
-    protected static <T extends Item> LibItemDefinition<T> item(String englishName, String id, Function<Item.Properties, T> factory) { return item(AdvancedAE.MOD_ID, englishName, id, factory); }
-    protected static <T extends IPart> LibItemDefinition<PartItem<T>> part(String englishName, String id, Class<T> partClass, Function<ItemStack, T> factory) { return part(AdvancedAE.MOD_ID, englishName, id, partClass, factory); }
+
+    protected static <T extends IPart> LibItemDefinition<PartItem<T>> part(
+            String englishName, String id, Class<T> partClass, Function<ItemStack, T> factory) {
+        return part(AdvancedAE.MOD_ID, englishName, id, partClass, factory);
+    }
 }
