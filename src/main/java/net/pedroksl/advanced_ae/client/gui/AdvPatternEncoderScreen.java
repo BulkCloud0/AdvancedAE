@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javax.annotation.Nullable;
 
+import lombok.var;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Rect2i;
@@ -195,26 +197,41 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
     private int getSelectedDirButton(@Nullable Direction dir) {
         if (dir == null) return 0;
 
-        return switch (dir) {
-            case NORTH -> 1;
-            case EAST -> 2;
-            case SOUTH -> 3;
-            case WEST -> 4;
-            case UP -> 5;
-            case DOWN -> 6;
-        };
+        switch (dir) {
+            case NORTH:
+                return 1;
+            case EAST:
+                return 2;
+            case SOUTH:
+                return 3;
+            case WEST:
+                return 4;
+            case UP:
+                return 5;
+            case DOWN:
+                return 6;
+            default:
+                return 0;
+        }
     }
 
     private ResourceLocation getDirButtonTexture(int index) {
-        return switch (index) {
-            case 1 -> AdvancedAE.makeId("textures/guis/north_button.png");
-            case 2 -> AdvancedAE.makeId("textures/guis/east_button.png");
-            case 3 -> AdvancedAE.makeId("textures/guis/south_button.png");
-            case 4 -> AdvancedAE.makeId("textures/guis/west_button.png");
-            case 5 -> AdvancedAE.makeId("textures/guis/up_button.png");
-            case 6 -> AdvancedAE.makeId("textures/guis/down_button.png");
-            default -> AdvancedAE.makeId("textures/guis/any_button.png");
-        };
+        switch (index) {
+            case 1:
+                return AdvancedAE.makeId("textures/guis/north_button.png");
+            case 2:
+                return AdvancedAE.makeId("textures/guis/east_button.png");
+            case 3:
+                return AdvancedAE.makeId("textures/guis/south_button.png");
+            case 4:
+                return AdvancedAE.makeId("textures/guis/west_button.png");
+            case 5:
+                return AdvancedAE.makeId("textures/guis/up_button.png");
+            case 6:
+                return AdvancedAE.makeId("textures/guis/down_button.png");
+            default:
+                return AdvancedAE.makeId("textures/guis/any_button.png");
+        }
     }
 
     private void resetScrollbar() {
@@ -222,5 +239,23 @@ public class AdvPatternEncoderScreen extends AEBaseScreen<AdvPatternEncoderMenu>
         scrollbar.setRange(0, this.inputList.size() - VISIBLE_ROWS, 2);
     }
 
-    public record InputRow(AEKey key, @Nullable Direction dir) {}
+    public static final class InputRow {
+        private final AEKey key;
+        @Nullable
+        private final Direction dir;
+
+        public InputRow(AEKey key, @Nullable Direction dir) {
+            this.key = key;
+            this.dir = dir;
+        }
+
+        public AEKey key() {
+            return this.key;
+        }
+
+        @Nullable
+        public Direction dir() {
+            return this.dir;
+        }
+    }
 }
