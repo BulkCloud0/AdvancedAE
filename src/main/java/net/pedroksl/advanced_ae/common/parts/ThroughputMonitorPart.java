@@ -5,9 +5,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -38,24 +40,19 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
     @PartModels
     public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/storage_monitor_off");
-
     @PartModels
     public static final ResourceLocation MODEL_ON = AppEng.makeId("part/storage_monitor_on");
-
     @PartModels
     public static final ResourceLocation MODEL_LOCKED_OFF = AppEng.makeId("part/storage_monitor_locked_off");
-
     @PartModels
     public static final ResourceLocation MODEL_LOCKED_ON = AppEng.makeId("part/storage_monitor_locked_on");
 
     public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
     public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
     public static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
-
     public static final IPartModel MODELS_LOCKED_OFF = new PartModel(MODEL_BASE, MODEL_LOCKED_OFF, MODEL_STATUS_OFF);
     public static final IPartModel MODELS_LOCKED_ON = new PartModel(MODEL_BASE, MODEL_LOCKED_ON, MODEL_STATUS_ON);
-    public static final IPartModel MODELS_LOCKED_HAS_CHANNEL =
-            new PartModel(MODEL_BASE, MODEL_LOCKED_ON, MODEL_STATUS_HAS_CHANNEL);
+    public static final IPartModel MODELS_LOCKED_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_LOCKED_ON, MODEL_STATUS_HAS_CHANNEL);
 
     private final ThroughputCache cache = new ThroughputCache();
     protected double lastReportedValue = -1;
@@ -73,21 +70,30 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
         TEN_MINUTE(12000, AAEConfig.instance().getThroughputMonitorCacheSize() * 5);
 
         public static WorkRoutine cycle(WorkRoutine routine) {
-            return switch (routine) {
-                case TICK -> SECOND;
-                case SECOND -> MINUTE;
-                case MINUTE -> TEN_MINUTE;
-                case TEN_MINUTE -> TICK;
-            };
+            switch (routine) {
+                case TICK:
+                    return SECOND;
+                case SECOND:
+                    return MINUTE;
+                case MINUTE:
+                    return TEN_MINUTE;
+                case TEN_MINUTE:
+                default:
+                    return TICK;
+            }
         }
 
         public static WorkRoutine fromInt(int value) {
-            return switch (value) {
-                case 0 -> TICK;
-                case 2 -> MINUTE;
-                case 3 -> TEN_MINUTE;
-                default -> SECOND;
-            };
+            switch (value) {
+                case 0:
+                    return TICK;
+                case 2:
+                    return MINUTE;
+                case 3:
+                    return TEN_MINUTE;
+                default:
+                    return SECOND;
+            }
         }
 
         public final int ticks;
@@ -101,7 +107,6 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
     public ThroughputMonitorPart(IPartItem<?> partItem) {
         super(partItem, false);
-
         getMainNode().addService(IGridTickable.class, this);
     }
 
@@ -130,17 +135,13 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public boolean readFromStream(FriendlyByteBuf data) {
         boolean needRedraw = super.readFromStream(data);
-
-        var reportedValue = data.readLong();
+        double reportedValue = data.readDouble();
         needRedraw |= reportedValue != this.lastReportedValue;
         this.lastReportedValue = reportedValue;
-
         this.lastHumanReadableValue = data.readUtf();
-
-        var routine = data.readEnum(WorkRoutine.class);
+        WorkRoutine routine = data.readEnum(WorkRoutine.class);
         needRedraw |= this.workRoutine != routine;
         this.workRoutine = routine;
-
         return needRedraw;
     }
 
@@ -163,19 +164,17 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
         if (!isClientSide()) {
-            var heldItem = player.getItemInHand(hand);
+            ItemStack heldItem = player.getItemInHand(hand);
             if (heldItem.is(AAEItems.MONITOR_CONFIGURATOR.asItem())) {
                 cycleWorkRoutine();
                 return true;
             }
         }
-
         return super.onPartActivate(player, hand, pos);
     }
 
     private void cycleWorkRoutine() {
         this.workRoutine = WorkRoutine.cycle(this.workRoutine);
-
         getMainNode().ifPresent((grid, node) -> grid.getTickManager().alertDevice(node));
     }
 
@@ -187,7 +186,6 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
         } else {
             getMainNode().ifPresent((grid, node) -> grid.getTickManager().sleepDevice(node));
         }
-
         super.configureWatchers();
     }
 
@@ -199,40 +197,47 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
             MultiBufferSource buffers,
             int combinedLightIn,
             int combinedOverlayIn) {
-        if (this.isActive()) {
-            if (getDisplayed() != null) {
-                poseStack.pushPose();
-                BlockOrientation orientation = BlockOrientation.get(this.getSide(), this.getSpin());
-                poseStack.translate(0.5, 0.5, 0.5);
-                BlockEntityRenderHelper.rotateToFace(poseStack, orientation);
-                poseStack.translate(0, 0.1, 0.5);
-                BlockEntityRenderHelper.renderItem2dWithAmount(
-                        poseStack,
-                        buffers,
-                        this.getDisplayed(),
-                        getAmount(),
-                        canCraft(),
-                        0.3F,
-                        -0.15F,
-                        this.getColor().contrastTextColor,
-                        this.getLevel());
+        if (this.isActive() && getDisplayed() != null) {
+            poseStack.pushPose();
+            BlockOrientation orientation = BlockOrientation.get(this.getSide(), this.getSpin());
+            poseStack.translate(0.5, 0.5, 0.5);
+            BlockEntityRenderHelper.rotateToFace(poseStack, orientation);
+            poseStack.translate(0, 0.1, 0.5);
+            BlockEntityRenderHelper.renderItem2dWithAmount(
+                    poseStack,
+                    buffers,
+                    this.getDisplayed(),
+                    getAmount(),
+                    canCraft(),
+                    0.3F,
+                    -0.15F,
+                    this.getColor().contrastTextColor,
+                    this.getLevel());
 
-                poseStack.translate(0, -0.23F, 0);
-                var sign = lastReportedValue > 0 ? "+" : lastReportedValue == 0 ? "" : "-";
-                var text =
-                        switch (this.workRoutine) {
-                            case TICK -> AAEText.OverdriveThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                            case SECOND -> AAEText.ThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                            case MINUTE -> AAEText.SlowThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                            case TEN_MINUTE -> AAEText.SlowerThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                        };
-
-                var color = lastReportedValue > 0
-                        ? positiveColor
-                        : lastReportedValue == 0 ? this.getColor().contrastTextColor : negativeColor;
-                AAEBlockEntityRenderHelper.renderString(poseStack, buffers, text, color);
-                poseStack.popPose();
+            poseStack.translate(0, -0.23F, 0);
+            String sign = lastReportedValue > 0 ? "+" : lastReportedValue == 0 ? "" : "-";
+            Component text;
+            switch (this.workRoutine) {
+                case TICK:
+                    text = AAEText.OverdriveThroughputMonitorValue.text(sign, lastHumanReadableValue);
+                    break;
+                case MINUTE:
+                    text = AAEText.SlowThroughputMonitorValue.text(sign, lastHumanReadableValue);
+                    break;
+                case TEN_MINUTE:
+                    text = AAEText.SlowerThroughputMonitorValue.text(sign, lastHumanReadableValue);
+                    break;
+                case SECOND:
+                default:
+                    text = AAEText.ThroughputMonitorValue.text(sign, lastHumanReadableValue);
+                    break;
             }
+
+            int color = lastReportedValue > 0
+                    ? positiveColor
+                    : lastReportedValue == 0 ? this.getColor().contrastTextColor : negativeColor;
+            AAEBlockEntityRenderHelper.renderString(poseStack, buffers, text, color);
+            poseStack.popPose();
         }
     }
 
@@ -250,7 +255,6 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     @Override
     protected void onMainNodeStateChanged(IGridNodeListener.State reason) {
         getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node));
-
         super.onMainNodeStateChanged(reason);
     }
 
@@ -268,17 +272,14 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
 
         long currentTick = TickHandler.instance().getCurrentTick();
         long currentAmount = getAmount();
-
-        // Long time without updates, do a fast one
         if (cache.size() == 0) {
             updateState(currentAmount, currentTick);
             this.lastHumanReadableValue = "-";
             return TickRateModulation.URGENT;
         }
 
-        // Normal update schedule
         if (this.workRoutine == this.lastWorkRoutine) {
-            var amountPerTick = cache.averagePerTick(this.workRoutine.timeLimit_s);
+            double amountPerTick = cache.averagePerTick(this.workRoutine.timeLimit_s);
             this.lastReportedValue = amountPerTick * this.workRoutine.ticks;
             if (this.lastReportedValue > 10 || this.lastReportedValue == 0) {
                 this.lastHumanReadableValue =
@@ -286,14 +287,12 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
             } else {
                 this.lastHumanReadableValue = String.format("%.2f", Math.abs(this.lastReportedValue));
             }
-
         } else {
             this.lastHumanReadableValue = "";
         }
 
         updateState(currentAmount, currentTick);
         this.getHost().markForUpdate();
-
         return TickRateModulation.SLOWER;
     }
 

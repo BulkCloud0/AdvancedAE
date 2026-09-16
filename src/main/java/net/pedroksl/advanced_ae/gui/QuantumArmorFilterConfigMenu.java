@@ -37,7 +37,6 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
     private final ISubMenuHost host;
 
     protected final ConfigInventory inv;
-
     protected final FakeSlot[] slots = new FakeSlot[9];
 
     protected static final String OPEN_AMOUNT_MENU = "open_amount_menu";
@@ -48,16 +47,15 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
         this.host = host;
         createPlayerInventorySlots(playerInventory);
 
-        var filterQuantities = type == AAEMenus.QUANTUM_ARMOR_FILTER_CONFIG.get();
+        boolean filterQuantities = type == AAEMenus.QUANTUM_ARMOR_FILTER_CONFIG.get();
         if (filterQuantities) {
             this.inv = ConfigInventory.configStacks(this::typeFilter, 9, this::onSlotChanged, true);
         } else {
             this.inv = ConfigInventory.configTypes(9, this::onSlotChanged);
         }
-        var wrappedInv = inv.createMenuWrapper();
 
-        for (var x = 0; x < inv.size(); x++) {
-            slots[x] = new FakeSlot(wrappedInv, x);
+        for (int x = 0; x < inv.size(); x++) {
+            slots[x] = new FakeSlot(inv.createMenuWrapper(), x);
             this.addSlot(slots[x], SlotSemantics.CONFIG);
         }
 
@@ -66,7 +64,8 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
 
     private boolean typeFilter(AEKey aeKey) {
         if (upgradeType == UpgradeType.AUTO_FEED) {
-            if (aeKey instanceof AEItemKey key) {
+            if (aeKey instanceof AEItemKey) {
+                AEItemKey key = (AEItemKey) aeKey;
                 return key.toStack().getFoodProperties(getPlayer()) != null;
             }
             return false;
@@ -91,7 +90,8 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
             UpgradeType upgradeType) {
         MenuOpener.open(AAEMenus.QUANTUM_ARMOR_FILTER_CONFIG.get(), player, locator);
 
-        if (player.containerMenu instanceof QuantumArmorFilterConfigMenu cca) {
+        if (player.containerMenu instanceof QuantumArmorFilterConfigMenu) {
+            QuantumArmorFilterConfigMenu cca = (QuantumArmorFilterConfigMenu) player.containerMenu;
             cca.setSlotIndex(slotIndex);
             cca.setUpgradeType(upgradeType);
             cca.setFilterList(filterList);
@@ -112,16 +112,15 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
     }
 
     public void setFilterList(List<GenericStack> filterList) {
-        for (var x = 0; x < inv.size(); x++) {
+        for (int x = 0; x < inv.size(); x++) {
             if (x < filterList.size()) {
-                var filter = filterList.get(x);
-                if (filter != null) {
-                    if (filter.what() instanceof AEItemKey key) {
-                        var stack = key.toStack();
-                        stack.setCount(Math.max(1, (int) filter.amount()));
-                        this.slots[x].set(stack);
-                        continue;
-                    }
+                GenericStack filter = filterList.get(x);
+                if (filter != null && filter.what() instanceof AEItemKey) {
+                    AEItemKey key = (AEItemKey) filter.what();
+                    ItemStack stack = key.toStack();
+                    stack.setCount(Math.max(1, (int) filter.amount()));
+                    this.slots[x].set(stack);
+                    continue;
                 }
             }
             this.slots[x].set(ItemStack.EMPTY);
@@ -132,7 +131,6 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
         if (isClientSide() || this.updatingFilters) {
             return;
         }
-
         updateItemStack();
     }
 
@@ -140,21 +138,20 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
         this.updatingFilters = true;
         List<GenericStack> filterList = makeFilterList();
 
-        var stack = getPlayer().getInventory().getItem(this.slotIndex);
-        if (stack.getItem() instanceof QuantumArmorBase item) {
-            if (item.getPossibleUpgrades().contains(this.upgradeType)) {
-                if (item.hasUpgrade(stack, this.upgradeType)) {
-                    item.setFilter(stack, this.upgradeType, filterList);
-                }
+        ItemStack stack = getPlayer().getInventory().getItem(this.slotIndex);
+        if (stack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+            if (item.getPossibleUpgrades().contains(this.upgradeType) && item.hasUpgrade(stack, this.upgradeType)) {
+                item.setFilter(stack, this.upgradeType, filterList);
             }
         }
         this.updatingFilters = false;
     }
 
     protected List<GenericStack> makeFilterList() {
-        List<GenericStack> filterList = new ArrayList<>();
-        for (var x = 0; x < inv.size(); x++) {
-            var stack = inv.getStack(x);
+        List<GenericStack> filterList = new ArrayList<GenericStack>();
+        for (int x = 0; x < inv.size(); x++) {
+            GenericStack stack = inv.getStack(x);
             if (stack != null) {
                 filterList.add(stack);
             }
@@ -168,15 +165,14 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
             return;
         }
 
-        var slot = this.getSlot(index);
-
+        Slot slot = this.getSlot(index);
         GenericStack currentStack = GenericStack.fromItemStack(slot.getItem());
         if (currentStack != null) {
-            var locator = getLocator();
+            MenuLocator locator = getLocator();
             if (locator != null && isServerSide()) {
                 SetAmountMenu.open(
-                        ((ServerPlayer) this.getPlayer()),
-                        getLocator(),
+                        (ServerPlayer) this.getPlayer(),
+                        locator,
                         currentStack,
                         (newStack) -> this.setFilter(slot.index, GenericStack.wrapInItemStack(newStack)),
                         this,
@@ -188,10 +184,10 @@ public class QuantumArmorFilterConfigMenu extends AEBaseMenu implements ISubMenu
     @Override
     public void returnFromSetAmountMenu() {
         List<GenericStack> filterList = makeFilterList();
-
         Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer serverPlayer) {
-            QuantumArmorFilterConfigMenu.open(serverPlayer, getLocator(), this.slotIndex, filterList, this.upgradeType);
+        if (player instanceof ServerPlayer) {
+            QuantumArmorFilterConfigMenu.open(
+                    (ServerPlayer) player, getLocator(), this.slotIndex, filterList, this.upgradeType);
         }
     }
 }

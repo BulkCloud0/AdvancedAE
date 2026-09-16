@@ -23,7 +23,6 @@ public class AdvancedIOBusMenu extends StockExportBusMenu {
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
-
         this.regulate = getHost().getConfigManager().getSetting(AAESettings.REGULATE_STOCK);
     }
 
@@ -34,8 +33,8 @@ public class AdvancedIOBusMenu extends StockExportBusMenu {
     @Override
     public void returnFromSetAmountMenu() {
         Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer serverPlayer) {
-            MenuOpener.open(AAEMenus.ADVANCED_IO_BUS.get(), serverPlayer, getLocator(), true);
+        if (player instanceof ServerPlayer) {
+            MenuOpener.open(AAEMenus.ADVANCED_IO_BUS.get(), (ServerPlayer) player, getLocator(), true);
         }
     }
 }

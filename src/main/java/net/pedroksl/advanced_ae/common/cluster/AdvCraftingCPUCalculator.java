@@ -10,6 +10,7 @@ import net.pedroksl.advanced_ae.common.definitions.AAEConfig;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridNode;
 import appeng.api.networking.events.GridCraftingCpuChange;
 import appeng.me.cluster.IAEMultiBlock;
 import appeng.me.cluster.MBCalculator;
@@ -22,16 +23,9 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
 
     @Override
     public boolean checkMultiblockScale(BlockPos min, BlockPos max) {
-        var maxSize = AAEConfig.instance().getQuantumComputerMaxSize() - 1;
-
-        if (max.getX() - min.getX() > maxSize) {
-            return false;
-        }
-
-        if (max.getY() - min.getY() > maxSize) {
-            return false;
-        }
-
+        int maxSize = AAEConfig.instance().getQuantumComputerMaxSize() - 1;
+        if (max.getX() - min.getX() > maxSize) return false;
+        if (max.getY() - min.getY() > maxSize) return false;
         return max.getZ() - min.getZ() <= maxSize;
     }
 
@@ -51,13 +45,12 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
 
         for (BlockPos blockPos : BlockPos.betweenClosed(min, max)) {
             final IAEMultiBlock<?> te = (IAEMultiBlock<?>) level.getBlockEntity(blockPos);
-
             if (te == null || !te.isValid()) {
                 return false;
             }
 
-            if (te instanceof AdvCraftingBlockEntity advEntity) {
-
+            if (te instanceof AdvCraftingBlockEntity) {
+                AdvCraftingBlockEntity advEntity = (AdvCraftingBlockEntity) te;
                 boolean isBoundary = blockPos.getX() == min.getX()
                         || blockPos.getY() == min.getY()
                         || blockPos.getZ() == min.getZ()
@@ -66,45 +59,25 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
                         || blockPos.getZ() == max.getZ();
 
                 switch ((AAECraftingUnitType) advEntity.getUnitBlock().type) {
-                    case QUANTUM_CORE: {
-                        if (min.equals(max)) {
-                            return true;
-                        }
-
-                        if (!isBoundary && !core) {
-                            core = true;
-                        } else {
-                            return false;
-                        }
+                    case QUANTUM_CORE:
+                        if (min.equals(max)) return true;
+                        if (!isBoundary && !core) core = true;
+                        else return false;
                         break;
-                    }
-                    case STRUCTURE: {
-                        if (!isBoundary) {
-                            return false;
-                        }
+                    case STRUCTURE:
+                        if (!isBoundary) return false;
                         break;
-                    }
-                    case STORAGE_MULTIPLIER: {
-                        if (!isBoundary && entangler < entanglerLimit) {
-                            entangler++;
-                        } else {
-                            return false;
-                        }
+                    case STORAGE_MULTIPLIER:
+                        if (!isBoundary && entangler < entanglerLimit) entangler++;
+                        else return false;
                         break;
-                    }
-                    case MULTI_THREADER: {
-                        if (!isBoundary && multi < multiLimit) {
-                            multi++;
-                        } else {
-                            return false;
-                        }
+                    case MULTI_THREADER:
+                        if (!isBoundary && multi < multiLimit) multi++;
+                        else return false;
                         break;
-                    }
-                    default: {
-                        if (isBoundary) {
-                            return false;
-                        }
-                    }
+                    default:
+                        if (isBoundary) return false;
+                        break;
                 }
 
                 if (!storage) {
@@ -129,8 +102,8 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
 
         final Iterator<AdvCraftingBlockEntity> i = c.getBlockEntities();
         while (i.hasNext()) {
-            var gh = i.next();
-            var n = gh.getGridNode();
+            AdvCraftingBlockEntity gh = i.next();
+            IGridNode n = gh.getGridNode();
             if (n != null) {
                 final IGrid g = n.getGrid();
                 g.postEvent(new GridCraftingCpuChange(n));

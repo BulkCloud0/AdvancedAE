@@ -2,6 +2,7 @@ package net.pedroksl.advanced_ae.gui;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.common.definitions.AAEMenus;
 import net.pedroksl.advanced_ae.common.items.armors.QuantumArmorBase;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
@@ -30,7 +31,6 @@ public class QuantumArmorNumInputConfigMenu extends AEBaseMenu implements ISubMe
     public QuantumArmorNumInputConfigMenu(int id, Inventory playerInventory, ISubMenuHost host) {
         super(AAEMenus.QUANTUM_ARMOR_NUM_INPUT.get(), id, playerInventory, host);
         this.host = host;
-
         registerClientAction(SET_CURRENT_VALUE, Integer.class, this::setCurrentValue);
     }
 
@@ -43,7 +43,8 @@ public class QuantumArmorNumInputConfigMenu extends AEBaseMenu implements ISubMe
             ServerPlayer player, MenuLocator locator, int slotIndex, UpgradeType type, int currentValue) {
         MenuOpener.open(AAEMenus.QUANTUM_ARMOR_NUM_INPUT.get(), player, locator);
 
-        if (player.containerMenu instanceof QuantumArmorNumInputConfigMenu cca) {
+        if (player.containerMenu instanceof QuantumArmorNumInputConfigMenu) {
+            QuantumArmorNumInputConfigMenu cca = (QuantumArmorNumInputConfigMenu) player.containerMenu;
             cca.setUpgradeType(type);
             cca.setSlotIndex(slotIndex);
             cca.setCurrentValue(currentValue);
@@ -66,13 +67,11 @@ public class QuantumArmorNumInputConfigMenu extends AEBaseMenu implements ISubMe
         }
 
         this.currentValue = value;
-
-        var stack = getPlayer().getInventory().getItem(this.slotIndex);
-        if (stack.getItem() instanceof QuantumArmorBase item) {
-            if (item.getPossibleUpgrades().contains(this.type)) {
-                if (item.hasUpgrade(stack, this.type)) {
-                    item.setUpgradeValue(stack, this.type, value);
-                }
+        ItemStack stack = getPlayer().getInventory().getItem(this.slotIndex);
+        if (stack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+            if (item.getPossibleUpgrades().contains(this.type) && item.hasUpgrade(stack, this.type)) {
+                item.setUpgradeValue(stack, this.type, value);
             }
         }
     }

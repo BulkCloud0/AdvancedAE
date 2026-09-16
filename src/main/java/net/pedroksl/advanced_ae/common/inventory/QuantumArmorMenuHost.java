@@ -9,6 +9,7 @@ import net.pedroksl.advanced_ae.common.definitions.AAEHotkeysRegistry;
 import net.pedroksl.advanced_ae.common.definitions.AAENbt;
 import net.pedroksl.advanced_ae.common.items.armors.QuantumArmorBase;
 import net.pedroksl.advanced_ae.common.items.upgrades.QuantumUpgradeBaseItem;
+import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.inventories.InternalInventory;
@@ -27,9 +28,7 @@ public class QuantumArmorMenuHost extends ItemMenuHost implements InternalInvent
     private ProgressChangedHandler progressChangedHandler;
     private InventoryChangedHandler invChangeHandler;
     private ClientUpdater clientUpdater;
-
     private final BiConsumer<Player, ISubMenu> returnToMainMenu;
-
     private long consumeCardStartTick = -1;
 
     @GuiSync(10)
@@ -40,32 +39,33 @@ public class QuantumArmorMenuHost extends ItemMenuHost implements InternalInvent
         super(player, inventorySlot, stack);
         this.returnToMainMenu = returnToMainMenu;
 
-        var itemTag = this.getItemStack().getTagElement(AAENbt.STACK_TAG);
+        CompoundTag itemTag = this.getItemStack().getTagElement(AAENbt.STACK_TAG);
         if (itemTag != null) {
             this.input.readFromNBT(itemTag, "input");
         }
     }
 
     public void tick() {
-        var inputCard = this.input.getStackInSlot(0);
+        ItemStack inputCard = this.input.getStackInSlot(0);
         if (inputCard.isEmpty() || selectedItemSlot == -1) {
             resetProgress();
             return;
         }
 
         ItemStack stack = super.getPlayer().getInventory().getItem(this.selectedItemSlot);
-        if (!(stack.getItem() instanceof QuantumArmorBase item)) {
+        if (!(stack.getItem() instanceof QuantumArmorBase)) {
             resetProgress();
             return;
         }
+        QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
 
-        QuantumUpgradeBaseItem card = ((QuantumUpgradeBaseItem) inputCard.getItem());
+        QuantumUpgradeBaseItem card = (QuantumUpgradeBaseItem) inputCard.getItem();
         if (!item.isUpgradeAllowed(card.getType()) || item.hasUpgrade(stack, card.getType())) {
             resetProgress();
             return;
         }
 
-        var currentTick = TickHandler.instance().getCurrentTick();
+        long currentTick = TickHandler.instance().getCurrentTick();
         if (consumeCardStartTick == -1) {
             consumeCardStartTick = currentTick;
         }
@@ -75,7 +75,7 @@ public class QuantumArmorMenuHost extends ItemMenuHost implements InternalInvent
             progressTime = -1;
             updateProgress(progressTime);
 
-            var type = card.getType();
+            UpgradeType type = card.getType();
             if (item.applyUpgrade(stack, type)) {
                 this.input.setItemDirect(0, ItemStack.EMPTY);
                 if (clientUpdater != null) {
@@ -115,7 +115,7 @@ public class QuantumArmorMenuHost extends ItemMenuHost implements InternalInvent
 
     @Override
     public void saveChanges() {
-        var itemTag = new CompoundTag();
+        CompoundTag itemTag = new CompoundTag();
         this.input.writeToNBT(itemTag, "input");
 
         if (!itemTag.isEmpty()) {
@@ -127,7 +127,7 @@ public class QuantumArmorMenuHost extends ItemMenuHost implements InternalInvent
 
     @Override
     public void onChangeInventory(InternalInventory inv, int slot) {
-        var itemTag = this.getItemStack().getOrCreateTagElement(AAENbt.STACK_TAG);
+        CompoundTag itemTag = this.getItemStack().getOrCreateTagElement(AAENbt.STACK_TAG);
         if (this.input == inv) {
             this.input.writeToNBT(itemTag, "input");
         }
