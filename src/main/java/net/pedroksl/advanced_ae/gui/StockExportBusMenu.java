@@ -24,16 +24,14 @@ public class StockExportBusMenu extends UpgradeableMenu<StockExportBusPart> impl
         this(AAEMenus.STOCK_EXPORT_BUS.get(), id, ip, host);
     }
 
-    public StockExportBusMenu(
-            MenuType<? extends StockExportBusMenu> menuType, int id, Inventory ip, StockExportBusPart host) {
+    public StockExportBusMenu(MenuType<? extends StockExportBusMenu> menuType, int id, Inventory ip, StockExportBusPart host) {
         super(menuType, id, ip, host);
-
         registerClientAction(OPEN_AMOUNT_MENU, Integer.class, this::openAmountMenu);
     }
 
     @Override
     protected void setupConfig() {
-        this.addExpandableConfigSlots((this.getHost()).getConfig(), 2, 9, 5);
+        this.addExpandableConfigSlots(this.getHost().getConfig(), 2, 9, 5);
     }
 
     @Override
@@ -51,28 +49,25 @@ public class StockExportBusMenu extends UpgradeableMenu<StockExportBusPart> impl
             sendClientAction(OPEN_AMOUNT_MENU, slotIndex);
             return;
         }
-        var slot = this.getSlot(slotIndex);
 
+        final Slot slot = this.getSlot(slotIndex);
         GenericStack currentStack = GenericStack.fromItemStack(slot.getItem());
-        if (currentStack != null) {
-            var locator = getLocator();
-            if (locator != null && isServerSide()) {
-                SetAmountMenu.open(
-                        ((ServerPlayer) this.getPlayer()),
-                        getLocator(),
-                        currentStack,
-                        (newStack) -> this.setFilter(slot.index, GenericStack.wrapInItemStack(newStack)),
-                        this,
-                        slot.getMaxStackSize());
-            }
+        if (currentStack != null && getLocator() != null && isServerSide()) {
+            SetAmountMenu.open(
+                    (ServerPlayer) this.getPlayer(),
+                    getLocator(),
+                    currentStack,
+                    (newStack) -> this.setFilter(slot.index, GenericStack.wrapInItemStack(newStack)),
+                    this,
+                    slot.getMaxStackSize());
         }
     }
 
     @Override
     public void returnFromSetAmountMenu() {
         Player player = getPlayerInventory().player;
-        if (player instanceof ServerPlayer serverPlayer) {
-            MenuOpener.open(AAEMenus.STOCK_EXPORT_BUS.get(), serverPlayer, getLocator(), true);
+        if (player instanceof ServerPlayer) {
+            MenuOpener.open(AAEMenus.STOCK_EXPORT_BUS.get(), (ServerPlayer) player, getLocator(), true);
         }
     }
 }

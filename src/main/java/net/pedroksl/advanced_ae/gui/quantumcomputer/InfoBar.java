@@ -14,12 +14,12 @@ import appeng.api.stacks.AEKey;
 import appeng.client.gui.Icon;
 
 public class InfoBar {
-    private final List<Widget> widgets = new ArrayList<>();
+    private final List<Widget> widgets = new ArrayList<Widget>();
 
     public void render(GuiGraphics guiGraphics, int x, int y) {
-        var maxHeight = widgets.stream().mapToInt(Widget::getHeight).max().orElse(0);
+        int maxHeight = widgets.stream().mapToInt(Widget::getHeight).max().orElse(0);
 
-        for (var widget : widgets) {
+        for (Widget widget : widgets) {
             widget.render(guiGraphics, x, Math.round(y + maxHeight / 2.f - widget.getHeight() / 2.f));
             x += widget.getWidth();
         }
@@ -27,9 +27,7 @@ public class InfoBar {
 
     interface Widget {
         int getWidth();
-
         int getHeight();
-
         void render(GuiGraphics guiGraphics, int x, int y);
     }
 
@@ -57,7 +55,15 @@ public class InfoBar {
         widgets.add(new SpaceWidget(width));
     }
 
-    private record StackWidget(AEKey what, float scale) implements Widget {
+    private static final class StackWidget implements Widget {
+        private final AEKey what;
+        private final float scale;
+
+        private StackWidget(AEKey what, float scale) {
+            this.what = what;
+            this.scale = scale;
+        }
+
         @Override
         public int getWidth() {
             return Math.round(16 * scale);
@@ -70,16 +76,23 @@ public class InfoBar {
 
         @Override
         public void render(GuiGraphics guiGraphics, int x, int y) {
-            var poseStack = guiGraphics.pose();
-            poseStack.pushPose();
-            poseStack.translate(x, y, 0);
-            poseStack.scale(scale, scale, 1);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(x, y, 0);
+            guiGraphics.pose().scale(scale, scale, 1);
             AEKeyRendering.drawInGui(Minecraft.getInstance(), guiGraphics, 0, 0, what);
-            poseStack.popPose();
+            guiGraphics.pose().popPose();
         }
     }
 
-    private record IconWidget(Icon icon, float scale) implements Widget {
+    private static final class IconWidget implements Widget {
+        private final Icon icon;
+        private final float scale;
+
+        private IconWidget(Icon icon, float scale) {
+            this.icon = icon;
+            this.scale = scale;
+        }
+
         @Override
         public int getWidth() {
             return Math.round(16 * scale);
@@ -92,12 +105,11 @@ public class InfoBar {
 
         @Override
         public void render(GuiGraphics guiGraphics, int x, int y) {
-            var poseStack = guiGraphics.pose();
-            poseStack.pushPose();
-            poseStack.translate(x, y, 0);
-            poseStack.scale(scale, scale, 1);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(x, y, 0);
+            guiGraphics.pose().scale(scale, scale, 1);
             icon.getBlitter().dest(0, 0).blit(guiGraphics);
-            poseStack.popPose();
+            guiGraphics.pose().popPose();
         }
     }
 
@@ -112,9 +124,8 @@ public class InfoBar {
             this.text = text;
             this.color = color;
             this.scale = scale;
-            var font = Minecraft.getInstance().font;
-            this.width = Math.round(font.width(text) * scale);
-            this.height = Math.round(font.lineHeight * scale);
+            this.width = Math.round(Minecraft.getInstance().font.width(text) * scale);
+            this.height = Math.round(Minecraft.getInstance().font.lineHeight * scale);
         }
 
         @Override
@@ -129,13 +140,11 @@ public class InfoBar {
 
         @Override
         public void render(GuiGraphics guiGraphics, int x, int y) {
-            var poseStack = guiGraphics.pose();
-            var font = Minecraft.getInstance().font;
-            poseStack.pushPose();
-            poseStack.translate(x, y, 0);
-            poseStack.scale(scale, scale, 1);
-            guiGraphics.drawString(font, text, 0, 0, color, false);
-            poseStack.popPose();
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(x, y, 0);
+            guiGraphics.pose().scale(scale, scale, 1);
+            guiGraphics.drawString(Minecraft.getInstance().font, text, 0, 0, color, false);
+            guiGraphics.pose().popPose();
         }
     }
 

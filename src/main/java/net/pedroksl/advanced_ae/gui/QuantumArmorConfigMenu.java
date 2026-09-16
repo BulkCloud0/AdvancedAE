@@ -31,14 +31,11 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
 
     @GuiSync(2)
     public int maxProcessingTime;
-
     @GuiSync(3)
     public int processingTime = -1;
 
     private final QuantumArmorMenuHost host;
-
     private final Slot inputSlot;
-
     private boolean markDirty = false;
 
     private static final String REQUEST_UPDATE = "request_update";
@@ -46,24 +43,20 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
     private static final String REQUEST_UNINSTALL = "request_uninstall";
     private static final String EMPTY_SLOT = "empty_slot";
     private static final String OPEN_STYLE = "open_style";
-
     public static final String LAST_SLOT_INDEX = "aae$lastSlotIndex";
 
     public QuantumArmorConfigMenu(int id, Inventory playerInventory, QuantumArmorMenuHost host) {
         super(AAEMenus.QUANTUM_ARMOR_CONFIG.get(), id, playerInventory, host);
         this.host = host;
         this.createPlayerInventorySlots(playerInventory);
-
         this.inputSlot = this.addSlot(new UpgradeSlot(host.getInventory(), 0), SlotSemantics.MACHINE_INPUT);
 
         int indexOfFirstQuantum = -1;
         for (int i = 3; i >= 0; i--) {
-            var index = Inventory.INVENTORY_SIZE + i;
-            var slot = new DisabledSlot(playerInventory, index);
-            if (slot.getItem().getItem() instanceof QuantumArmorBase) {
-                if (indexOfFirstQuantum == -1) {
-                    indexOfFirstQuantum = index;
-                }
+            int index = Inventory.INVENTORY_SIZE + i;
+            DisabledSlot slot = new DisabledSlot(playerInventory, index);
+            if (slot.getItem().getItem() instanceof QuantumArmorBase && indexOfFirstQuantum == -1) {
+                indexOfFirstQuantum = index;
             }
             this.addSlot(slot, AAESlotSemantics.ARMOR);
         }
@@ -127,7 +120,6 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
             getPlayer().getPersistentData().putInt(LAST_SLOT_INDEX, index);
             return;
         }
-
         this.host.setSelectedItemSlot(index);
     }
 
@@ -136,48 +128,35 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
     }
 
     public void toggleUpgradeEnable(UpgradeType upgradeType, boolean state) {
-        var slotIndex = this.host.getSelectedSlotIndex();
-        var stack = getPlayer().getInventory().getItem(slotIndex);
-        if (stack.getItem() instanceof QuantumArmorBase item) {
-            if (item.getPossibleUpgrades().contains(upgradeType)) {
-                if (item.hasUpgrade(stack, upgradeType)) {
-                    item.toggleUpgrade(stack, upgradeType);
-                    this.markDirty = true;
-                }
+        int slotIndex = this.host.getSelectedSlotIndex();
+        ItemStack stack = getPlayer().getInventory().getItem(slotIndex);
+        if (stack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+            if (item.getPossibleUpgrades().contains(upgradeType) && item.hasUpgrade(stack, upgradeType)) {
+                item.toggleUpgrade(stack, upgradeType);
+                this.markDirty = true;
             }
         }
     }
 
     public void openNumInputConfigScreen(UpgradeType upgradeType, int currentValue) {
-        var locator = getLocator();
-        if (locator != null) {
-            QuantumArmorNumInputConfigMenu.open(
-                    ((ServerPlayer) this.getPlayer()),
-                    getLocator(),
-                    this.getSelectedSlotIndex(),
-                    upgradeType,
-                    currentValue);
+        if (getLocator() != null) {
+            QuantumArmorNumInputConfigMenu.open((ServerPlayer) this.getPlayer(), getLocator(),
+                    this.getSelectedSlotIndex(), upgradeType, currentValue);
         }
     }
 
     public void openFilterConfigScreen(UpgradeType upgradeType, List<GenericStack> filter) {
-        var locator = getLocator();
-        if (locator != null && isServerSide()) {
-            QuantumArmorFilterConfigMenu.open(
-                    ((ServerPlayer) this.getPlayer()), getLocator(), this.getSelectedSlotIndex(), filter, upgradeType);
+        if (getLocator() != null && isServerSide()) {
+            QuantumArmorFilterConfigMenu.open((ServerPlayer) this.getPlayer(), getLocator(),
+                    this.getSelectedSlotIndex(), filter, upgradeType);
         }
     }
 
     public void openMagnetScreen(int currentValue, List<GenericStack> filter, boolean blacklist) {
-        var locator = getLocator();
-        if (locator != null && isServerSide()) {
-            QuantumArmorMagnetMenu.open(
-                    ((ServerPlayer) this.getPlayer()),
-                    getLocator(),
-                    this.getSelectedSlotIndex(),
-                    filter,
-                    currentValue,
-                    blacklist);
+        if (getLocator() != null && isServerSide()) {
+            QuantumArmorMagnetMenu.open((ServerPlayer) this.getPlayer(), getLocator(),
+                    this.getSelectedSlotIndex(), filter, currentValue, blacklist);
         }
     }
 
@@ -186,11 +165,8 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
             sendClientAction(OPEN_STYLE);
             return;
         }
-
-        var locator = getLocator();
-        if (locator != null) {
-            QuantumArmorStyleConfigMenu.open(
-                    ((ServerPlayer) this.getPlayer()), getLocator(), this.getSelectedSlotIndex());
+        if (getLocator() != null) {
+            QuantumArmorStyleConfigMenu.open((ServerPlayer) this.getPlayer(), getLocator(), this.getSelectedSlotIndex());
         }
     }
 
@@ -201,21 +177,18 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
         }
 
         boolean upgradeRemoved = false;
-        var slotIndex = this.host.getSelectedSlotIndex();
-        var stack = getPlayer().getInventory().getItem(slotIndex);
-        if (stack.getItem() instanceof QuantumArmorBase item) {
-            if (item.getPossibleUpgrades().contains(upgradeType)) {
-                if (item.hasUpgrade(stack, upgradeType)) {
-                    upgradeRemoved = item.removeUpgrade(stack, upgradeType);
-                }
+        int slotIndex = this.host.getSelectedSlotIndex();
+        ItemStack stack = getPlayer().getInventory().getItem(slotIndex);
+        if (stack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
+            if (item.getPossibleUpgrades().contains(upgradeType) && item.hasUpgrade(stack, upgradeType)) {
+                upgradeRemoved = item.removeUpgrade(stack, upgradeType);
             }
         }
 
-        var upgradeStack = upgradeType.item().stack();
-        if (upgradeRemoved) {
-            if (!getPlayer().getInventory().add(upgradeStack)) {
-                getPlayer().drop(upgradeStack, false);
-            }
+        ItemStack upgradeStack = upgradeType.item().stack();
+        if (upgradeRemoved && !getPlayer().getInventory().add(upgradeStack)) {
+            getPlayer().drop(upgradeStack, false);
         }
         this.markDirty = true;
     }
@@ -226,22 +199,21 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
             return;
         }
 
-        var slotIndex = this.host.getSelectedSlotIndex();
-        var stack = getPlayer().getInventory().getItem(slotIndex);
-        if (!stack.isEmpty() && this.getPlayer() instanceof ServerPlayer player) {
-            var index = 4 - (slotIndex - Inventory.INVENTORY_SIZE) + Inventory.INVENTORY_SIZE;
-            AAENetworkHandler.INSTANCE.sendTo(new QuantumArmorUpgradeStatePacket(index, stack), player);
+        int slotIndex = this.host.getSelectedSlotIndex();
+        ItemStack stack = getPlayer().getInventory().getItem(slotIndex);
+        if (!stack.isEmpty() && this.getPlayer() instanceof ServerPlayer) {
+            int index = 4 - (slotIndex - Inventory.INVENTORY_SIZE) + Inventory.INVENTORY_SIZE;
+            AAENetworkHandler.INSTANCE.sendTo(
+                    new QuantumArmorUpgradeStatePacket(index, stack), (ServerPlayer) this.getPlayer());
         }
     }
 
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
-
         if (host != null) {
             host.tick();
         }
-
         if (markDirty) {
             updateClient();
             markDirty = false;
@@ -253,7 +225,6 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
             sendClientAction(EMPTY_SLOT);
             return;
         }
-
         if (!this.inputSlot.getItem().isEmpty()) {
             this.getPlayer().addItem(this.inputSlot.getItem());
             this.inputSlot.set(ItemStack.EMPTY);
@@ -267,8 +238,8 @@ public class QuantumArmorConfigMenu extends AEBaseMenu implements ISubMenuHost, 
 
         @Override
         public boolean mayPlace(ItemStack stack) {
-            if (stack.getItem() instanceof QuantumUpgradeBaseItem upgrade) {
-                return upgrade.getType() != UpgradeType.EMPTY;
+            if (stack.getItem() instanceof QuantumUpgradeBaseItem) {
+                return ((QuantumUpgradeBaseItem) stack.getItem()).getType() != UpgradeType.EMPTY;
             }
             return false;
         }
