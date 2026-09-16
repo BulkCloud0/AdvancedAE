@@ -21,7 +21,13 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace --no-daemon
+          ./gradlew build --stacktrace --no-daemon 2>&1 | tee gradle-build.log
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdvancedAE-1.16.5-build-log
+          path: gradle-build.log
       - name: Upload jars
         if: success()
         uses: actions/upload-artifact@v4
