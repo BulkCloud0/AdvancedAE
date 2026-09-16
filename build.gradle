@@ -51,8 +51,49 @@ minecraft {
     }
 }
 
-sourceSets.main.java.srcDir 'vendor/ExtendedAE/src/main/java'
+// During the backport we keep the upstream source intact as a reference and
+// deterministically emit Java-8-safe copies of the few very large classes that
+// still contain newer language syntax. Once their API migration is complete,
+// the generated copy can be folded back into src/main/java without changing
+// runtime behaviour.
+def legacyGeneratedDir = file("$buildDir/generated/sources/expansionaeLegacy/java")
+def advPatternProviderPath = 'net/pedroksl/advanced_ae/common/logic/AdvPatternProviderLogic.java'
+
+sourceSets.main.java {
+    srcDir 'vendor/ExtendedAE/src/main/java'
+    srcDir legacyGeneratedDir
+    exclude advPatternProviderPath
+}
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+task prepareExpansionAELegacySources {
+    inputs.file file("src/main/java/${advPatternProviderPath}")
+    outputs.file file("${legacyGeneratedDir}/${advPatternProviderPath}")
+
+    doLast {
+        def sourceFile = file("src/main/java/${advPatternProviderPath}")
+        def outFile = file("${legacyGeneratedDir}/${advPatternProviderPath}")
+        outFile.parentFile.mkdirs()
+
+        def text = sourceFile.getText('UTF-8')
+        text = text.replace('import java.util.*;', 'import java.util.*;\n\nimport lombok.var;')
+
+        text = text.replace('''        var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);\n        this.unlockEvent = switch (unlockEventType) {\n            case 0 -> null;\n            case 1 -> UnlockCraftingEvent.REDSTONE_POWER;\n            case 2 -> UnlockCraftingEvent.RESULT;\n            case 3 -> UnlockCraftingEvent.REDSTONE_PULSE;\n            default -> {\n                LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);\n                yield null;\n            }};''', '''        var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);\n        switch (unlockEventType) {\n            case 0:\n                this.unlockEvent = null;\n                break;\n            case 1:\n                this.unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                break;\n            case 2:\n                this.unlockEvent = UnlockCraftingEvent.RESULT;\n                break;\n            case 3:\n                this.unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                break;\n            default:\n                LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);\n                this.unlockEvent = null;\n                break;\n        }''')
+
+        text = text.replace('''        record PushTarget(Direction direction, PatternProviderTarget target) {}\n        var possibleTargets = new ArrayList<PushTarget>();''', '''        class PushTarget {\n            private final Direction direction;\n            private final PatternProviderTarget target;\n\n            PushTarget(Direction direction, PatternProviderTarget target) {\n                this.direction = direction;\n                this.target = target;\n            }\n\n            Direction direction() {\n                return this.direction;\n            }\n\n            PatternProviderTarget target() {\n                return this.target;\n            }\n        }\n        var possibleTargets = new ArrayList<PushTarget>();''')
+
+        text = text.replace('''        switch (lockMode) {\n            case LOCK_UNTIL_PULSE -> {\n                if (getRedstoneState()) {\n                    // Already have signal, wait for no signal before switching to REDSTONE_POWER\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                } else {\n                    // No signal, wait for signal\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                }\n                redstoneState = YesNo.UNDECIDED; // Check redstone state again next update\n                saveChanges();\n            }\n            case LOCK_UNTIL_RESULT -> {\n                unlockEvent = UnlockCraftingEvent.RESULT;\n                unlockStack = pattern.getPrimaryOutput();\n                saveChanges();\n            }\n        }''', '''        switch (lockMode) {\n            case LOCK_UNTIL_PULSE:\n                if (getRedstoneState()) {\n                    // Already have signal, wait for no signal before switching to REDSTONE_POWER\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                } else {\n                    // No signal, wait for signal\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                }\n                redstoneState = YesNo.UNDECIDED; // Check redstone state again next update\n                saveChanges();\n                break;\n            case LOCK_UNTIL_RESULT:\n                unlockEvent = UnlockCraftingEvent.RESULT;\n                unlockStack = pattern.getPrimaryOutput();\n                saveChanges();\n                break;\n            default:\n                break;\n        }''')
+
+        text = text.replace('''            switch (unlockEvent) {\n                case REDSTONE_POWER, REDSTONE_PULSE -> {\n                    return LockCraftingMode.LOCK_UNTIL_PULSE;\n                }\n                case RESULT -> {\n                    return LockCraftingMode.LOCK_UNTIL_RESULT;\n                }\n            }''', '''            switch (unlockEvent) {\n                case REDSTONE_POWER:\n                case REDSTONE_PULSE:\n                    return LockCraftingMode.LOCK_UNTIL_PULSE;\n                case RESULT:\n                    return LockCraftingMode.LOCK_UNTIL_RESULT;\n                default:\n                    break;\n            }''')
+
+        text = text.replace('''        if (this.host instanceof Nameable nameable && nameable.hasCustomName()) {\n            var name = nameable.getCustomName();\n            return new PatternContainerGroup(this.host.getTerminalIcon(), name, List.of());\n        }''', '''        if (this.host instanceof Nameable && ((Nameable) this.host).hasCustomName()) {\n            Nameable nameable = (Nameable) this.host;\n            var name = nameable.getCustomName();\n            return new PatternContainerGroup(this.host.getTerminalIcon(), name, Collections.emptyList());\n        }''')
+        text = text.replace('List<Component> tooltip = List.of();', 'List<Component> tooltip = Collections.emptyList();')
+
+        outFile.setText(text, 'UTF-8')
+    }
+}
+
+compileJava.dependsOn prepareExpansionAELegacySources
 
 repositories {
     mavenCentral()
@@ -73,6 +114,9 @@ dependencies {
     implementation fg.deobf('curse.maven:curios-309927:4419403')
     compileOnly fg.deobf('curse.maven:jei-238222:5534622')
 
+    // Java 8 local type inference used only by generated transitional sources.
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
