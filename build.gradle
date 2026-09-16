@@ -58,7 +58,8 @@ def advPatternProviderPath = 'net/pedroksl/advanced_ae/common/logic/AdvPatternPr
 def advCraftingCpuPath = 'net/pedroksl/advanced_ae/common/logic/AdvCraftingCPULogic.java'
 def reactionChamberPath = 'net/pedroksl/advanced_ae/common/entities/ReactionChamberEntity.java'
 def quantumCrafterPath = 'net/pedroksl/advanced_ae/common/entities/QuantumCrafterEntity.java'
-def legacySourcePaths = [advPatternProviderPath, advCraftingCpuPath, reactionChamberPath, quantumCrafterPath]
+def quantumCrafterTermPath = 'net/pedroksl/advanced_ae/client/gui/QuantumCrafterTermScreen.java'
+def legacySourcePaths = [advPatternProviderPath, advCraftingCpuPath, reactionChamberPath, quantumCrafterPath, quantumCrafterTermPath]
 
 sourceSets.main.java {
     srcDir 'vendor/ExtendedAE/src/main/java'
@@ -123,6 +124,16 @@ task prepareExpansionAELegacySources {
             text = text.replace('''if (!(input.what() instanceof AEItemKey inKey)) return ItemStack.EMPTY;\n            ItemStack inStack = inKey.toStack();''', '''if (!(input.what() instanceof AEItemKey)) return ItemStack.EMPTY;\n            AEItemKey inKey = (AEItemKey) input.what();\n            ItemStack inStack = inKey.toStack();''')
             text = text.replace('''if (input.what() instanceof AEItemKey inputKey\n                        && inputKey.getItem().equals(item.getItem())) {''', '''if (input.what() instanceof AEItemKey\n                        && ((AEItemKey) input.what()).getItem().equals(item.getItem())) {\n                    AEItemKey inputKey = (AEItemKey) input.what();''')
             text = text.replace('''} else if (input.what() instanceof AEItemKey key) {\n                    craftingInput.add(key.toStack((int) input.amount()));''', '''} else if (input.what() instanceof AEItemKey) {\n                    AEItemKey key = (AEItemKey) input.what();\n                    craftingInput.add(key.toStack((int) input.amount()));''')
+            return text
+        }
+
+        writeLegacySource(quantumCrafterTermPath) { text ->
+            text = text.replace('import java.util.*;', 'import java.util.*;\n\nimport lombok.var;')
+            text = text.replace('''if (row instanceof ConfigRow configRow) {''', '''if (row instanceof ConfigRow) {\n                    ConfigRow configRow = (ConfigRow) row;''')
+            text = text.replace('''} else if (row instanceof SlotsRow slotsRow) {''', '''} else if (row instanceof SlotsRow) {\n                    SlotsRow slotsRow = (SlotsRow) row;''')
+            text = text.replace('''} else if (row instanceof EnabledRow enabledRow\n                        && this.enableButtons.containsKey(enabledRow.container.getServerId())) {''', '''} else if (row instanceof EnabledRow\n                        && this.enableButtons.containsKey(((EnabledRow) row).container.getServerId())) {\n                    EnabledRow enabledRow = (EnabledRow) row;''')
+            text = text.replace('''if (slot instanceof PatternSlot machineSlot) {''', '''if (slot instanceof PatternSlot) {\n            PatternSlot machineSlot = (PatternSlot) slot;''')
+            text = text.replace('''    sealed interface Row {}\n\n    /**\n     * A row containing a header for a group.\n     */\n    record ConfigRow(long serverId, int slots) implements Row {}\n\n    /**\n     * A row containing slots for a subset of a pattern container inventory.\n     */\n    record SlotsRow(AutoCrafterContainerRecord container, int offset, int slots) implements Row {}\n\n    record EnabledRow(AutoCrafterContainerRecord container, int offset, int slots) implements Row {}''', '''    interface Row {}\n\n    static final class ConfigRow implements Row {\n        final long serverId;\n        final int slots;\n        ConfigRow(long serverId, int slots) { this.serverId = serverId; this.slots = slots; }\n    }\n\n    static final class SlotsRow implements Row {\n        final AutoCrafterContainerRecord container;\n        final int offset;\n        final int slots;\n        SlotsRow(AutoCrafterContainerRecord container, int offset, int slots) {\n            this.container = container; this.offset = offset; this.slots = slots;\n        }\n    }\n\n    static final class EnabledRow implements Row {\n        final AutoCrafterContainerRecord container;\n        final int offset;\n        final int slots;\n        EnabledRow(AutoCrafterContainerRecord container, int offset, int slots) {\n            this.container = container; this.offset = offset; this.slots = slots;\n        }\n    }''')
             return text
         }
     }
