@@ -1,11 +1,14 @@
 package net.pedroksl.advanced_ae.common.items;
 
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
@@ -15,6 +18,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 import net.pedroksl.advanced_ae.common.definitions.AAEBlockEntities;
@@ -24,6 +28,8 @@ import net.pedroksl.advanced_ae.common.definitions.AAEText;
 import net.pedroksl.advanced_ae.common.entities.SmallAdvPatternProviderEntity;
 import net.pedroksl.advanced_ae.common.parts.SmallAdvPatternProviderPart;
 
+import appeng.api.parts.IPart;
+import appeng.api.parts.IPartItem;
 import appeng.blockentity.networking.CableBusBlockEntity;
 import appeng.parts.AEBasePart;
 
@@ -37,24 +43,24 @@ public class AdvPatternProviderCapacityUpgradeItem extends BlockUpgradeItem {
     @Nonnull
     @Override
     public InteractionResult useOn(@Nonnull UseOnContext context) {
-        var pos = context.getClickedPos();
-        var world = context.getLevel();
-        var entity = world.getBlockEntity(pos);
+        BlockPos pos = context.getClickedPos();
+        Level world = context.getLevel();
+        BlockEntity entity = world.getBlockEntity(pos);
         if (entity != null) {
-            var ctx = new BlockPlaceContext(context);
-            var tClazz = entity.getClass();
+            BlockPlaceContext ctx = new BlockPlaceContext(context);
+            Class<?> tClazz = entity.getClass();
             if (tClazz == SmallAdvPatternProviderEntity.class) {
-                var originState = world.getBlockState(pos);
-                var state = AAEBlocks.ADV_PATTERN_PROVIDER.block().getStateForPlacement(ctx);
+                BlockState originState = world.getBlockState(pos);
+                BlockState state = AAEBlocks.ADV_PATTERN_PROVIDER.block().getStateForPlacement(ctx);
                 if (state == null) {
                     return InteractionResult.PASS;
                 }
-                for (var sp : originState.getValues().entrySet()) {
-                    var pt = sp.getKey();
-                    var va = sp.getValue();
+                for (Map.Entry<Property<?>, Comparable<?>> sp : originState.getValues().entrySet()) {
+                    Property pt = sp.getKey();
+                    Comparable va = sp.getValue();
                     try {
                         if (state.hasProperty(pt)) {
-                            state = state.<Comparable, Comparable>setValue((Property) pt, va);
+                            state = state.setValue(pt, va);
                         }
                     } catch (Exception ignore) {
                         // NO-OP
@@ -65,18 +71,19 @@ public class AdvPatternProviderCapacityUpgradeItem extends BlockUpgradeItem {
                 context.getItemInHand().shrink(1);
                 return InteractionResult.CONSUME;
 
-            } else if (entity instanceof CableBusBlockEntity cable) {
+            } else if (entity instanceof CableBusBlockEntity) {
+                CableBusBlockEntity cable = (CableBusBlockEntity) entity;
                 Vec3 hitVec = context.getClickLocation();
                 Vec3 hitInBlock = new Vec3(hitVec.x - pos.getX(), hitVec.y - pos.getY(), hitVec.z - pos.getZ());
-                var part = cable.getCableBus().selectPartLocal(hitInBlock).part;
-                if (part instanceof AEBasePart basePart && (part.getClass() == SmallAdvPatternProviderPart.class)) {
-                    var side = basePart.getSide();
-                    var contents = new CompoundTag();
-
-                    var partItem = AAEItems.ADV_PATTERN_PROVIDER.get();
+                IPart part = cable.getCableBus().selectPartLocal(hitInBlock).part;
+                if (part instanceof AEBasePart && part.getClass() == SmallAdvPatternProviderPart.class) {
+                    AEBasePart basePart = (AEBasePart) part;
+                    Direction side = basePart.getSide();
+                    CompoundTag contents = new CompoundTag();
+                    IPartItem<?> partItem = (IPartItem<?>) AAEItems.ADV_PATTERN_PROVIDER.get();
 
                     part.writeToNBT(contents);
-                    var p = cable.replacePart(partItem, side, context.getPlayer(), null);
+                    IPart p = cable.replacePart(partItem, side, context.getPlayer(), null);
                     if (p != null) {
                         p.readFromNBT(contents);
                     }

@@ -38,15 +38,10 @@ import appeng.parts.reporting.AbstractMonitorPart;
 
 public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridTickable {
 
-    @PartModels
-    public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/storage_monitor_off");
-    @PartModels
-    public static final ResourceLocation MODEL_ON = AppEng.makeId("part/storage_monitor_on");
-    @PartModels
-    public static final ResourceLocation MODEL_LOCKED_OFF = AppEng.makeId("part/storage_monitor_locked_off");
-    @PartModels
-    public static final ResourceLocation MODEL_LOCKED_ON = AppEng.makeId("part/storage_monitor_locked_on");
-
+    @PartModels public static final ResourceLocation MODEL_OFF = AppEng.makeId("part/storage_monitor_off");
+    @PartModels public static final ResourceLocation MODEL_ON = AppEng.makeId("part/storage_monitor_on");
+    @PartModels public static final ResourceLocation MODEL_LOCKED_OFF = AppEng.makeId("part/storage_monitor_locked_off");
+    @PartModels public static final ResourceLocation MODEL_LOCKED_ON = AppEng.makeId("part/storage_monitor_locked_on");
     public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE, MODEL_OFF, MODEL_STATUS_OFF);
     public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_ON);
     public static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE, MODEL_ON, MODEL_STATUS_HAS_CHANNEL);
@@ -59,50 +54,32 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
     protected String lastHumanReadableValue = "";
     private WorkRoutine workRoutine = WorkRoutine.SECOND;
     private WorkRoutine lastWorkRoutine = WorkRoutine.SECOND;
-
     private static final int positiveColor = AEColor.GREEN.mediumVariant;
     private static final int negativeColor = AEColor.RED.mediumVariant;
 
     private enum WorkRoutine {
-        TICK(1, 10),
-        SECOND(20, 20),
-        MINUTE(1200, AAEConfig.instance().getThroughputMonitorCacheSize() / 2),
+        TICK(1, 10), SECOND(20, 20), MINUTE(1200, AAEConfig.instance().getThroughputMonitorCacheSize() / 2),
         TEN_MINUTE(12000, AAEConfig.instance().getThroughputMonitorCacheSize() * 5);
-
         public static WorkRoutine cycle(WorkRoutine routine) {
             switch (routine) {
-                case TICK:
-                    return SECOND;
-                case SECOND:
-                    return MINUTE;
-                case MINUTE:
-                    return TEN_MINUTE;
+                case TICK: return SECOND;
+                case SECOND: return MINUTE;
+                case MINUTE: return TEN_MINUTE;
                 case TEN_MINUTE:
-                default:
-                    return TICK;
+                default: return TICK;
             }
         }
-
         public static WorkRoutine fromInt(int value) {
             switch (value) {
-                case 0:
-                    return TICK;
-                case 2:
-                    return MINUTE;
-                case 3:
-                    return TEN_MINUTE;
-                default:
-                    return SECOND;
+                case 0: return TICK;
+                case 2: return MINUTE;
+                case 3: return TEN_MINUTE;
+                default: return SECOND;
             }
         }
-
         public final int ticks;
         public final int timeLimit_s;
-
-        WorkRoutine(int ticks, int timeLimit_s) {
-            this.ticks = ticks;
-            this.timeLimit_s = timeLimit_s;
-        }
+        WorkRoutine(int ticks, int timeLimit_s) { this.ticks = ticks; this.timeLimit_s = timeLimit_s; }
     }
 
     public ThroughputMonitorPart(IPartItem<?> partItem) {
@@ -110,199 +87,68 @@ public class ThroughputMonitorPart extends AbstractMonitorPart implements IGridT
         getMainNode().addService(IGridTickable.class, this);
     }
 
-    @Override
-    public void writeToNBT(CompoundTag data) {
-        super.writeToNBT(data);
-        data.putString("throughput", this.lastHumanReadableValue);
-        data.putInt("routine", this.workRoutine.ordinal());
+    @Override public void writeToNBT(CompoundTag data) {
+        super.writeToNBT(data); data.putString("throughput", this.lastHumanReadableValue); data.putInt("routine", this.workRoutine.ordinal());
     }
-
-    @Override
-    public void readFromNBT(CompoundTag data) {
-        super.readFromNBT(data);
-        this.lastHumanReadableValue = data.getString("throughput");
-        this.workRoutine = WorkRoutine.fromInt(data.getInt("routine"));
+    @Override public void readFromNBT(CompoundTag data) {
+        super.readFromNBT(data); this.lastHumanReadableValue = data.getString("throughput"); this.workRoutine = WorkRoutine.fromInt(data.getInt("routine"));
     }
-
-    @Override
-    public void writeToStream(FriendlyByteBuf data) {
-        super.writeToStream(data);
-        data.writeDouble(this.lastReportedValue);
-        data.writeUtf(this.lastHumanReadableValue);
-        data.writeEnum(this.workRoutine);
+    @Override public void writeToStream(FriendlyByteBuf data) {
+        super.writeToStream(data); data.writeDouble(this.lastReportedValue); data.writeUtf(this.lastHumanReadableValue); data.writeEnum(this.workRoutine);
     }
-
-    @Override
-    public boolean readFromStream(FriendlyByteBuf data) {
-        boolean needRedraw = super.readFromStream(data);
-        double reportedValue = data.readDouble();
-        needRedraw |= reportedValue != this.lastReportedValue;
-        this.lastReportedValue = reportedValue;
-        this.lastHumanReadableValue = data.readUtf();
-        WorkRoutine routine = data.readEnum(WorkRoutine.class);
-        needRedraw |= this.workRoutine != routine;
-        this.workRoutine = routine;
-        return needRedraw;
+    @Override public boolean readFromStream(FriendlyByteBuf data) {
+        boolean needRedraw = super.readFromStream(data); double reportedValue = data.readDouble();
+        needRedraw |= reportedValue != this.lastReportedValue; this.lastReportedValue = reportedValue;
+        this.lastHumanReadableValue = data.readUtf(); WorkRoutine routine = data.readEnum(WorkRoutine.class);
+        needRedraw |= this.workRoutine != routine; this.workRoutine = routine; return needRedraw;
     }
-
-    @Override
-    public void writeVisualStateToNBT(CompoundTag data) {
-        super.writeVisualStateToNBT(data);
-        data.putDouble("lastValue", this.lastReportedValue);
-        data.putString("throughput", this.lastHumanReadableValue);
-        data.putInt("routine", this.workRoutine.ordinal());
+    @Override public void writeVisualStateToNBT(CompoundTag data) {
+        super.writeVisualStateToNBT(data); data.putDouble("lastValue", this.lastReportedValue); data.putString("throughput", this.lastHumanReadableValue); data.putInt("routine", this.workRoutine.ordinal());
     }
-
-    @Override
-    public void readVisualStateFromNBT(CompoundTag data) {
-        super.readVisualStateFromNBT(data);
-        this.lastReportedValue = data.getLong("lastValue");
-        this.lastHumanReadableValue = data.getString("throughput");
-        this.workRoutine = WorkRoutine.fromInt(data.getInt("routine"));
+    @Override public void readVisualStateFromNBT(CompoundTag data) {
+        super.readVisualStateFromNBT(data); this.lastReportedValue = data.getDouble("lastValue"); this.lastHumanReadableValue = data.getString("throughput"); this.workRoutine = WorkRoutine.fromInt(data.getInt("routine"));
     }
-
-    @Override
-    public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
-        if (!isClientSide()) {
-            ItemStack heldItem = player.getItemInHand(hand);
-            if (heldItem.is(AAEItems.MONITOR_CONFIGURATOR.asItem())) {
-                cycleWorkRoutine();
-                return true;
-            }
-        }
+    @Override public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
+        if (!isClientSide()) { ItemStack heldItem = player.getItemInHand(hand); if (heldItem.is(AAEItems.MONITOR_CONFIGURATOR.asItem())) { cycleWorkRoutine(); return true; } }
         return super.onPartActivate(player, hand, pos);
     }
-
-    private void cycleWorkRoutine() {
-        this.workRoutine = WorkRoutine.cycle(this.workRoutine);
-        getMainNode().ifPresent((grid, node) -> grid.getTickManager().alertDevice(node));
-    }
-
-    @Override
-    protected void configureWatchers() {
-        if (getDisplayed() != null) {
-            updateState(getAmount(), TickHandler.instance().getCurrentTick());
-            getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node));
-        } else {
-            getMainNode().ifPresent((grid, node) -> grid.getTickManager().sleepDevice(node));
-        }
+    private void cycleWorkRoutine() { this.workRoutine = WorkRoutine.cycle(this.workRoutine); getMainNode().ifPresent((grid, node) -> grid.getTickManager().alertDevice(node)); }
+    @Override protected void configureWatchers() {
+        if (getDisplayed() != null) { updateState(getAmount(), TickHandler.instance().getCurrentTick()); getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node)); }
+        else getMainNode().ifPresent((grid, node) -> grid.getTickManager().sleepDevice(node));
         super.configureWatchers();
     }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public void renderDynamic(
-            float partialTicks,
-            PoseStack poseStack,
-            MultiBufferSource buffers,
-            int combinedLightIn,
-            int combinedOverlayIn) {
+    @Override @OnlyIn(Dist.CLIENT) public void renderDynamic(float partialTicks, PoseStack poseStack, MultiBufferSource buffers, int combinedLightIn, int combinedOverlayIn) {
         if (this.isActive() && getDisplayed() != null) {
-            poseStack.pushPose();
-            BlockOrientation orientation = BlockOrientation.get(this.getSide(), this.getSpin());
-            poseStack.translate(0.5, 0.5, 0.5);
-            BlockEntityRenderHelper.rotateToFace(poseStack, orientation);
-            poseStack.translate(0, 0.1, 0.5);
-            BlockEntityRenderHelper.renderItem2dWithAmount(
-                    poseStack,
-                    buffers,
-                    this.getDisplayed(),
-                    getAmount(),
-                    canCraft(),
-                    0.3F,
-                    -0.15F,
-                    this.getColor().contrastTextColor,
-                    this.getLevel());
-
-            poseStack.translate(0, -0.23F, 0);
-            String sign = lastReportedValue > 0 ? "+" : lastReportedValue == 0 ? "" : "-";
-            Component text;
+            poseStack.pushPose(); BlockOrientation orientation = BlockOrientation.get(this.getSide(), this.getSpin()); poseStack.translate(0.5, 0.5, 0.5);
+            BlockEntityRenderHelper.rotateToFace(poseStack, orientation); poseStack.translate(0, 0.1, 0.5);
+            BlockEntityRenderHelper.renderItem2dWithAmount(poseStack, buffers, this.getDisplayed(), getAmount(), canCraft(), 0.3F, -0.15F, this.getColor().contrastTextColor, this.getLevel());
+            poseStack.translate(0, -0.23F, 0); String sign = lastReportedValue > 0 ? "+" : lastReportedValue == 0 ? "" : "-"; Component text;
             switch (this.workRoutine) {
-                case TICK:
-                    text = AAEText.OverdriveThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                    break;
-                case MINUTE:
-                    text = AAEText.SlowThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                    break;
-                case TEN_MINUTE:
-                    text = AAEText.SlowerThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                    break;
+                case TICK: text = AAEText.OverdriveThroughputMonitorValue.text(sign, lastHumanReadableValue); break;
+                case MINUTE: text = AAEText.SlowThroughputMonitorValue.text(sign, lastHumanReadableValue); break;
+                case TEN_MINUTE: text = AAEText.SlowerThroughputMonitorValue.text(sign, lastHumanReadableValue); break;
                 case SECOND:
-                default:
-                    text = AAEText.ThroughputMonitorValue.text(sign, lastHumanReadableValue);
-                    break;
+                default: text = AAEText.ThroughputMonitorValue.text(sign, lastHumanReadableValue); break;
             }
-
-            int color = lastReportedValue > 0
-                    ? positiveColor
-                    : lastReportedValue == 0 ? this.getColor().contrastTextColor : negativeColor;
-            AAEBlockEntityRenderHelper.renderString(poseStack, buffers, text, color);
-            poseStack.popPose();
+            int color = lastReportedValue > 0 ? positiveColor : lastReportedValue == 0 ? this.getColor().contrastTextColor : negativeColor;
+            AAEBlockEntityRenderHelper.renderString(poseStack, buffers, text, color); poseStack.popPose();
         }
     }
-
-    @Override
-    public IPartModel getStaticModels() {
-        return this.selectModel(
-                MODELS_OFF,
-                MODELS_ON,
-                MODELS_HAS_CHANNEL,
-                MODELS_LOCKED_OFF,
-                MODELS_LOCKED_ON,
-                MODELS_LOCKED_HAS_CHANNEL);
-    }
-
-    @Override
-    protected void onMainNodeStateChanged(IGridNodeListener.State reason) {
-        getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node));
-        super.onMainNodeStateChanged(reason);
-    }
-
-    @Override
-    public TickingRequest getTickingRequest(IGridNode iGridNode) {
-        return new TickingRequest(20, 100, !isActive() || getDisplayed() == null, true);
-    }
-
-    @Override
-    public TickRateModulation tickingRequest(IGridNode iGridNode, int i) {
-        if (!this.getMainNode().isActive() || getDisplayed() == null) {
-            resetState();
-            return TickRateModulation.SLEEP;
-        }
-
-        long currentTick = TickHandler.instance().getCurrentTick();
-        long currentAmount = getAmount();
-        if (cache.size() == 0) {
-            updateState(currentAmount, currentTick);
-            this.lastHumanReadableValue = "-";
-            return TickRateModulation.URGENT;
-        }
-
+    @Override public IPartModel getStaticModels() { return this.selectModel(MODELS_OFF, MODELS_ON, MODELS_HAS_CHANNEL, MODELS_LOCKED_OFF, MODELS_LOCKED_ON, MODELS_LOCKED_HAS_CHANNEL); }
+    @Override protected void onMainNodeStateChanged(IGridNodeListener.State reason) { getMainNode().ifPresent((grid, node) -> grid.getTickManager().wakeDevice(node)); super.onMainNodeStateChanged(reason); }
+    @Override public TickingRequest getTickingRequest(IGridNode iGridNode) { return new TickingRequest(20, 100, !isActive() || getDisplayed() == null, true); }
+    @Override public TickRateModulation tickingRequest(IGridNode iGridNode, int i) {
+        if (!this.getMainNode().isActive() || getDisplayed() == null) { resetState(); return TickRateModulation.SLEEP; }
+        long currentTick = TickHandler.instance().getCurrentTick(); long currentAmount = getAmount();
+        if (cache.size() == 0) { updateState(currentAmount, currentTick); this.lastHumanReadableValue = "-"; return TickRateModulation.URGENT; }
         if (this.workRoutine == this.lastWorkRoutine) {
-            double amountPerTick = cache.averagePerTick(this.workRoutine.timeLimit_s);
-            this.lastReportedValue = amountPerTick * this.workRoutine.ticks;
-            if (this.lastReportedValue > 10 || this.lastReportedValue == 0) {
-                this.lastHumanReadableValue =
-                        getDisplayed().formatAmount(Math.round(Math.abs(lastReportedValue)), AmountFormat.SLOT);
-            } else {
-                this.lastHumanReadableValue = String.format("%.2f", Math.abs(this.lastReportedValue));
-            }
-        } else {
-            this.lastHumanReadableValue = "";
-        }
-
-        updateState(currentAmount, currentTick);
-        this.getHost().markForUpdate();
-        return TickRateModulation.SLOWER;
+            double amountPerTick = cache.averagePerTick(this.workRoutine.timeLimit_s); this.lastReportedValue = amountPerTick * this.workRoutine.ticks;
+            if (this.lastReportedValue > 10 || this.lastReportedValue == 0) this.lastHumanReadableValue = getDisplayed().formatAmount(Math.round(Math.abs(lastReportedValue)), AmountFormat.SLOT);
+            else this.lastHumanReadableValue = String.format("%.2f", Math.abs(this.lastReportedValue));
+        } else this.lastHumanReadableValue = "";
+        updateState(currentAmount, currentTick); this.getHost().markForUpdate(); return TickRateModulation.SLOWER;
     }
-
-    private void resetState() {
-        cache.clear();
-        this.lastHumanReadableValue = "";
-    }
-
-    private void updateState(long amount, long tick) {
-        cache.push(amount, tick);
-        this.lastWorkRoutine = this.workRoutine;
-    }
+    private void resetState() { cache.clear(); this.lastHumanReadableValue = ""; }
+    private void updateState(long amount, long tick) { cache.push(amount, tick); this.lastWorkRoutine = this.workRoutine; }
 }
