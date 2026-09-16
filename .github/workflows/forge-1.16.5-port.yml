@@ -40,7 +40,20 @@ jobs:
         run: ./gradlew build --stacktrace --no-daemon
 
       - name: Forge runtime smoke test
-        run: ./gradlew runData --stacktrace --no-daemon
+        shell: bash
+        run: |
+          set +e
+          ./gradlew runData --stacktrace --no-daemon 2>&1 | tee runData.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "===== runData failure summary ====="
+            grep -E -i -B 3 -A 12 'exception|caused by|modloading|registry|mixin|error|failure' runData.log | tail -n 260 || true
+            echo "===== runData tail ====="
+            tail -n 220 runData.log || true
+            echo "===== Forge runtime logs ====="
+            find run -maxdepth 5 -type f \( -name 'latest.log' -o -name 'debug.log' -o -name 'crash-*.txt' \) -print -exec tail -n 220 {} \; 2>/dev/null || true
+          fi
+          exit "$status"
 
       - name: Save Gradle cache
         if: always()
