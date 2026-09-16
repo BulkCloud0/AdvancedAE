@@ -63,16 +63,30 @@ public class AAEItems extends ItemRegistry {
 
     public static final LibItemDefinition<QuantumArmorItem> QUANTUM_HELMET = item(
             "Quantum Helmet", "quantum_helmet",
-            p -> new QuantumArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.HEAD, p.rarity(Rarity.EPIC)));
+            p -> new QuantumArmorItem(
+                    AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.HEAD, p.rarity(Rarity.EPIC),
+                    UpgradeType.WATER_BREATHING, UpgradeType.AUTO_FEED, UpgradeType.AUTO_STOCK,
+                    UpgradeType.MAGNET, UpgradeType.LUCK, UpgradeType.NIGHT_VISION,
+                    UpgradeType.CHARGING, UpgradeType.WORKBENCH));
     public static final LibItemDefinition<QuantumArmorItem> QUANTUM_CHESTPLATE = item(
             "Quantum Chestplate", "quantum_chestplate",
-            p -> new QuantumArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.CHEST, p.rarity(Rarity.EPIC)));
+            p -> new QuantumArmorItem(
+                    AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.CHEST, p.rarity(Rarity.EPIC),
+                    UpgradeType.FLIGHT, UpgradeType.HP_BUFFER, UpgradeType.LAVA_IMMUNITY,
+                    UpgradeType.REGENERATION, UpgradeType.STRENGTH, UpgradeType.ATTACK_SPEED,
+                    UpgradeType.CHARGING, UpgradeType.PICK_CRAFT));
     public static final LibItemDefinition<QuantumArmorItem> QUANTUM_LEGGINGS = item(
             "Quantum Leggings", "quantum_leggings",
-            p -> new QuantumArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.LEGS, p.rarity(Rarity.EPIC)));
+            p -> new QuantumArmorItem(
+                    AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.LEGS, p.rarity(Rarity.EPIC),
+                    UpgradeType.WALK_SPEED, UpgradeType.SPRINT_SPEED, UpgradeType.SWIM_SPEED,
+                    UpgradeType.REACH, UpgradeType.CHARGING));
     public static final LibItemDefinition<QuantumArmorItem> QUANTUM_BOOTS = item(
             "Quantum Boots", "quantum_boots",
-            p -> new QuantumArmorItem(AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.FEET, p.rarity(Rarity.EPIC)));
+            p -> new QuantumArmorItem(
+                    AAEMaterials.QUANTUM_ALLOY, EquipmentSlotType.FEET, p.rarity(Rarity.EPIC),
+                    UpgradeType.STEP_ASSIST, UpgradeType.JUMP_HEIGHT, UpgradeType.EVASION,
+                    UpgradeType.FLIGHT_DRIFT, UpgradeType.CHARGING));
 
     public static final LibItemDefinition<QuantumUpgradeBaseItem> QUANTUM_UPGRADE_BASE = upgrade(
             "Quantum Upgrade Base Card", "quantum_upgrade_base", UpgradeType.EMPTY);
