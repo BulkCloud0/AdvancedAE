@@ -20,18 +20,63 @@ jobs:
           distribution: temurin
           java-version: '8'
           cache: gradle
+      - name: Audit Java 8 compatibility
+        shell: bash
+        run: |
+          python3 - <<'PY' | tee java8-audit.log
+          import pathlib
+          import re
+
+          roots = [pathlib.Path('src/main/java'), pathlib.Path('vendor/ExtendedAE/src/main/java')]
+          line_checks = [
+              ('record', re.compile(r'\brecord\s+[A-Za-z_$][\w$]*')),
+              ('instanceof-binding', re.compile(r'\binstanceof\s+[\w.$]+(?:\s*<[^;(){}]+>)?(?:\[\])?\s+[A-Za-z_$][\w$]*')),
+              ('switch-arrow', re.compile(r'^\s*(?:case\b.*|default)\s*->')),
+              ('switch-expression', re.compile(r'(?:\breturn|=)\s*switch\s*\(')),
+              ('collection-factory', re.compile(r'\b(?:List|Set|Map)\.(?:of|copyOf)\s*\(')),
+              ('stream-toList', re.compile(r'\.toList\s*\(')),
+              ('java11-string', re.compile(r'\.(?:isBlank|strip|stripLeading|stripTrailing|repeat|lines)\s*\(')),
+              ('java9-collections', re.compile(r'\bCollections\.emptyIterator\s*\(')),
+              ('java9-map-entry', re.compile(r'\bMap\.entry\s*\(')),
+              ('java9-stream', re.compile(r'\bStream\.ofNullable\s*\(')),
+              ('java11-files', re.compile(r'\bFiles\.(?:readString|writeString)\s*\(')),
+              ('java17-string', re.compile(r'\.formatted\s*\(')),
+              ('sealed', re.compile(r'\b(?:sealed|permits|non-sealed)\b')),
+              ('yield', re.compile(r'\byield\b')),
+              ('text-block', re.compile(r'"""')),
+              ('anonymous-diamond', re.compile(r'\bnew\s+[\w.$]+\s*<>\s*\([^;{}]*\)\s*\{')),
+          ]
+
+          findings = 0
+          for root in roots:
+              if not root.exists():
+                  continue
+              for path in sorted(root.rglob('*.java')):
+                  text = path.read_text(encoding='utf-8', errors='replace')
+                  if re.search(r'\bvar\s+[A-Za-z_$][\w$]*\s*=', text) and 'import lombok.var;' not in text:
+                      print(f'{path}:1: missing-lombok-var-import')
+                      findings += 1
+                  for line_no, line in enumerate(text.splitlines(), 1):
+                      for label, pattern in line_checks:
+                          if pattern.search(line):
+                              print(f'{path}:{line_no}: {label}: {line.strip()}')
+                              findings += 1
+          print(f'Java 8 audit findings: {findings}')
+          PY
       - name: Build
         shell: bash
         run: |
           set -o pipefail
           chmod +x gradlew
           ./gradlew build --stacktrace --no-daemon 2>&1 | tee gradle-build.log
-      - name: Upload build log
+      - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ExpansionAE-1.16.5-build-log
-          path: gradle-build.log
+          path: |
+            gradle-build.log
+            java8-audit.log
       - name: Upload jars
         if: success()
         uses: actions/upload-artifact@v4
