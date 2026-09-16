@@ -52,6 +52,18 @@ jobs:
             tail -n 220 runData.log || true
             echo "===== Forge runtime logs ====="
             find run -maxdepth 5 -type f \( -name 'latest.log' -o -name 'debug.log' -o -name 'crash-*.txt' \) -print -exec tail -n 220 {} \; 2>/dev/null || true
+
+            failure=$(grep -E 'Caused by:' runData.log | tail -n 1 | head -c 1800)
+            if [ -z "$failure" ]; then
+              failure=$(grep -E -i 'exception|error|failed|failure' runData.log | tail -n 1 | head -c 1800)
+            fi
+            if [ -z "$failure" ]; then
+              failure=$(tail -n 1 runData.log | head -c 1800)
+            fi
+            failure=${failure//'%'/'%25'}
+            failure=${failure//$'\r'/'%0D'}
+            failure=${failure//$'\n'/'%0A'}
+            echo "::error title=runData bootstrap failure::$failure"
           fi
           exit "$status"
 
