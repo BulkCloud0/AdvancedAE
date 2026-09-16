@@ -1,94 +1,95 @@
 package net.pedroksl.advanced_ae.common.helpers;
 
-import java.awt.*;
+import java.awt.Color;
 
-import net.minecraft.util.FastColor;
-import net.minecraft.util.Mth;
-
-public class AAEColor {
-
-    public static final AAEColor WHITE = AAEColor.ofArgb(0xFFFFFFFF);
-    public static final AAEColor LIGHT_GRAY = AAEColor.ofArgb(0xFFADB0C4);
-    public static final AAEColor DARK_GRAY_BLUE = AAEColor.ofArgb(0xFF413F54);
-    public static final AAEColor LIGHT_PURPLE = AAEColor.ofArgb(0x787d53c1);
-    public static final AAEColor PURPLE = AAEColor.ofArgb(0xFF7110a5);
-    public static final AAEColor DARK_GRAY = AAEColor.ofArgb(0X8B8B8B);
+/** Java 8-compatible color helper used by AdvancedAE client and armor code. */
+public final class AAEColor {
+    public static final AAEColor WHITE = ofArgb(0xFFFFFFFF);
+    public static final AAEColor LIGHT_GRAY = ofArgb(0xFFADB0C4);
+    public static final AAEColor DARK_GRAY_BLUE = ofArgb(0xFF413F54);
+    public static final AAEColor LIGHT_PURPLE = ofArgb(0x787D53C1);
+    public static final AAEColor PURPLE = ofArgb(0xFF7110A5);
+    public static final AAEColor DARK_GRAY = ofArgb(0xFF8B8B8B);
 
     private final int red;
     private final int green;
     private final int blue;
     private final int alpha;
 
-    AAEColor(int red, int green, int blue) {
+    private AAEColor(int red, int green, int blue) {
         this(red, green, blue, 255);
     }
 
-    AAEColor(int red, int green, int blue, int alpha) {
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
-        this.alpha = alpha;
+    private AAEColor(int red, int green, int blue, int alpha) {
+        this.red = clamp(red);
+        this.green = clamp(green);
+        this.blue = clamp(blue);
+        this.alpha = clamp(alpha);
     }
 
     public static AAEColor ofArgb(int color) {
-        var alpha = color >> 24 & 0xFF;
-        var red = color >> 16 & 0xFF;
-        var green = color >> 8 & 0xFF;
-        var blue = color & 0xFF;
-
+        int alpha = color >>> 24 & 0xFF;
+        int red = color >>> 16 & 0xFF;
+        int green = color >>> 8 & 0xFF;
+        int blue = color & 0xFF;
         return new AAEColor(red, green, blue, alpha);
     }
 
     public static AAEColor ofRgb(int color) {
-        var red = color >> 16 & 0xFF;
-        var green = color >> 8 & 0xFF;
-        var blue = color & 0xFF;
-
+        int red = color >>> 16 & 0xFF;
+        int green = color >>> 8 & 0xFF;
+        int blue = color & 0xFF;
         return new AAEColor(red, green, blue);
     }
 
     public static AAEColor ofHsv(float hue, float saturation, float value) {
-        return ofRgb(Mth.hsvToRgb(hue - 0.5e-7f, saturation, value));
+        return ofRgb(Color.HSBtoRGB(hue - 0.5e-7f, saturation, value));
     }
 
     public static AAEColor ofHsv(float hue, float saturation, float value, float alpha) {
-        int color = Mth.hsvToRgb(hue - 0.5e-7f, saturation, value);
-        return ofArgb(color | 255 << 24);
+        AAEColor rgb = ofHsv(hue, saturation, value);
+        return new AAEColor(rgb.red, rgb.green, rgb.blue, Math.round(alpha * 255.0f));
     }
 
-    public float r() {
-        return this.red / 255f;
-    }
-
-    public float g() {
-        return this.green / 255f;
-    }
-
-    public float b() {
-        return this.blue / 255f;
-    }
-
-    public float a() {
-        return this.alpha / 255f;
-    }
+    public float r() { return red / 255.0f; }
+    public float g() { return green / 255.0f; }
+    public float b() { return blue / 255.0f; }
+    public float a() { return alpha / 255.0f; }
 
     public int argb() {
-        return FastColor.ARGB32.color(this.alpha, this.red, this.green, this.blue);
+        return alpha << 24 | red << 16 | green << 8 | blue;
     }
 
     public int argb(int alpha) {
-        return FastColor.ARGB32.color(alpha, this.red, this.green, this.blue);
+        return clamp(alpha) << 24 | red << 16 | green << 8 | blue;
     }
 
     public int rgb() {
-        return this.red << 16 | this.green << 8 | this.blue;
+        return red << 16 | green << 8 | blue;
     }
 
     public HSV hsv() {
-        float[] vals = new float[3];
-        Color.RGBtoHSB(this.red, this.green, this.blue, vals);
-        return new HSV(vals[0], vals[1], vals[2]);
+        float[] values = Color.RGBtoHSB(red, green, blue, null);
+        return new HSV(values[0], values[1], values[2]);
     }
 
-    public record HSV(float hue, float saturation, float value) {}
+    private static int clamp(int value) {
+        return Math.max(0, Math.min(255, value));
+    }
+
+    public static final class HSV {
+        private final float hue;
+        private final float saturation;
+        private final float value;
+
+        public HSV(float hue, float saturation, float value) {
+            this.hue = hue;
+            this.saturation = saturation;
+            this.value = value;
+        }
+
+        public float hue() { return hue; }
+        public float saturation() { return saturation; }
+        public float value() { return value; }
+    }
 }

@@ -64,7 +64,6 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/common/helpers/ArmorHotkeyAction.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/ToggleUpgradeCardAction.java'
             exclude 'net/pedroksl/advanced_ae/common/helpers/MagnetHelpers.java'
-            exclude 'net/pedroksl/advanced_ae/common/helpers/AAEColor.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAEHotkeysRegistry.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAEMenus.java'
             exclude 'net/pedroksl/advanced_ae/common/definitions/AAEFluids.java'
