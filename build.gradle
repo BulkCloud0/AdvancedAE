@@ -51,45 +51,80 @@ minecraft {
     }
 }
 
-// During the backport we keep the upstream source intact as a reference and
-// deterministically emit Java-8-safe copies of the few very large classes that
-// still contain newer language syntax. Once their API migration is complete,
-// the generated copy can be folded back into src/main/java without changing
-// runtime behaviour.
+// Transitional Java-8 source copies. These keep the upstream implementations
+// readable while the real Minecraft/AE2 1.16.5 API migration is performed.
 def legacyGeneratedDir = file("$buildDir/generated/sources/expansionaeLegacy/java")
 def advPatternProviderPath = 'net/pedroksl/advanced_ae/common/logic/AdvPatternProviderLogic.java'
+def advCraftingCpuPath = 'net/pedroksl/advanced_ae/common/logic/AdvCraftingCPULogic.java'
+def reactionChamberPath = 'net/pedroksl/advanced_ae/common/entities/ReactionChamberEntity.java'
+def quantumCrafterPath = 'net/pedroksl/advanced_ae/common/entities/QuantumCrafterEntity.java'
+def legacySourcePaths = [advPatternProviderPath, advCraftingCpuPath, reactionChamberPath, quantumCrafterPath]
 
 sourceSets.main.java {
     srcDir 'vendor/ExtendedAE/src/main/java'
     srcDir legacyGeneratedDir
-    exclude advPatternProviderPath
+    legacySourcePaths.each { exclude it }
 }
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+def writeLegacySource = { String path, Closure transformer ->
+    def sourceFile = file("src/main/java/${path}")
+    def outFile = file("${legacyGeneratedDir}/${path}")
+    outFile.parentFile.mkdirs()
+    outFile.setText(transformer(sourceFile.getText('UTF-8')), 'UTF-8')
+}
+
 task prepareExpansionAELegacySources {
-    inputs.file file("src/main/java/${advPatternProviderPath}")
-    outputs.file file("${legacyGeneratedDir}/${advPatternProviderPath}")
+    inputs.files legacySourcePaths.collect { file("src/main/java/${it}") }
+    outputs.files legacySourcePaths.collect { file("${legacyGeneratedDir}/${it}") }
 
     doLast {
-        def sourceFile = file("src/main/java/${advPatternProviderPath}")
-        def outFile = file("${legacyGeneratedDir}/${advPatternProviderPath}")
-        outFile.parentFile.mkdirs()
+        writeLegacySource(advPatternProviderPath) { text ->
+            text = text.replace('import java.util.*;', 'import java.util.*;\n\nimport lombok.var;')
+            text = text.replace('''        var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);\n        this.unlockEvent = switch (unlockEventType) {\n            case 0 -> null;\n            case 1 -> UnlockCraftingEvent.REDSTONE_POWER;\n            case 2 -> UnlockCraftingEvent.RESULT;\n            case 3 -> UnlockCraftingEvent.REDSTONE_PULSE;\n            default -> {\n                LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);\n                yield null;\n            }};''', '''        var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);\n        switch (unlockEventType) {\n            case 0: this.unlockEvent = null; break;\n            case 1: this.unlockEvent = UnlockCraftingEvent.REDSTONE_POWER; break;\n            case 2: this.unlockEvent = UnlockCraftingEvent.RESULT; break;\n            case 3: this.unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE; break;\n            default:\n                LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);\n                this.unlockEvent = null;\n                break;\n        }''')
+            text = text.replace('''        record PushTarget(Direction direction, PatternProviderTarget target) {}\n        var possibleTargets = new ArrayList<PushTarget>();''', '''        class PushTarget {\n            private final Direction direction;\n            private final PatternProviderTarget target;\n            PushTarget(Direction direction, PatternProviderTarget target) { this.direction = direction; this.target = target; }\n            Direction direction() { return this.direction; }\n            PatternProviderTarget target() { return this.target; }\n        }\n        var possibleTargets = new ArrayList<PushTarget>();''')
+            text = text.replace('''        switch (lockMode) {\n            case LOCK_UNTIL_PULSE -> {\n                if (getRedstoneState()) {\n                    // Already have signal, wait for no signal before switching to REDSTONE_POWER\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                } else {\n                    // No signal, wait for signal\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                }\n                redstoneState = YesNo.UNDECIDED; // Check redstone state again next update\n                saveChanges();\n            }\n            case LOCK_UNTIL_RESULT -> {\n                unlockEvent = UnlockCraftingEvent.RESULT;\n                unlockStack = pattern.getPrimaryOutput();\n                saveChanges();\n            }\n        }''', '''        switch (lockMode) {\n            case LOCK_UNTIL_PULSE:\n                if (getRedstoneState()) { unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE; }\n                else { unlockEvent = UnlockCraftingEvent.REDSTONE_POWER; }\n                redstoneState = YesNo.UNDECIDED;\n                saveChanges();\n                break;\n            case LOCK_UNTIL_RESULT:\n                unlockEvent = UnlockCraftingEvent.RESULT;\n                unlockStack = pattern.getPrimaryOutput();\n                saveChanges();\n                break;\n            default: break;\n        }''')
+            text = text.replace('''            switch (unlockEvent) {\n                case REDSTONE_POWER, REDSTONE_PULSE -> {\n                    return LockCraftingMode.LOCK_UNTIL_PULSE;\n                }\n                case RESULT -> {\n                    return LockCraftingMode.LOCK_UNTIL_RESULT;\n                }\n            }''', '''            switch (unlockEvent) {\n                case REDSTONE_POWER:\n                case REDSTONE_PULSE: return LockCraftingMode.LOCK_UNTIL_PULSE;\n                case RESULT: return LockCraftingMode.LOCK_UNTIL_RESULT;\n                default: break;\n            }''')
+            text = text.replace('''        if (this.host instanceof Nameable nameable && nameable.hasCustomName()) {\n            var name = nameable.getCustomName();\n            return new PatternContainerGroup(this.host.getTerminalIcon(), name, List.of());\n        }''', '''        if (this.host instanceof Nameable && ((Nameable) this.host).hasCustomName()) {\n            Nameable nameable = (Nameable) this.host;\n            var name = nameable.getCustomName();\n            return new PatternContainerGroup(this.host.getTerminalIcon(), name, Collections.emptyList());\n        }''')
+            text = text.replace('List<Component> tooltip = List.of();', 'List<Component> tooltip = Collections.emptyList();')
+            return text
+        }
 
-        def text = sourceFile.getText('UTF-8')
-        text = text.replace('import java.util.*;', 'import java.util.*;\n\nimport lombok.var;')
+        writeLegacySource(advCraftingCpuPath) { text ->
+            text = text.replace('import java.util.function.Consumer;', 'import java.util.function.Consumer;\n\nimport lombok.var;')
+            text = text.replace('p instanceof ServerPlayer serverPlayer ? IPlayerRegistry.getPlayerId(serverPlayer) : null',
+                    'p instanceof ServerPlayer ? IPlayerRegistry.getPlayerId((ServerPlayer) p) : null')
+            return text
+        }
 
-        text = text.replace('''        var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);\n        this.unlockEvent = switch (unlockEventType) {\n            case 0 -> null;\n            case 1 -> UnlockCraftingEvent.REDSTONE_POWER;\n            case 2 -> UnlockCraftingEvent.RESULT;\n            case 3 -> UnlockCraftingEvent.REDSTONE_PULSE;\n            default -> {\n                LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);\n                yield null;\n            }};''', '''        var unlockEventType = tag.getByte(NBT_UNLOCK_EVENT);\n        switch (unlockEventType) {\n            case 0:\n                this.unlockEvent = null;\n                break;\n            case 1:\n                this.unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                break;\n            case 2:\n                this.unlockEvent = UnlockCraftingEvent.RESULT;\n                break;\n            case 3:\n                this.unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                break;\n            default:\n                LOGGER.error("Unknown unlock event type {} in NBT for pattern provider: {}", unlockEventType, tag);\n                this.unlockEvent = null;\n                break;\n        }''')
+        writeLegacySource(reactionChamberPath) { text ->
+            text = text.replaceFirst('import java.util', 'import lombok.var;\n\nimport java.util')
+            text = text.replace('''if (aeKey instanceof AEFluidKey key) {\n                fluidStack = key.toStack((int) fluid.amount());\n            }''', '''if (aeKey instanceof AEFluidKey) {\n                AEFluidKey key = (AEFluidKey) aeKey;\n                fluidStack = key.toStack((int) fluid.amount());\n            }''')
+            text = text.replace('''if (aeKey instanceof AEFluidKey key) {\n                                fluidStack = key.toStack((int) fluid.amount());\n                            }''', '''if (aeKey instanceof AEFluidKey) {\n                                AEFluidKey key = (AEFluidKey) aeKey;\n                                fluidStack = key.toStack((int) fluid.amount());\n                            }''')
+            text = text.replace('''                final int speedFactor =\n                        switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {\n                            default -> 2; // 116 ticks\n                            case 1 -> 3; // 83 ticks\n                            case 2 -> 5; // 56 ticks\n                            case 3 -> 10; // 36 ticks\n                            case 4 -> 50; // 20 ticks\n                        };''', '''                final int speedFactor;\n                switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {\n                    case 1: speedFactor = 3; break;\n                    case 2: speedFactor = 5; break;\n                    case 3: speedFactor = 10; break;\n                    case 4: speedFactor = 50; break;\n                    default: speedFactor = 2; break;\n                }''')
+            text = text.replace('.map(o -> o.getUnrotatedSide().get3DDataValue())\n                    .toList()', '.map(o -> o.getUnrotatedSide().get3DDataValue())\n                    .collect(java.util.stream.Collectors.toList())')
+            text = text.replace('''if (tag instanceof IntArrayTag list) {\n                var level = getLevel();''', '''if (tag instanceof IntArrayTag) {\n                IntArrayTag list = (IntArrayTag) tag;\n                var level = getLevel();''')
+            text = text.replace('''if (be instanceof IDirectionalOutputHost host) {\n\n                        var outputs''', '''if (be instanceof IDirectionalOutputHost) {\n                        IDirectionalOutputHost host = (IDirectionalOutputHost) be;\n\n                        var outputs''')
+            return text
+        }
 
-        text = text.replace('''        record PushTarget(Direction direction, PatternProviderTarget target) {}\n        var possibleTargets = new ArrayList<PushTarget>();''', '''        class PushTarget {\n            private final Direction direction;\n            private final PatternProviderTarget target;\n\n            PushTarget(Direction direction, PatternProviderTarget target) {\n                this.direction = direction;\n                this.target = target;\n            }\n\n            Direction direction() {\n                return this.direction;\n            }\n\n            PatternProviderTarget target() {\n                return this.target;\n            }\n        }\n        var possibleTargets = new ArrayList<PushTarget>();''')
-
-        text = text.replace('''        switch (lockMode) {\n            case LOCK_UNTIL_PULSE -> {\n                if (getRedstoneState()) {\n                    // Already have signal, wait for no signal before switching to REDSTONE_POWER\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                } else {\n                    // No signal, wait for signal\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                }\n                redstoneState = YesNo.UNDECIDED; // Check redstone state again next update\n                saveChanges();\n            }\n            case LOCK_UNTIL_RESULT -> {\n                unlockEvent = UnlockCraftingEvent.RESULT;\n                unlockStack = pattern.getPrimaryOutput();\n                saveChanges();\n            }\n        }''', '''        switch (lockMode) {\n            case LOCK_UNTIL_PULSE:\n                if (getRedstoneState()) {\n                    // Already have signal, wait for no signal before switching to REDSTONE_POWER\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_PULSE;\n                } else {\n                    // No signal, wait for signal\n                    unlockEvent = UnlockCraftingEvent.REDSTONE_POWER;\n                }\n                redstoneState = YesNo.UNDECIDED; // Check redstone state again next update\n                saveChanges();\n                break;\n            case LOCK_UNTIL_RESULT:\n                unlockEvent = UnlockCraftingEvent.RESULT;\n                unlockStack = pattern.getPrimaryOutput();\n                saveChanges();\n                break;\n            default:\n                break;\n        }''')
-
-        text = text.replace('''            switch (unlockEvent) {\n                case REDSTONE_POWER, REDSTONE_PULSE -> {\n                    return LockCraftingMode.LOCK_UNTIL_PULSE;\n                }\n                case RESULT -> {\n                    return LockCraftingMode.LOCK_UNTIL_RESULT;\n                }\n            }''', '''            switch (unlockEvent) {\n                case REDSTONE_POWER:\n                case REDSTONE_PULSE:\n                    return LockCraftingMode.LOCK_UNTIL_PULSE;\n                case RESULT:\n                    return LockCraftingMode.LOCK_UNTIL_RESULT;\n                default:\n                    break;\n            }''')
-
-        text = text.replace('''        if (this.host instanceof Nameable nameable && nameable.hasCustomName()) {\n            var name = nameable.getCustomName();\n            return new PatternContainerGroup(this.host.getTerminalIcon(), name, List.of());\n        }''', '''        if (this.host instanceof Nameable && ((Nameable) this.host).hasCustomName()) {\n            Nameable nameable = (Nameable) this.host;\n            var name = nameable.getCustomName();\n            return new PatternContainerGroup(this.host.getTerminalIcon(), name, Collections.emptyList());\n        }''')
-        text = text.replace('List<Component> tooltip = List.of();', 'List<Component> tooltip = Collections.emptyList();')
-
-        outFile.setText(text, 'UTF-8')
+        writeLegacySource(quantumCrafterPath) { text ->
+            text = text.replaceFirst('import java.util', 'import lombok.var;\n\nimport java.util')
+            text = text.replace('''if (details instanceof AECraftingPattern craftPattern) {''', '''if (details instanceof AECraftingPattern) {\n                    AECraftingPattern craftPattern = (AECraftingPattern) details;''')
+            text = text.replace('''if (output.what() instanceof AEItemKey key) {\n                    var stack = key.toStack((int) output.amount());''', '''if (output.what() instanceof AEItemKey) {\n                    AEItemKey key = (AEItemKey) output.what();\n                    var stack = key.toStack((int) output.amount());''')
+            text = text.replace('''            final int speedFactor =\n                    switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {\n                        default -> 1;\n                        case 1 -> 8;\n                        case 2 -> 16;\n                        case 3 -> 32;\n                        case 4 -> 64;\n                    };''', '''            final int speedFactor;\n            switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {\n                case 1: speedFactor = 8; break;\n                case 2: speedFactor = 16; break;\n                case 3: speedFactor = 32; break;\n                case 4: speedFactor = 64; break;\n                default: speedFactor = 1; break;\n            }''')
+            text = text.replace('''if (output.what() instanceof AEItemKey key) {\n                var stack = key.toStack();''', '''if (output.what() instanceof AEItemKey) {\n                AEItemKey key = (AEItemKey) output.what();\n                var stack = key.toStack();''')
+            text = text.replace('.map(o -> o.getUnrotatedSide().get3DDataValue())\n                    .toList()', '.map(o -> o.getUnrotatedSide().get3DDataValue())\n                    .collect(java.util.stream.Collectors.toList())')
+            text = text.replace('''if (tag instanceof IntArrayTag list) {\n                var level = getLevel();''', '''if (tag instanceof IntArrayTag) {\n                IntArrayTag list = (IntArrayTag) tag;\n                var level = getLevel();''')
+            text = text.replace('''if (be instanceof IDirectionalOutputHost host) {\n\n                        var outputs''', '''if (be instanceof IDirectionalOutputHost) {\n                        IDirectionalOutputHost host = (IDirectionalOutputHost) be;\n\n                        var outputs''')
+            text = text.replace('''if (in.what() instanceof AEItemKey inKey) {\n                    var inStack''', '''if (in.what() instanceof AEItemKey) {\n                    AEItemKey inKey = (AEItemKey) in.what();\n                    var inStack''')
+            text = text.replace('''if (input.what() instanceof AEItemKey inputKey) {\n                if (this.keysThatConsumeDurability.containsKey(inputKey)) {''', '''if (input.what() instanceof AEItemKey) {\n                AEItemKey inputKey = (AEItemKey) input.what();\n                if (this.keysThatConsumeDurability.containsKey(inputKey)) {''')
+            text = text.replace('''if (input.what() instanceof AEItemKey key) {\n                ItemStack stack = key.toStack();''', '''if (input.what() instanceof AEItemKey) {\n                AEItemKey key = (AEItemKey) input.what();\n                ItemStack stack = key.toStack();''')
+            text = text.replace('''if (!(input.what() instanceof AEItemKey inKey)) return ItemStack.EMPTY;\n            ItemStack inStack = inKey.toStack();''', '''if (!(input.what() instanceof AEItemKey)) return ItemStack.EMPTY;\n            AEItemKey inKey = (AEItemKey) input.what();\n            ItemStack inStack = inKey.toStack();''')
+            text = text.replace('''if (input.what() instanceof AEItemKey inputKey\n                        && inputKey.getItem().equals(item.getItem())) {''', '''if (input.what() instanceof AEItemKey\n                        && ((AEItemKey) input.what()).getItem().equals(item.getItem())) {\n                    AEItemKey inputKey = (AEItemKey) input.what();''')
+            text = text.replace('''} else if (input.what() instanceof AEItemKey key) {\n                    craftingInput.add(key.toStack((int) input.amount()));''', '''} else if (input.what() instanceof AEItemKey) {\n                    AEItemKey key = (AEItemKey) input.what();\n                    craftingInput.add(key.toStack((int) input.amount()));''')
+            return text
+        }
     }
 }
 
@@ -114,7 +149,6 @@ dependencies {
     implementation fg.deobf('curse.maven:curios-309927:4419403')
     compileOnly fg.deobf('curse.maven:jei-238222:5534622')
 
-    // Java 8 local type inference used only by generated transitional sources.
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
