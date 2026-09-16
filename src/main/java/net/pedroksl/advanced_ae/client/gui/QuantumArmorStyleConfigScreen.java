@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
+import lombok.var;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -53,7 +55,8 @@ public class QuantumArmorStyleConfigScreen extends AEBaseScreen<QuantumArmorStyl
 
         int lastColor = -1;
         for (var slot : this.menu.getSlots(AAESlotSemantics.ARMOR)) {
-            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase armor) {
+            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase armor = (QuantumArmorBase) slot.getItem().getItem();
                 int color = armor.getTintColor(slot.getItem());
                 if (lastColor != -1 && lastColor != color) {
                     this.applyToAll = false;
@@ -74,7 +77,8 @@ public class QuantumArmorStyleConfigScreen extends AEBaseScreen<QuantumArmorStyl
     public void updateColorPicker() {
         if (selectedIndex != -1 && selectedIndex < this.menu.slots.size()) {
             var slot = this.menu.getSlot(selectedIndex);
-            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase armor) {
+            if (slot.hasItem() && slot.getItem().getItem() instanceof QuantumArmorBase) {
+                QuantumArmorBase armor = (QuantumArmorBase) slot.getItem().getItem();
                 this.colorPicker.setColorAndUpdate(armor.getTintColor(slot.getItem()));
             }
         }
@@ -104,7 +108,6 @@ public class QuantumArmorStyleConfigScreen extends AEBaseScreen<QuantumArmorStyl
     public boolean mouseClicked(double xCoord, double yCoord, int btn) {
         assert this.minecraft != null;
 
-        // Handle item selection
         if (btn == InputConstants.MOUSE_BUTTON_LEFT) {
             Slot slot = this.findSlot(xCoord, yCoord);
             if (isValidSlot(slot)) {
