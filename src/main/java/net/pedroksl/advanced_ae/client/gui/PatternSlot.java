@@ -43,7 +43,8 @@ public class PatternSlot extends AppEngSlot {
     public ItemStack getDisplayStack() {
         if (isRemote()) {
             final ItemStack is = super.getDisplayStack();
-            if (!is.isEmpty() && is.getItem() instanceof EncodedPatternItem iep) {
+            if (!is.isEmpty() && is.getItem() instanceof EncodedPatternItem) {
+                EncodedPatternItem iep = (EncodedPatternItem) is.getItem();
                 final ItemStack out = iep.getOutput(is);
                 if (!out.isEmpty()) {
                     return out;
@@ -62,8 +63,6 @@ public class PatternSlot extends AppEngSlot {
         return this.machineInv;
     }
 
-    // The following methods are overridden to prevent client-side code from messing with the stack in the slot
-    // Any interaction with the real content of this slot must go via a custom packet
     @Override
     public final boolean mayPlace(ItemStack stack) {
         return false;
