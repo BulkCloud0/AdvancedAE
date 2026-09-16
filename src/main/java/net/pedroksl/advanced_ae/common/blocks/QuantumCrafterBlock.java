@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -56,7 +57,9 @@ public class QuantumCrafterBlock extends AEBaseEntityBlock<QuantumCrafterEntity>
             Player player,
             InteractionHand hand,
             BlockHitResult hitResult) {
-        if (level.getBlockEntity(pos) instanceof QuantumCrafterEntity be) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof QuantumCrafterEntity) {
+            QuantumCrafterEntity be = (QuantumCrafterEntity) blockEntity;
             if (!level.isClientSide()) {
                 MenuOpener.open(AAEMenus.QUANTUM_CRAFTER.get(), player, MenuLocators.forBlockEntity(be));
             }

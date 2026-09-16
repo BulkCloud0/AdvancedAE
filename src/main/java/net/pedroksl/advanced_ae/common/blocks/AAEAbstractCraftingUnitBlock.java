@@ -85,7 +85,7 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseBlockEntity> 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (newState.getBlock() == state.getBlock()) {
-            return; // Just a block state change
+            return;
         }
 
         final AdvCraftingBlockEntity cp = (AdvCraftingBlockEntity) this.getBlockEntity(level, pos);
@@ -99,12 +99,15 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseBlockEntity> 
     @Override
     public InteractionResult use(
             BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (level.getBlockEntity(pos) instanceof AdvCraftingBlockEntity be && be.isFormed() && be.isActive()) {
-            if (!level.isClientSide()) {
-                MenuOpener.open(AAEMenus.QUANTUM_COMPUTER.get(), player, MenuLocators.forBlockEntity(be));
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof AdvCraftingBlockEntity) {
+            AdvCraftingBlockEntity be = (AdvCraftingBlockEntity) blockEntity;
+            if (be.isFormed() && be.isActive()) {
+                if (!level.isClientSide()) {
+                    MenuOpener.open(AAEMenus.QUANTUM_COMPUTER.get(), player, MenuLocators.forBlockEntity(be));
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide());
             }
-
-            return InteractionResult.sidedSuccess(level.isClientSide());
         }
 
         return super.use(state, level, pos, player, hand, hit);

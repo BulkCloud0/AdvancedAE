@@ -2,6 +2,7 @@ package net.pedroksl.advanced_ae.common.definitions;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -9,15 +10,25 @@ import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.items.AdvPatternEncoderItem;
 import net.pedroksl.advanced_ae.common.items.AdvPatternProviderCapacityUpgradeItem;
 import net.pedroksl.advanced_ae.common.items.AdvPatternProviderUpgradeItem;
-import net.pedroksl.advanced_ae.common.items.armors.*;
+import net.pedroksl.advanced_ae.common.items.armors.QuantumArmorBase;
+import net.pedroksl.advanced_ae.common.items.armors.QuantumBoots;
+import net.pedroksl.advanced_ae.common.items.armors.QuantumChestplate;
+import net.pedroksl.advanced_ae.common.items.armors.QuantumHelmet;
+import net.pedroksl.advanced_ae.common.items.armors.QuantumLeggings;
 import net.pedroksl.advanced_ae.common.items.upgrades.QuantumUpgradeBaseItem;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
-import net.pedroksl.advanced_ae.common.parts.*;
+import net.pedroksl.advanced_ae.common.parts.AdvPatternProviderPart;
+import net.pedroksl.advanced_ae.common.parts.AdvancedIOBusPart;
+import net.pedroksl.advanced_ae.common.parts.ImportExportBusPart;
+import net.pedroksl.advanced_ae.common.parts.QuantumCrafterTerminalPart;
+import net.pedroksl.advanced_ae.common.parts.SmallAdvPatternProviderPart;
+import net.pedroksl.advanced_ae.common.parts.StockExportBusPart;
+import net.pedroksl.advanced_ae.common.parts.ThroughputMonitorPart;
 import net.pedroksl.advanced_ae.common.patterns.AdvProcessingPatternItem;
 import net.pedroksl.advanced_ae.xmod.Addons;
+import net.pedroksl.ae2addonlib.integration.AddonEnum;
 import net.pedroksl.ae2addonlib.registry.ItemRegistry;
 import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
-import net.pedroksl.ae2addonlib.util.AddonEnum;
 
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartItem;
@@ -36,13 +47,13 @@ public class AAEItems extends ItemRegistry {
     public static List<LibItemDefinition<?>> getQuantumArmor() {
         return INSTANCE.getItems().stream()
                 .filter(item -> item.stack().getItem() instanceof QuantumArmorBase)
-                .toList();
+                .collect(Collectors.<LibItemDefinition<?>>toList());
     }
 
     public static List<LibItemDefinition<?>> getQuantumCards() {
         return INSTANCE.getItems().stream()
                 .filter(item -> item.stack().getItem() instanceof QuantumUpgradeBaseItem)
-                .toList();
+                .collect(Collectors.<LibItemDefinition<?>>toList());
     }
 
     public static final LibItemDefinition<PartItem<AdvPatternProviderPart>> ADV_PATTERN_PROVIDER = part(
@@ -167,18 +178,16 @@ public class AAEItems extends ItemRegistry {
             p -> new QuantumUpgradeBaseItem(UpgradeType.WORKBENCH, p));
     public static final LibItemDefinition<QuantumUpgradeBaseItem> PICK_CRAFT_CARD =
             item("Pick Craft Card", "pick_craft_card", p -> new QuantumUpgradeBaseItem(UpgradeType.PICK_CRAFT, p));
-    //    public static final ItemDefinition<QuantumUpgradeBaseItem> HUD_CARD =
-    //            item("HUD Card", "hud_card", p -> new QuantumUpgradeBaseItem(UpgradeType.HUD, p));
 
     @SuppressWarnings("unchecked")
     private static <T extends Item> LibItemDefinition<T> conditionalItem(
             AddonEnum addon, String englishName, String id, String itemClass) {
         if (addon.isLoaded()) {
             try {
-                var instance =
-                        (T) Class.forName(itemClass).getDeclaredConstructor().newInstance();
+                T instance = (T) Class.forName(itemClass).getDeclaredConstructor().newInstance();
                 return item(AdvancedAE.MOD_ID, englishName, id, p -> instance);
             } catch (Exception ignored) {
+                // Optional integration is absent or incompatible.
             }
         }
         return null;

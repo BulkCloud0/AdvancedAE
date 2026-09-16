@@ -21,20 +21,20 @@ public class AdvPatternDetailsDecoder implements IPatternDetailsDecoder {
     @Nullable
     @Override
     public IPatternDetails decodePattern(AEItemKey what, Level level) {
-        if (level == null || !(what.getItem() instanceof AdvProcessingPatternItem advProcessingPatternItem)) {
+        if (level == null || !(what.getItem() instanceof AdvProcessingPatternItem)) {
             return null;
         }
-
-        return advProcessingPatternItem.decode(what, level);
+        AdvProcessingPatternItem item = (AdvProcessingPatternItem) what.getItem();
+        return item.decode(what, level);
     }
 
     @Nullable
     @Override
     public IPatternDetails decodePattern(ItemStack what, Level level, boolean tryRecovery) {
-        if (level == null || !(what.getItem() instanceof AdvProcessingPatternItem advProcessingPatternItem)) {
+        if (level == null || !(what.getItem() instanceof AdvProcessingPatternItem)) {
             return null;
         }
-
-        return advProcessingPatternItem.decode(what, level, tryRecovery);
+        AdvProcessingPatternItem item = (AdvProcessingPatternItem) what.getItem();
+        return item.decode(what, level, tryRecovery);
     }
 }

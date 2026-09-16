@@ -27,7 +27,7 @@ public enum AAECraftingUnitType implements ICraftingUnitType {
 
     @Override
     public long getStorageBytes() {
-        return 1024L * 1024 * storageMb;
+        return 1024L * 1024L * storageMb;
     }
 
     public int getStorageMultiplier() {
@@ -36,10 +36,13 @@ public enum AAECraftingUnitType implements ICraftingUnitType {
 
     @Override
     public int getAcceleratorThreads() {
-        return switch (this) {
-            case QUANTUM_ACCELERATOR, QUANTUM_CORE -> AAEConfig.instance().getQuantumComputerAcceleratorThreads();
-            default -> 0;
-        };
+        switch (this) {
+            case QUANTUM_ACCELERATOR:
+            case QUANTUM_CORE:
+                return AAEConfig.instance().getQuantumComputerAcceleratorThreads();
+            default:
+                return 0;
+        }
     }
 
     public int getAccelerationMultiplier() {
@@ -51,16 +54,26 @@ public enum AAECraftingUnitType implements ICraftingUnitType {
     }
 
     public LibBlockDefinition<?> getDefinition() {
-        return switch (this) {
-            case QUANTUM_UNIT -> AAEBlocks.QUANTUM_UNIT;
-            case QUANTUM_CORE -> AAEBlocks.QUANTUM_CORE;
-            case STORAGE_128M -> AAEBlocks.QUANTUM_STORAGE_128M;
-            case STORAGE_256M -> AAEBlocks.QUANTUM_STORAGE_256M;
-            case STORAGE_MULTIPLIER -> AAEBlocks.DATA_ENTANGLER;
-            case QUANTUM_ACCELERATOR -> AAEBlocks.QUANTUM_ACCELERATOR;
-            case MULTI_THREADER -> AAEBlocks.QUANTUM_MULTI_THREADER;
-            case STRUCTURE -> AAEBlocks.QUANTUM_STRUCTURE;
-        };
+        switch (this) {
+            case QUANTUM_UNIT:
+                return AAEBlocks.QUANTUM_UNIT;
+            case QUANTUM_CORE:
+                return AAEBlocks.QUANTUM_CORE;
+            case STORAGE_128M:
+                return AAEBlocks.QUANTUM_STORAGE_128M;
+            case STORAGE_256M:
+                return AAEBlocks.QUANTUM_STORAGE_256M;
+            case STORAGE_MULTIPLIER:
+                return AAEBlocks.DATA_ENTANGLER;
+            case QUANTUM_ACCELERATOR:
+                return AAEBlocks.QUANTUM_ACCELERATOR;
+            case MULTI_THREADER:
+                return AAEBlocks.QUANTUM_MULTI_THREADER;
+            case STRUCTURE:
+                return AAEBlocks.QUANTUM_STRUCTURE;
+            default:
+                throw new IllegalStateException("Unknown crafting unit type: " + this);
+        }
     }
 
     @Override
