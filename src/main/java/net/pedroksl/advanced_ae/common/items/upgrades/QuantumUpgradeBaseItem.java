@@ -33,9 +33,9 @@ public class QuantumUpgradeBaseItem extends Item {
     }
 
     @Override
-    public void addInformation(
+    public void appendHoverText(
             ItemStack stack, @Nullable World world, List<ITextComponent> lines, ITooltipFlag tooltipFlag) {
-        super.addInformation(stack, world, lines, tooltipFlag);
-        lines.add(new TranslationTextComponent(type.getTranslationKey()).mergeStyle(TextFormatting.GRAY));
+        super.appendHoverText(stack, world, lines, tooltipFlag);
+        lines.add(new TranslationTextComponent(type.getTranslationKey()).withStyle(TextFormatting.GRAY));
     }
 }
