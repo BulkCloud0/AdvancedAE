@@ -18,6 +18,8 @@ public enum Addons implements AddonEnum {
     CURIOS("curios", "Curios"),
     APOTHIC_ENCHANTING("apotheosis", "Apotheosis");
 
+    private static final String EXPANSION_AE_MOD_ID = "expansionae";
+
     private final String modId;
     private final String modName;
 
@@ -38,6 +40,9 @@ public enum Addons implements AddonEnum {
 
     @Override
     public boolean isLoaded() {
+        if (this == EXPATTERNPROVIDER && ModList.get().isLoaded(EXPANSION_AE_MOD_ID)) {
+            return true;
+        }
         return ModList.get().isLoaded(this.modId);
     }
 }
