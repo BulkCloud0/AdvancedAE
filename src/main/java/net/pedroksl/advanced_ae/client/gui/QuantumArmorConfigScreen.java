@@ -7,6 +7,8 @@ import java.util.Map;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import lombok.var;
+
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -79,7 +81,6 @@ public class QuantumArmorConfigScreen extends AEBaseScreen<QuantumArmorConfigMen
     public boolean mouseClicked(double xCoord, double yCoord, int btn) {
         assert this.minecraft != null;
 
-        // Handle item selection
         if (btn == InputConstants.MOUSE_BUTTON_LEFT) {
             Slot slot = this.findSlot(xCoord, yCoord);
             if (this.isArmorSlot(slot)) {
@@ -209,7 +210,8 @@ public class QuantumArmorConfigScreen extends AEBaseScreen<QuantumArmorConfigMen
 
         int index = 0;
         var armorStack = stack.isEmpty() ? this.menu.getSlot(this.selectedIndex).getItem() : stack;
-        if (armorStack.getItem() instanceof QuantumArmorBase item) {
+        if (armorStack.getItem() instanceof QuantumArmorBase) {
+            QuantumArmorBase item = (QuantumArmorBase) armorStack.getItem();
             for (var upgrade : item.getPossibleUpgrades()) {
                 if (item.hasUpgrade(armorStack, upgrade)) {
 
@@ -287,7 +289,8 @@ public class QuantumArmorConfigScreen extends AEBaseScreen<QuantumArmorConfigMen
         } else if (state.type().getSettingType() == UpgradeType.SettingType.NUM_AND_FILTER) {
             if (state.type() == UpgradeType.MAGNET) {
                 var stack = this.menu.getSlot(selectedIndex).getItem();
-                if (stack.getItem() instanceof QuantumArmorBase item) {
+                if (stack.getItem() instanceof QuantumArmorBase) {
+                    QuantumArmorBase item = (QuantumArmorBase) stack.getItem();
                     var blacklist = item.isUpgradeEnabled(stack, UpgradeType.MAGNET);
                     AAENetworkHandler.INSTANCE.sendToServer(
                             new QuantumArmorMagnetPacket(state.currentValue(), state.filter(), blacklist));
