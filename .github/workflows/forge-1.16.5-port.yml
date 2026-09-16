@@ -39,6 +39,9 @@ jobs:
       - name: Build
         run: ./gradlew build --stacktrace --no-daemon
 
+      - name: Forge runtime smoke test
+        run: ./gradlew runData --stacktrace --no-daemon
+
       - name: Save Gradle cache
         if: always()
         uses: actions/cache/save@v4
