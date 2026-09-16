@@ -1,0 +1,4 @@
+[submodule "vendor/ExtendedAE"]
+	path = vendor/ExtendedAE
+	url = https://github.com/BulkCloud0/ExtendedAE.git
+	branch = expansionae-embedded-1.16.5
