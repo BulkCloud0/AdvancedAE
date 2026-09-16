@@ -25,10 +25,10 @@ public final class AAEBlocks extends BlockRegistry {
 
     public static final LibBlockDefinition<AEDecorativeBlock> QUANTUM_ALLOY_BLOCK = block(
             "Quantum Alloy Block", "quantum_alloy_block",
-            () -> new AEDecorativeBlock(stoneProps().hardnessAndResistance(25.0f, 150.0f)), BlockItem::new);
+            () -> new AEDecorativeBlock(stoneProps().strength(25.0f, 150.0f)), BlockItem::new);
     public static final LibBlockDefinition<StairsBlock> QUANTUM_ALLOY_STAIRS = block(
             "Quantum Alloy Stairs", "quantum_alloy_stairs",
-            () -> new StairsBlock(() -> QUANTUM_ALLOY_BLOCK.block().getDefaultState(), metalProps()), BlockItem::new);
+            () -> new StairsBlock(() -> QUANTUM_ALLOY_BLOCK.block().defaultBlockState(), metalProps()), BlockItem::new);
     public static final LibBlockDefinition<WallBlock> QUANTUM_ALLOY_WALL = block(
             "Quantum Alloy Wall", "quantum_alloy_wall", () -> new WallBlock(metalProps()), BlockItem::new);
     public static final LibBlockDefinition<SlabBlock> QUANTUM_ALLOY_SLAB = block(
@@ -61,10 +61,10 @@ public final class AAEBlocks extends BlockRegistry {
     }
 
     private static AbstractBlock.Properties stoneProps() {
-        return AbstractBlock.Properties.create(Material.ROCK).hardnessAndResistance(2.2f, 11.0f).harvestTool(ToolType.PICKAXE).harvestLevel(0);
+        return AbstractBlock.Properties.create(Material.STONE).strength(2.2f, 11.0f).harvestTool(ToolType.PICKAXE).harvestLevel(0);
     }
     private static AbstractBlock.Properties metalProps() {
-        return AbstractBlock.Properties.create(Material.IRON).hardnessAndResistance(2.2f, 11.0f).harvestTool(ToolType.PICKAXE).harvestLevel(0);
+        return AbstractBlock.Properties.create(Material.METAL).strength(2.2f, 11.0f).harvestTool(ToolType.PICKAXE).harvestLevel(0);
     }
     protected static <T extends Block> LibBlockDefinition<T> block(String englishName, String id, Supplier<T> blockSupplier) {
         return block(AdvancedAE.MOD_ID, englishName, id, blockSupplier, null);

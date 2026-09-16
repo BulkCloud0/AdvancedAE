@@ -26,16 +26,9 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
     @Override
     public boolean checkMultiblockScale(final BlockPos min, final BlockPos max) {
         final int maxSize = AAEConfig.instance().getQuantumComputerMaxSize() - 1;
-
-        if (max.getX() - min.getX() > maxSize) {
-            return false;
-        }
-
-        if (max.getY() - min.getY() > maxSize) {
-            return false;
-        }
-
-        return max.getZ() - min.getZ() <= maxSize;
+        return max.getX() - min.getX() <= maxSize
+                && max.getY() - min.getY() <= maxSize
+                && max.getZ() - min.getZ() <= maxSize;
     }
 
     @Override
@@ -52,18 +45,17 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
         int multi = 0;
         final int multiLimit = AAEConfig.instance().getQuantumComputerMaxMultiThreaders();
 
-        for (BlockPos blockPos : BlockPos.getAllInBoxMutable(min, max)) {
-            final IAEMultiBlock<?> multiblock = (IAEMultiBlock<?>) level.getTileEntity(blockPos);
-
-            if (multiblock == null || !multiblock.isValid()) {
+        for (BlockPos blockPos : BlockPos.betweenClosed(min, max)) {
+            final TileEntity raw = level.getBlockEntity(blockPos);
+            if (!(raw instanceof IAEMultiBlock) || !(raw instanceof AdvCraftingBlockEntity)) {
+                return false;
+            }
+            final IAEMultiBlock<?> multiblock = (IAEMultiBlock<?>) raw;
+            if (!multiblock.isValid()) {
                 return false;
             }
 
-            if (!(multiblock instanceof AdvCraftingBlockEntity)) {
-                return false;
-            }
-
-            final AdvCraftingBlockEntity advEntity = (AdvCraftingBlockEntity) multiblock;
+            final AdvCraftingBlockEntity advEntity = (AdvCraftingBlockEntity) raw;
             final boolean isBoundary = blockPos.getX() == min.getX()
                     || blockPos.getY() == min.getY()
                     || blockPos.getZ() == min.getZ()
@@ -71,12 +63,11 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
                     || blockPos.getY() == max.getY()
                     || blockPos.getZ() == max.getZ();
 
-            switch ((AAECraftingUnitType) advEntity.getUnitBlock().type) {
+            switch (advEntity.getUnitBlock().type) {
                 case QUANTUM_CORE:
                     if (min.equals(max)) {
                         return true;
                     }
-
                     if (!isBoundary && !core) {
                         core = true;
                     } else {
@@ -120,8 +111,12 @@ public class AdvCraftingCPUCalculator extends MBCalculator<AdvCraftingBlockEntit
     @Override
     public void updateTiles(
             final AdvCraftingCPUCluster cluster, final World level, final BlockPos min, final BlockPos max) {
-        for (BlockPos blockPos : BlockPos.getAllInBoxMutable(min, max)) {
-            final AdvCraftingBlockEntity tile = (AdvCraftingBlockEntity) level.getTileEntity(blockPos);
+        for (BlockPos blockPos : BlockPos.betweenClosed(min, max)) {
+            final TileEntity raw = level.getBlockEntity(blockPos);
+            if (!(raw instanceof AdvCraftingBlockEntity)) {
+                continue;
+            }
+            final AdvCraftingBlockEntity tile = (AdvCraftingBlockEntity) raw;
             tile.updateStatus(cluster);
             cluster.addBlockEntity(tile);
         }

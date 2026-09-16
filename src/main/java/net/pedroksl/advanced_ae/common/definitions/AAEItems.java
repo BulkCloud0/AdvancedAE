@@ -15,7 +15,6 @@ import net.pedroksl.ae2addonlib.registry.ItemRegistry;
 import net.pedroksl.ae2addonlib.registry.helpers.LibItemDefinition;
 
 import appeng.api.parts.IPart;
-import appeng.items.materials.MaterialItem;
 import appeng.items.parts.PartItem;
 
 public class AAEItems extends ItemRegistry {
@@ -46,14 +45,15 @@ public class AAEItems extends ItemRegistry {
     public static final LibItemDefinition<Item> ADV_PROCESSING_PATTERN = item("Advanced Processing Pattern", "adv_processing_pattern", Item::new);
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_UPGRADE = item("Advanced Pattern Provider Upgrade", "adv_pattern_provider_upgrade", Item::new);
     public static final LibItemDefinition<Item> ADV_PATTERN_PROVIDER_CAPACITY_UPGRADE = item("Advanced Pattern Provider Capacity Upgrade", "adv_pattern_provider_capacity_upgrade", Item::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_INFUSED_DUST = item("Quantum Infused Dust", "quantum_infused_dust", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_ALLOY = item("Quantum Alloy", "quantum_alloy", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_ALLOY_PLATE = item("Quantum Alloy Plate", "quantum_alloy_plate", p -> new MaterialItem(p.rarity(Rarity.EPIC)));
-    public static final LibItemDefinition<MaterialItem> SHATTERED_SINGULARITY = item("Shattered Singularity", "shattered_singularity", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_PROCESSOR_PRESS = item("Inscriber Quantum Press", "quantum_processor_press", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_PROCESSOR_PRINT = item("Printed Quantum Circuit", "printed_quantum_processor", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_PROCESSOR = item("Quantum Processor", "quantum_processor", MaterialItem::new);
-    public static final LibItemDefinition<MaterialItem> QUANTUM_STORAGE_COMPONENT = item("Quantum Storage Component", "quantum_storage_component", MaterialItem::new);
+
+    public static final LibItemDefinition<Item> QUANTUM_INFUSED_DUST = item("Quantum Infused Dust", "quantum_infused_dust", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_ALLOY = item("Quantum Alloy", "quantum_alloy", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_ALLOY_PLATE = item("Quantum Alloy Plate", "quantum_alloy_plate", p -> new Item(p.rarity(Rarity.EPIC)));
+    public static final LibItemDefinition<Item> SHATTERED_SINGULARITY = item("Shattered Singularity", "shattered_singularity", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_PROCESSOR_PRESS = item("Inscriber Quantum Press", "quantum_processor_press", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_PROCESSOR_PRINT = item("Printed Quantum Circuit", "printed_quantum_processor", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_PROCESSOR = item("Quantum Processor", "quantum_processor", Item::new);
+    public static final LibItemDefinition<Item> QUANTUM_STORAGE_COMPONENT = item("Quantum Storage Component", "quantum_storage_component", Item::new);
     public static final LibItemDefinition<Item> ADV_PATTERN_ENCODER = item("Advanced Pattern Encoder", "adv_pattern_encoder", Item::new);
     public static final LibItemDefinition<Item> MONITOR_CONFIGURATOR = item("Throughput Monitor Configurator", "throughput_monitor_configurator", Item::new);
 

@@ -15,10 +15,10 @@ public class AAECraftingUnitBlock extends AAEAbstractCraftingUnitBlock<AdvCrafti
     }
 
     public static AbstractBlock.Properties getProps(AAECraftingUnitType type, boolean formed) {
-        AbstractBlock.Properties props = defaultProps(type == AAECraftingUnitType.STRUCTURE ? Material.GLASS : Material.IRON);
+        AbstractBlock.Properties props = defaultProps(type == AAECraftingUnitType.STRUCTURE ? Material.GLASS : Material.METAL);
         if (type == AAECraftingUnitType.QUANTUM_CORE || type == AAECraftingUnitType.STRUCTURE) {
-            props.setLightLevel(state -> state.get(AAEAbstractCraftingUnitBlock.LIGHT_LEVEL));
-            props.notSolid();
+            props.lightLevel(state -> state.getValue(AAEAbstractCraftingUnitBlock.LIGHT_LEVEL));
+            props.noOcclusion();
         }
         return props;
     }

@@ -37,11 +37,6 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     private boolean isCoreBlock;
     private AdvCraftingCPUCluster cluster;
 
-    /**
-     * The addon registry keeps the newer constructor shape so block-entity method
-     * references do not need special adapters. On 1.16.5 the position/state are
-     * supplied by Minecraft after construction, so only the type is forwarded.
-     */
     public AdvCraftingBlockEntity(TileEntityType<?> tileEntityType, BlockPos ignoredPos, BlockState ignoredState) {
         super(tileEntityType);
         this.getProxy().setFlags(GridFlags.MULTIBLOCK, GridFlags.REQUIRE_CHANNEL);
@@ -67,14 +62,13 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     }
 
     public AAEAbstractCraftingUnitBlock<?> getUnitBlock() {
-        if (this.world == null || this.notLoaded() || this.isRemoved()) {
+        if (this.level == null || this.notLoaded() || this.isRemoved()) {
             return AAEBlocks.QUANTUM_UNIT.block();
         }
-
-        if (this.world.getBlockState(this.pos).getBlock() instanceof AAEAbstractCraftingUnitBlock) {
-            return (AAEAbstractCraftingUnitBlock<?>) this.world.getBlockState(this.pos).getBlock();
+        BlockState state = this.level.getBlockState(this.worldPosition);
+        if (state.getBlock() instanceof AAEAbstractCraftingUnitBlock) {
+            return (AAEAbstractCraftingUnitBlock<?>) state.getBlock();
         }
-
         return AAEBlocks.QUANTUM_UNIT.block();
     }
 
@@ -98,14 +92,14 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     public void onReady() {
         super.onReady();
         this.getProxy().setVisualRepresentation(this.getItemFromTile(this));
-        if (this.world != null) {
-            this.calc.calculateMultiblock(this.world, this.pos);
+        if (this.level != null) {
+            this.calc.calculateMultiblock(this.level, this.worldPosition);
         }
     }
 
     public void updateMultiBlock(final BlockPos changedPos) {
-        if (this.world != null) {
-            this.calc.updateMultiblockAfterNeighborUpdate(this.world, this.pos, changedPos);
+        if (this.level != null) {
+            this.calc.updateMultiblockAfterNeighborUpdate(this.level, this.worldPosition, changedPos);
         }
     }
 
@@ -113,19 +107,18 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
         if (this.cluster != null && this.cluster != newCluster) {
             this.cluster.breakCluster();
         }
-
         this.cluster = newCluster;
         this.updateSubType(true);
     }
 
     public void updateSubType(final boolean updateFormed) {
-        if (this.world == null || this.notLoaded() || this.isRemoved()) {
+        if (this.level == null || this.notLoaded() || this.isRemoved()) {
             return;
         }
 
         final boolean formed = this.isFormed();
         final boolean power = this.getProxy().isReady() && this.getProxy().isActive();
-        final BlockState current = this.world.getBlockState(this.pos);
+        final BlockState current = this.level.getBlockState(this.worldPosition);
 
         if (current.getBlock() instanceof AAEAbstractCraftingUnitBlock) {
             final AAECraftingUnitType type = this.getUnitBlock().type;
@@ -133,13 +126,13 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
             lightLevel = formed && power ? lightLevel : 0;
             final boolean multiblocked = this.cluster != null && this.cluster.numBlockEntities() > 1;
 
-            final BlockState newState = current.with(AAEAbstractCraftingUnitBlock.POWERED, power)
-                    .with(AAEAbstractCraftingUnitBlock.FORMED, formed)
-                    .with(AAEAbstractCraftingUnitBlock.LIGHT_LEVEL, lightLevel)
-                    .with(AAEAbstractCraftingUnitBlock.MULTIBLOCKED, multiblocked);
+            final BlockState newState = current.setValue(AAEAbstractCraftingUnitBlock.POWERED, power)
+                    .setValue(AAEAbstractCraftingUnitBlock.FORMED, formed)
+                    .setValue(AAEAbstractCraftingUnitBlock.LIGHT_LEVEL, lightLevel)
+                    .setValue(AAEAbstractCraftingUnitBlock.MULTIBLOCKED, multiblocked);
 
             if (current != newState) {
-                this.world.setBlockState(this.pos, newState, 2);
+                this.level.setBlock(this.worldPosition, newState, 2);
             }
         }
 
@@ -156,14 +149,15 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
 
     public boolean isFormed() {
         if (isRemote()) {
-            return this.world != null && this.world.getBlockState(this.pos).get(AAEAbstractCraftingUnitBlock.FORMED);
+            return this.level != null
+                    && this.level.getBlockState(this.worldPosition).getValue(AAEAbstractCraftingUnitBlock.FORMED);
         }
         return this.cluster != null;
     }
 
     @Override
-    public CompoundNBT write(final CompoundNBT data) {
-        super.write(data);
+    public CompoundNBT save(final CompoundNBT data) {
+        super.save(data);
         data.putBoolean("core", this.isCoreBlock());
         if (this.isCoreBlock() && this.cluster != null) {
             this.cluster.writeToNBT(data);
@@ -172,8 +166,8 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     }
 
     @Override
-    public void read(final BlockState blockState, final CompoundNBT data) {
-        super.read(blockState, data);
+    public void load(final BlockState blockState, final CompoundNBT data) {
+        super.load(blockState, data);
         this.setCoreBlock(data.getBoolean("core"));
         if (this.isCoreBlock()) {
             if (this.cluster != null) {
@@ -214,15 +208,8 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
         this.updateSubType(false);
     }
 
-    /**
-     * The 1.20 implementation drops every per-job crafting inventory here. The
-     * equivalent inventories are part of the remaining AdvCraftingCPU/cluster port,
-     * so cancellation/destruction is kept centralized until those classes use the
-     * AE2 8 storage API. This avoids retaining references to 1.20 GenericStack APIs
-     * in the tile itself.
-     */
     public void breakCluster() {
-        this.updateContainingBlockInfo();
+        requestModelDataUpdate();
         if (this.cluster != null) {
             this.cluster.cancelJobs();
             this.cluster.destroy();
@@ -232,15 +219,16 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     @Override
     public boolean isPowered() {
         if (isRemote()) {
-            return this.world != null && this.world.getBlockState(this.pos).get(AAEAbstractCraftingUnitBlock.POWERED);
+            return this.level != null
+                    && this.level.getBlockState(this.worldPosition).getValue(AAEAbstractCraftingUnitBlock.POWERED);
         }
         return this.getProxy().isActive();
     }
 
     public boolean isMultiblocked() {
         if (isRemote()) {
-            return this.world != null
-                    && this.world.getBlockState(this.pos).get(AAEAbstractCraftingUnitBlock.MULTIBLOCKED);
+            return this.level != null
+                    && this.level.getBlockState(this.worldPosition).getValue(AAEAbstractCraftingUnitBlock.MULTIBLOCKED);
         }
         return this.cluster != null && this.cluster.numBlockEntities() > 1;
     }
@@ -276,13 +264,12 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     }
 
     protected EnumSet<Direction> getConnections() {
-        if (this.world == null) {
+        if (this.level == null) {
             return EnumSet.noneOf(Direction.class);
         }
-
         final EnumSet<Direction> connections = EnumSet.noneOf(Direction.class);
         for (final Direction facing : Direction.values()) {
-            if (this.isConnected(this.world, this.pos, facing)) {
+            if (this.isConnected(this.level, this.worldPosition, facing)) {
                 connections.add(facing);
             }
         }
@@ -290,13 +277,7 @@ public class AdvCraftingBlockEntity extends AENetworkTileEntity
     }
 
     private boolean isConnected(final IBlockReader level, final BlockPos pos, final Direction side) {
-        final BlockPos adjacentPos = pos.offset(side);
+        final BlockPos adjacentPos = pos.relative(side);
         return level.getBlockState(adjacentPos).getBlock() instanceof AAEAbstractCraftingUnitBlock;
-    }
-
-    @Override
-    public void updateContainingBlockInfo() {
-        super.updateContainingBlockInfo();
-        requestModelDataUpdate();
     }
 }

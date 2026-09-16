@@ -7,13 +7,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
@@ -32,32 +29,17 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
     public AAEAbstractCraftingUnitBlock(AbstractBlock.Properties props, AAECraftingUnitType type) {
         super(props);
         this.type = type;
-        this.setDefaultState(getDefaultState()
-                .with(FORMED, false)
-                .with(POWERED, false)
-                .with(MULTIBLOCKED, false)
-                .with(LIGHT_LEVEL, 0));
+        this.registerDefaultState(this.defaultBlockState()
+                .setValue(FORMED, false)
+                .setValue(POWERED, false)
+                .setValue(MULTIBLOCKED, false)
+                .setValue(LIGHT_LEVEL, 0));
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        super.fillStateContainer(builder);
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(POWERED, FORMED, MULTIBLOCKED, LIGHT_LEVEL);
-    }
-
-    @Override
-    public BlockState updatePostPlacement(
-            BlockState stateIn,
-            Direction facing,
-            BlockState facingState,
-            IWorld worldIn,
-            BlockPos currentPos,
-            BlockPos facingPos) {
-        TileEntity te = worldIn.getTileEntity(currentPos);
-        if (te != null) {
-            te.requestModelDataUpdate();
-        }
-        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
     }
 
     @Override
@@ -70,28 +52,26 @@ public abstract class AAEAbstractCraftingUnitBlock<T extends AEBaseTileEntity> e
     }
 
     @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (newState.getBlock() == state.getBlock()) {
-            return;
+    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (newState.getBlock() != state.getBlock()) {
+            T tile = this.getTileEntity(world, pos);
+            if (tile instanceof AdvCraftingBlockEntity) {
+                ((AdvCraftingBlockEntity) tile).breakCluster();
+            }
         }
-        T tile = this.getTileEntity(world, pos);
-        if (tile instanceof AdvCraftingBlockEntity) {
-            ((AdvCraftingBlockEntity) tile).breakCluster();
-        }
-        super.onReplaced(state, world, pos, newState, isMoving);
+        super.onRemove(state, world, pos, newState, isMoving);
     }
 
     @Override
-    public ActionResultType onBlockActivated(
+    public ActionResultType use(
             BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
         T tile = this.getTileEntity(world, pos);
         if (tile instanceof AdvCraftingBlockEntity) {
             AdvCraftingBlockEntity crafting = (AdvCraftingBlockEntity) tile;
             if (!InteractionUtil.isInAlternateUseMode(player) && crafting.isFormed() && crafting.isActive()) {
-                // The custom Quantum Computer menu is deferred during the 1.16.5 baseline port.
-                return ActionResultType.func_233537_a_(world.isRemote());
+                return ActionResultType.SUCCESS;
             }
         }
-        return super.onBlockActivated(state, world, pos, player, hand, hit);
+        return ActionResultType.PASS;
     }
 }
