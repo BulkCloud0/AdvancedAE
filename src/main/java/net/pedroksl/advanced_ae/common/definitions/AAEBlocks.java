@@ -14,7 +14,6 @@ import net.minecraft.item.Item;
 import net.minecraftforge.common.ToolType;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.blocks.*;
-import net.pedroksl.advanced_ae.common.items.AAECraftingBlockItem;
 import net.pedroksl.ae2addonlib.registry.BlockRegistry;
 import net.pedroksl.ae2addonlib.registry.helpers.LibBlockDefinition;
 import appeng.block.AEBaseBlockItem;
@@ -36,21 +35,21 @@ public final class AAEBlocks extends BlockRegistry {
             "Quantum Alloy Slab", "quantum_alloy_slab", () -> new SlabBlock(metalProps()), BlockItem::new);
 
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_UNIT = block(
-            "Quantum Crafting Unit", "quantum_unit", () -> new AAECraftingUnitBlock(AAECraftingUnitType.QUANTUM_UNIT), AAECraftingBlockItem::new);
+            "Quantum Crafting Unit", "quantum_unit", () -> new AAECraftingUnitBlock(AAECraftingUnitType.QUANTUM_UNIT), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_CORE = block(
-            "Quantum Computer Core", "quantum_core", () -> new AAECraftingUnitBlock(AAECraftingUnitType.QUANTUM_CORE), AAECraftingBlockItem::new);
+            "Quantum Computer Core", "quantum_core", () -> new AAECraftingUnitBlock(AAECraftingUnitType.QUANTUM_CORE), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_STORAGE_128M = block(
-            "128M Quantum Computer Storage", "quantum_storage_128", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STORAGE_128M), AAECraftingBlockItem::new);
+            "128M Quantum Computer Storage", "quantum_storage_128", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STORAGE_128M), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_STORAGE_256M = block(
-            "256M Quantum Computer Storage", "quantum_storage_256", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STORAGE_256M), AAECraftingBlockItem::new);
+            "256M Quantum Computer Storage", "quantum_storage_256", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STORAGE_256M), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> DATA_ENTANGLER = block(
-            "Quantum Data Entangler", "data_entangler", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STORAGE_MULTIPLIER), AAECraftingBlockItem::new);
+            "Quantum Data Entangler", "data_entangler", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STORAGE_MULTIPLIER), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_ACCELERATOR = block(
-            "Quantum Computer Accelerator", "quantum_accelerator", () -> new AAECraftingUnitBlock(AAECraftingUnitType.QUANTUM_ACCELERATOR), AAECraftingBlockItem::new);
+            "Quantum Computer Accelerator", "quantum_accelerator", () -> new AAECraftingUnitBlock(AAECraftingUnitType.QUANTUM_ACCELERATOR), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_MULTI_THREADER = block(
-            "Quantum Computer Multi-Threader", "quantum_multi_threader", () -> new AAECraftingUnitBlock(AAECraftingUnitType.MULTI_THREADER), AAECraftingBlockItem::new);
+            "Quantum Computer Multi-Threader", "quantum_multi_threader", () -> new AAECraftingUnitBlock(AAECraftingUnitType.MULTI_THREADER), AEBaseBlockItem::new);
     public static final LibBlockDefinition<AAECraftingUnitBlock> QUANTUM_STRUCTURE = block(
-            "Quantum Computer Structural Glass", "quantum_structure", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STRUCTURE), AAECraftingBlockItem::new);
+            "Quantum Computer Structural Glass", "quantum_structure", () -> new AAECraftingUnitBlock(AAECraftingUnitType.STRUCTURE), AEBaseBlockItem::new);
 
     public static final LibBlockDefinition<AEDecorativeBlock> ADV_PATTERN_PROVIDER = placeholder("Advanced Extended Pattern Provider", "adv_pattern_provider");
     public static final LibBlockDefinition<AEDecorativeBlock> SMALL_ADV_PATTERN_PROVIDER = placeholder("Advanced Pattern Provider", "small_adv_pattern_provider");
