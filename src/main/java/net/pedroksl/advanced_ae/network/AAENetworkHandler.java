@@ -1,35 +1,68 @@
 package net.pedroksl.advanced_ae.network;
 
-import net.pedroksl.advanced_ae.AdvancedAE;
-import net.pedroksl.advanced_ae.network.packet.*;
-import net.pedroksl.advanced_ae.network.packet.quantumarmor.*;
-import net.pedroksl.ae2addonlib.network.NetworkHandler;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-public class AAENetworkHandler extends NetworkHandler {
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.pedroksl.advanced_ae.AdvancedAE;
+
+/** Forge 1.16.5-native transport for AdvancedAE packets. */
+public final class AAENetworkHandler {
+    private static final String PROTOCOL_VERSION = "1";
 
     public static final AAENetworkHandler INSTANCE = new AAENetworkHandler();
 
-    public AAENetworkHandler() {
-        super(AdvancedAE.MOD_ID);
+    private final SimpleChannel channel = NetworkRegistry.newSimpleChannel(
+            AdvancedAE.makeId("main"),
+            () -> PROTOCOL_VERSION,
+            PROTOCOL_VERSION::equals,
+            PROTOCOL_VERSION::equals);
+
+    private int nextMessageId;
+    private boolean initialized;
+
+    private AAENetworkHandler() {}
+
+    /**
+     * Initializes the channel. Packet registrations are deliberately migrated incrementally;
+     * the modern packet payloads remain excluded until their AE2 v8 data models are ported.
+     */
+    public synchronized void init() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
     }
 
-    public void init() {
-        registerPacket(AdvPatternEncoderPacket.class, AdvPatternEncoderPacket::new);
-        registerPacket(AdvPatternEncoderChangeDirectionPacket.class, AdvPatternEncoderChangeDirectionPacket::new);
-        registerPacket(PatternConfigServerUpdatePacket.class, PatternConfigServerUpdatePacket::new);
-        registerPacket(PatternsUpdatePacket.class, PatternsUpdatePacket::new);
-        registerPacket(SetStockAmountPacket.class, SetStockAmountPacket::new);
-        registerPacket(MenuSelectionPacket.class, MenuSelectionPacket::new);
-        registerPacket(KeysPressedPacket.class, KeysPressedPacket::new);
-        registerPacket(QuantumArmorMagnetPacket.class, QuantumArmorMagnetPacket::new);
-        registerPacket(QuantumArmorStylePacket.class, QuantumArmorStylePacket::new);
-        registerPacket(QuantumArmorUpgradeFilterPacket.class, QuantumArmorUpgradeFilterPacket::new);
-        registerPacket(QuantumArmorUpgradeStatePacket.class, QuantumArmorUpgradeStatePacket::new);
-        registerPacket(QuantumArmorUpgradeValuePacket.class, QuantumArmorUpgradeValuePacket::new);
-        registerPacket(QuantumArmorUpgradeTogglePacket.class, QuantumArmorUpgradeTogglePacket::new);
-        registerPacket(ItemTrackingPacket.class, ItemTrackingPacket::new);
-        registerPacket(ClearQuantumCrafterTerminalPacket.class, ClearQuantumCrafterTerminalPacket::new);
-        registerPacket(QuantumCrafterTerminalPacket.class, QuantumCrafterTerminalPacket::new);
-        registerPacket(QuantumCrafterTerminalClientAction.class, QuantumCrafterTerminalClientAction::new);
+    public synchronized <MSG> void register(
+            Class<MSG> messageType,
+            BiConsumer<MSG, PacketBuffer> encoder,
+            Function<PacketBuffer, MSG> decoder,
+            BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer,
+            NetworkDirection direction) {
+        channel.messageBuilder(messageType, nextMessageId++, direction)
+                .encoder(encoder)
+                .decoder(decoder)
+                .consumer(consumer)
+                .add();
+    }
+
+    public <MSG> void sendToServer(MSG message) {
+        channel.sendToServer(message);
+    }
+
+    public <MSG> void sendToPlayer(ServerPlayerEntity player, MSG message) {
+        channel.send(PacketDistributor.PLAYER.with(() -> player), message);
+    }
+
+    public SimpleChannel channel() {
+        return channel;
     }
 }

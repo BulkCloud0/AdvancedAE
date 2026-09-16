@@ -10,6 +10,7 @@ import net.pedroksl.advanced_ae.common.definitions.AAEBlocks;
 import net.pedroksl.advanced_ae.common.definitions.AAEConfig;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
 import net.pedroksl.advanced_ae.common.definitions.AAENbt;
+import net.pedroksl.advanced_ae.network.AAENetworkHandler;
 
 public class AdvancedAE {
     public static final String MOD_ID = "advanced_ae";
@@ -36,6 +37,7 @@ public class AdvancedAE {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        AAENetworkHandler.INSTANCE.init();
         // Upgrade registration and optional integrations are restored after the core baseline compiles.
     }
 

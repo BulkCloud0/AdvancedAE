@@ -8,7 +8,7 @@ buildscript {
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-        classpath 'org.parchmentmc:librarian:1.+'
+        classpath 'org.parchmentmc.librarian:1.+'
     }
 }
 apply plugin: 'java'
@@ -39,7 +39,7 @@ sourceSets {
             exclude 'net/pedroksl/advanced_ae/client/**'
             exclude 'net/pedroksl/advanced_ae/gui/**'
             exclude 'net/pedroksl/advanced_ae/mixins/**'
-            exclude 'net/pedroksl/advanced_ae/network/**'
+            exclude 'net/pedroksl/advanced_ae/network/packet/**'
             exclude 'net/pedroksl/advanced_ae/events/**'
             exclude 'net/pedroksl/advanced_ae/recipes/**'
             exclude 'net/pedroksl/advanced_ae/xmod/**'
