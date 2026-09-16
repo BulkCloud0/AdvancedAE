@@ -4,6 +4,8 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
 
+import lombok.var;
+
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -62,7 +64,8 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
                     + "Ljava/lang/Object;)V",
             at = @At("TAIL"))
     private void onInit(MenuType<?> menuType, int id, Inventory ip, Object te, CallbackInfo ci) {
-        if (te instanceof AdvCraftingBlockEntity advEntity) {
+        if (te instanceof AdvCraftingBlockEntity) {
+            AdvCraftingBlockEntity advEntity = (AdvCraftingBlockEntity) te;
             var cluster = advEntity.getCluster();
             if (cluster == null) return;
 
@@ -81,18 +84,15 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
             this.advancedAE$advCpu.craftingLogic.removeListener(cpuChangeListener);
         }
 
-        if (c instanceof AdvCraftingCPU advCPU) {
-            // Clear old cpu listener if it's still valid
+        if (c instanceof AdvCraftingCPU) {
+            AdvCraftingCPU advCPU = (AdvCraftingCPU) c;
             if (this.cpu != null) {
                 this.cpu.craftingLogic.removeListener(cpuChangeListener);
             }
 
-            // Clear helper inside the if statement because it will be cleared normally otherwise
             incrementalUpdateHelper.reset();
-
             this.advancedAE$advCpu = advCPU;
 
-            // Initially send all items as a full-update to the client when the CPU changes
             var allItems = new KeyCounter();
             this.advancedAE$advCpu.craftingLogic.getAllItems(allItems);
             for (var entry : allItems) {
@@ -100,7 +100,6 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
             }
 
             this.advancedAE$advCpu.craftingLogic.addListener(cpuChangeListener);
-
             ci.cancel();
         } else {
             this.advancedAE$advCpu = null;
@@ -109,10 +108,8 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
 
     @Inject(method = "cancelCrafting", at = @At("TAIL"))
     public void onCancelCrafting(CallbackInfo ci) {
-        if (!isClientSide()) {
-            if (this.advancedAE$advCpu != null) {
-                this.advancedAE$advCpu.cancelJob();
-            }
+        if (!isClientSide() && this.advancedAE$advCpu != null) {
+            this.advancedAE$advCpu.cancelJob();
         }
     }
 
@@ -130,10 +127,8 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
             this.cantStoreItems = this.advancedAE$advCpu.craftingLogic.isCantStoreItems();
 
             if (this.incrementalUpdateHelper.hasChanges()) {
-                CraftingStatus status =
-                        advancedAE$create(this.incrementalUpdateHelper, this.advancedAE$advCpu.craftingLogic);
+                CraftingStatus status = advancedAE$create(this.incrementalUpdateHelper, this.advancedAE$advCpu.craftingLogic);
                 this.incrementalUpdateHelper.commitChanges();
-
                 sendPacketToClient(new CraftingStatusPacket(status));
             }
         }
@@ -151,7 +146,6 @@ public class MixinCraftingCPUMenu extends AEBaseMenu {
 
             var sentStack = what;
             if (!full && changes.getSerial(what) != null) {
-                // The item was already sent to the client, so we can skip the item stack
                 sentStack = null;
             }
 
