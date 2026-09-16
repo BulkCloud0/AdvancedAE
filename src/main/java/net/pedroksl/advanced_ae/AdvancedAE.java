@@ -4,6 +4,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -25,8 +26,18 @@ import appeng.api.features.GridLinkables;
 import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEItems;
 
+/**
+ * Transitional ExpansionAE entry point.
+ *
+ * The Java package/class name remains AdvancedAE while the 1.16.5 port is in
+ * progress so the upstream call sites do not need a destructive mass rename.
+ * The actual Forge mod identity is ExpansionAE / expansionae.
+ */
+@Mod(AdvancedAE.MOD_ID)
 public class AdvancedAE {
-    public static final String MOD_ID = "advanced_ae";
+    public static final String MOD_ID = "expansionae";
+    public static final String LEGACY_ADVANCED_AE_MOD_ID = "advanced_ae";
+    public static final String LEGACY_EXTENDED_AE_MOD_ID = "expatternprovider";
 
     static AdvancedAE INSTANCE;
 
