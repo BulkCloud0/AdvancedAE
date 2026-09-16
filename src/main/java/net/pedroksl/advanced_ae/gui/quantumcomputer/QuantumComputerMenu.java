@@ -1,6 +1,11 @@
 package net.pedroksl.advanced_ae.gui.quantumcomputer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.WeakHashMap;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +25,7 @@ import appeng.menu.me.crafting.CraftingCPUMenu;
 
 public class QuantumComputerMenu extends CraftingCPUMenu {
 
-    private static final CraftingCpuList EMPTY_CPU_LIST = new CraftingCpuList(Collections.emptyList());
+    private static final CraftingCpuList EMPTY_CPU_LIST = new CraftingCpuList(Collections.<CraftingCpuListEntry>emptyList());
 
     private static final Comparator<CraftingCpuListEntry> CPU_COMPARATOR = Comparator.comparing(
                     (CraftingCpuListEntry e) -> e.name() == null)
@@ -29,18 +34,14 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
 
     private static final String ACTION_SELECT_CPU = "selectCpu";
 
-    private WeakHashMap<ICraftingCPU, Integer> cpuSerialMap = new WeakHashMap<>();
-
+    private WeakHashMap<ICraftingCPU, Integer> cpuSerialMap = new WeakHashMap<ICraftingCPU, Integer>();
     private int nextCpuSerial = 1;
-
-    private List<AdvCraftingCPU> lastCpuSet = List.of();
-
+    private List<AdvCraftingCPU> lastCpuSet = Collections.emptyList();
     private int lastUpdate = 0;
 
     @GuiSync(8)
     public CraftingCpuList cpuList = EMPTY_CPU_LIST;
 
-    // This is server-side
     @Nullable
     private ICraftingCPU selectedCpu = null;
 
@@ -79,9 +80,7 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
         if (isServerSide() && this.host.getCluster() != null) {
             List<AdvCraftingCPU> newCpuSet = this.host.getCluster().getActiveCPUs();
             newCpuSet.add(this.host.getCluster().getRemainingCapacityCPU());
-            if (!lastCpuSet.equals(newCpuSet)
-                    // Always try to update once every second to show job progress
-                    || ++lastUpdate >= 20) {
+            if (!lastCpuSet.equals(newCpuSet) || ++lastUpdate >= 20) {
                 lastCpuSet = newCpuSet;
                 cpuList = createCpuList();
             }
@@ -89,27 +88,23 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
             lastUpdate = 20;
             if (!lastCpuSet.isEmpty()) {
                 cpuList = EMPTY_CPU_LIST;
-                lastCpuSet = List.of();
+                lastCpuSet = Collections.emptyList();
             }
         }
 
-        // Clear selection if CPU is no longer in list
         if (selectedCpuSerial != -1) {
             if (cpuList.cpus().stream().noneMatch(c -> c.serial() == selectedCpuSerial)) {
                 selectCpu(-1);
             }
         }
 
-        // Select a suitable CPU if none is selected
         if (selectedCpuSerial == -1) {
-            // Try busy CPUs first
-            for (var cpu : cpuList.cpus()) {
+            for (CraftingCpuListEntry cpu : cpuList.cpus()) {
                 if (cpu.currentJob() != null) {
                     selectCpu(cpu.serial());
                     break;
                 }
             }
-            // If we couldn't find a busy one, just select the first
             if (selectedCpuSerial == -1 && !cpuList.cpus().isEmpty()) {
                 selectCpu(cpuList.cpus().get(0).serial());
             }
@@ -123,11 +118,11 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
     }
 
     private CraftingCpuList createCpuList() {
-        var entries = new ArrayList<CraftingCpuListEntry>(lastCpuSet.size());
-        for (var cpu : lastCpuSet) {
-            var serial = getOrAssignCpuSerial(cpu);
-            var status = cpu.getJobStatus();
-            var progress = 0f;
+        ArrayList<CraftingCpuListEntry> entries = new ArrayList<CraftingCpuListEntry>(lastCpuSet.size());
+        for (AdvCraftingCPU cpu : lastCpuSet) {
+            int serial = getOrAssignCpuSerial(cpu);
+            AdvCraftingCPU.JobStatus status = cpu.getJobStatus();
+            float progress = 0f;
             if (status != null && status.totalItems() > 0) {
                 progress = (float) (status.progress() / (double) status.totalItems());
             }
@@ -141,15 +136,20 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
                     progress,
                     status != null ? status.elapsedTimeNanos() : 0));
         }
-        entries.sort(CPU_COMPARATOR);
+        Collections.sort(entries, CPU_COMPARATOR);
         return new CraftingCpuList(entries);
     }
 
     private int getOrAssignCpuSerial(ICraftingCPU cpu) {
         if (this.cpuSerialMap == null) {
-            this.cpuSerialMap = new WeakHashMap<>();
+            this.cpuSerialMap = new WeakHashMap<ICraftingCPU, Integer>();
         }
-        return cpuSerialMap.computeIfAbsent(cpu, ignored -> nextCpuSerial++);
+        Integer serial = cpuSerialMap.get(cpu);
+        if (serial == null) {
+            serial = Integer.valueOf(nextCpuSerial++);
+            cpuSerialMap.put(cpu, serial);
+        }
+        return serial.intValue();
     }
 
     @Override
@@ -164,8 +164,9 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
         } else {
             ICraftingCPU newSelectedCpu = null;
             if (serial != -1) {
-                for (var cpu : lastCpuSet) {
-                    if (cpuSerialMap.getOrDefault(cpu, -1) == serial) {
+                for (AdvCraftingCPU cpu : lastCpuSet) {
+                    Integer cpuSerial = cpuSerialMap.get(cpu);
+                    if (cpuSerial != null && cpuSerial.intValue() == serial) {
                         newSelectedCpu = cpu;
                         break;
                     }
@@ -186,14 +187,24 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
         return this.selectionMode;
     }
 
-    public record CraftingCpuList(List<CraftingCpuListEntry> cpus) implements PacketWritable {
+    public static final class CraftingCpuList implements PacketWritable {
+        private final List<CraftingCpuListEntry> cpus;
+
+        public CraftingCpuList(List<CraftingCpuListEntry> cpus) {
+            this.cpus = cpus;
+        }
+
         public CraftingCpuList(FriendlyByteBuf data) {
             this(readFromPacket(data));
         }
 
+        public List<CraftingCpuListEntry> cpus() {
+            return cpus;
+        }
+
         private static List<CraftingCpuListEntry> readFromPacket(FriendlyByteBuf data) {
-            var count = data.readInt();
-            var result = new ArrayList<CraftingCpuListEntry>(count);
+            int count = data.readInt();
+            ArrayList<CraftingCpuListEntry> result = new ArrayList<CraftingCpuListEntry>(count);
             for (int i = 0; i < count; i++) {
                 result.add(CraftingCpuListEntry.readFromPacket(data));
             }
@@ -203,21 +214,53 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
         @Override
         public void writeToPacket(FriendlyByteBuf data) {
             data.writeInt(cpus.size());
-            for (var entry : cpus) {
+            for (CraftingCpuListEntry entry : cpus) {
                 entry.writeToPacket(data);
             }
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof CraftingCpuList && Objects.equals(cpus, ((CraftingCpuList) obj).cpus);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(cpus);
+        }
     }
 
-    public record CraftingCpuListEntry(
-            int serial,
-            long storage,
-            int coProcessors,
-            Component name,
-            CpuSelectionMode mode,
-            GenericStack currentJob,
-            float progress,
-            long elapsedTimeNanos) {
+    public static final class CraftingCpuListEntry {
+        private final int serial;
+        private final long storage;
+        private final int coProcessors;
+        private final Component name;
+        private final CpuSelectionMode mode;
+        private final GenericStack currentJob;
+        private final float progress;
+        private final long elapsedTimeNanos;
+
+        public CraftingCpuListEntry(int serial, long storage, int coProcessors, Component name,
+                CpuSelectionMode mode, GenericStack currentJob, float progress, long elapsedTimeNanos) {
+            this.serial = serial;
+            this.storage = storage;
+            this.coProcessors = coProcessors;
+            this.name = name;
+            this.mode = mode;
+            this.currentJob = currentJob;
+            this.progress = progress;
+            this.elapsedTimeNanos = elapsedTimeNanos;
+        }
+
+        public int serial() { return serial; }
+        public long storage() { return storage; }
+        public int coProcessors() { return coProcessors; }
+        public Component name() { return name; }
+        public CpuSelectionMode mode() { return mode; }
+        public GenericStack currentJob() { return currentJob; }
+        public float progress() { return progress; }
+        public long elapsedTimeNanos() { return elapsedTimeNanos; }
+
         public static CraftingCpuListEntry readFromPacket(FriendlyByteBuf data) {
             return new CraftingCpuListEntry(
                     data.readInt(),
@@ -242,6 +285,20 @@ public class QuantumComputerMenu extends CraftingCPUMenu {
             GenericStack.writeBuffer(currentJob, data);
             data.writeFloat(progress);
             data.writeVarLong(elapsedTimeNanos);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof CraftingCpuListEntry)) return false;
+            CraftingCpuListEntry other = (CraftingCpuListEntry) obj;
+            return serial == other.serial && storage == other.storage && coProcessors == other.coProcessors
+                    && Float.compare(progress, other.progress) == 0 && elapsedTimeNanos == other.elapsedTimeNanos
+                    && Objects.equals(name, other.name) && mode == other.mode && Objects.equals(currentJob, other.currentJob);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(serial, storage, coProcessors, name, mode, currentJob, progress, elapsedTimeNanos);
         }
     }
 }

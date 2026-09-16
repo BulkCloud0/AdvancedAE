@@ -6,7 +6,6 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +30,6 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     public final List<IngredientStack.Item> inputs;
     public final IngredientStack.Fluid fluid;
     public final GenericStack output;
-
     protected final int energy;
 
     public ReactionChamberRecipe(
@@ -48,13 +46,13 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     }
 
     @Override
-    public boolean matches(Container pContainer, Level pLevel) {
+    public boolean matches(Container container, Level level) {
         return false;
     }
 
     @Override
-    public ItemStack assemble(Container inv, RegistryAccess registryAccess) {
-        return getResultItem(registryAccess).copy();
+    public ItemStack assemble(Container inv) {
+        return getResultItem().copy();
     }
 
     @Override
@@ -62,24 +60,22 @@ public class ReactionChamberRecipe implements Recipe<Container> {
         return true;
     }
 
-    @Override
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
-        return getResultItem();
-    }
-
     public boolean isItemOutput() {
         return this.output.what() instanceof AEItemKey;
     }
 
+    @Override
     public ItemStack getResultItem() {
-        if (this.output.what() instanceof AEItemKey key) {
+        if (this.output.what() instanceof AEItemKey) {
+            AEItemKey key = (AEItemKey) this.output.what();
             return key.toStack((int) this.output.amount());
         }
         return ItemStack.EMPTY;
     }
 
     public FluidStack getResultFluid() {
-        if (this.output.what() instanceof AEFluidKey key) {
+        if (this.output.what() instanceof AEFluidKey) {
+            AEFluidKey key = (AEFluidKey) this.output.what();
             return key.toStack((int) this.output.amount());
         }
         return FluidStack.EMPTY;
@@ -100,14 +96,12 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     }
 
     public List<IngredientStack<?, ?>> getValidInputs() {
-        List<IngredientStack<?, ?>> validInputs = new ArrayList<>();
-
-        for (var input : this.inputs) {
+        List<IngredientStack<?, ?>> validInputs = new ArrayList<IngredientStack<?, ?>>();
+        for (IngredientStack.Item input : this.inputs) {
             if (!input.isEmpty()) {
                 validInputs.add(input.sample());
             }
         }
-
         validInputs.add(this.fluid.sample());
         return validInputs;
     }
@@ -132,7 +126,7 @@ public class ReactionChamberRecipe implements Recipe<Container> {
     }
 
     public boolean containsIngredient(ItemStack stack) {
-        for (var input : inputs) {
+        for (IngredientStack.Item input : inputs) {
             if (!input.isEmpty() && input.test(stack)) {
                 return true;
             }

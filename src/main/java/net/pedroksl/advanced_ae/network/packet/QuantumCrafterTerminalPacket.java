@@ -1,6 +1,10 @@
 package net.pedroksl.advanced_ae.network.packet;
 
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2BooleanArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
@@ -9,16 +13,13 @@ import net.minecraft.world.item.ItemStack;
 import net.pedroksl.advanced_ae.client.gui.QuantumCrafterTermScreen;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
-/**
- * Sends the content for a single {@link net.pedroksl.advanced_ae.common.helpers.AutoCraftingContainer} shown in the
- * quantum crafter terminal to the client.
- */
+/** Sends the content for a single quantum-crafter inventory to the terminal client. */
 public class QuantumCrafterTerminalPacket extends AddonPacket {
 
     private final boolean fullUpdate;
     private final long inventoryId;
-    private int inventorySize; // Only valid if fullUpdate
-    private long sortBy; // Only valid if fullUpdate
+    private int inventorySize;
+    private long sortBy;
     private final Int2ObjectMap<ItemStack> slots;
     private final Int2BooleanMap enabledArray;
     private final Int2BooleanMap invalidArray;
@@ -50,31 +51,32 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
             this.sortBy = stream.readVarLong();
         }
 
-        var size = stream.readInt();
-        this.slots = new Int2ObjectOpenHashMap<>(size);
+        int size = stream.readInt();
+        this.slots = new Int2ObjectOpenHashMap<ItemStack>(size);
         for (int i = 0; i < size; i++) {
-            var key = stream.readInt();
-            var value = stream.readItem();
+            int key = stream.readInt();
+            ItemStack value = stream.readItem();
             this.slots.put(key, value);
         }
 
         size = stream.readInt();
         this.enabledArray = new Int2BooleanOpenHashMap(size);
         for (int i = 0; i < size; i++) {
-            var key = stream.readInt();
-            var value = stream.readBoolean();
+            int key = stream.readInt();
+            boolean value = stream.readBoolean();
             this.enabledArray.put(key, value);
         }
 
         size = stream.readInt();
         this.invalidArray = new Int2BooleanOpenHashMap(size);
         for (int i = 0; i < size; i++) {
-            var key = stream.readInt();
-            var value = stream.readBoolean();
+            int key = stream.readInt();
+            boolean value = stream.readBoolean();
             this.invalidArray.put(key, value);
         }
     }
 
+    @Override
     public void write(FriendlyByteBuf stream) {
         stream.writeVarLong(inventoryId);
         stream.writeBoolean(fullUpdate);
@@ -84,19 +86,19 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
         }
 
         stream.writeInt(slots.size());
-        for (var entry : slots.int2ObjectEntrySet()) {
+        for (Int2ObjectMap.Entry<ItemStack> entry : slots.int2ObjectEntrySet()) {
             stream.writeInt(entry.getIntKey());
             stream.writeItemStack(entry.getValue(), false);
         }
 
         stream.writeInt(enabledArray.size());
-        for (var entry : enabledArray.int2BooleanEntrySet()) {
+        for (Int2BooleanMap.Entry entry : enabledArray.int2BooleanEntrySet()) {
             stream.writeInt(entry.getIntKey());
             stream.writeBoolean(entry.getBooleanValue());
         }
 
         stream.writeInt(invalidArray.size());
-        for (var entry : invalidArray.int2BooleanEntrySet()) {
+        for (Int2BooleanMap.Entry entry : invalidArray.int2BooleanEntrySet()) {
             stream.writeInt(entry.getIntKey());
             stream.writeBoolean(entry.getBooleanValue());
         }
@@ -123,7 +125,8 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen<?> screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen) {
+            QuantumCrafterTermScreen<?> screen = (QuantumCrafterTermScreen<?>) Minecraft.getInstance().screen;
             if (fullUpdate) {
                 screen.postFullUpdate(this.inventoryId, sortBy, inventorySize, slots, enabledArray, invalidArray);
             } else {

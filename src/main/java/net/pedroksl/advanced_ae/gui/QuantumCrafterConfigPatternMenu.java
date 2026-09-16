@@ -26,9 +26,9 @@ public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubM
     private final ISubMenuHost host;
     private AutoCraftingContainer crafter;
 
-    private final String SET_MAX_CRAFTED = "set_max_crafted";
+    private static final String SET_MAX_CRAFTED = "set_max_crafted";
 
-    public LinkedHashMap<AEKey, Long> inputs = new LinkedHashMap<>();
+    public LinkedHashMap<AEKey, Long> inputs = new LinkedHashMap<AEKey, Long>();
     public Pair<AEKey, Long> output;
 
     public QuantumCrafterConfigPatternMenu(int id, Inventory ip, ISubMenuHost host) {
@@ -39,7 +39,6 @@ public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubM
             MenuType<? extends QuantumCrafterConfigPatternMenu> type, int id, Inventory ip, ISubMenuHost host) {
         super(type, id, ip, host);
         this.host = host;
-
         registerClientAction(SET_MAX_CRAFTED, Long.class, this::setMaxCrafted);
     }
 
@@ -57,7 +56,8 @@ public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubM
             Pair<AEKey, Long> output) {
         MenuOpener.open(AAEMenus.CRAFTER_PATTERN_CONFIG.get(), player, locator);
 
-        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu cca) {
+        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu) {
+            QuantumCrafterConfigPatternMenu cca = (QuantumCrafterConfigPatternMenu) player.containerMenu;
             cca.setCrafter(crafter);
             cca.setIndex(index);
             cca.setInputsAndOutput(inputs, output);
@@ -74,13 +74,11 @@ public class QuantumCrafterConfigPatternMenu extends AEBaseMenu implements ISubM
     }
 
     private void setInputsAndOutput(LinkedHashMap<AEKey, Long> inputs, Pair<AEKey, Long> output) {
-        this.inputs = new LinkedHashMap<>(inputs);
-        this.output = new Pair<>(output.getFirst(), output.getSecond());
+        this.inputs = new LinkedHashMap<AEKey, Long>(inputs);
+        this.output = new Pair<AEKey, Long>(output.getFirst(), output.getSecond());
 
-        if (isServerSide()
-                && this.inputs != null
-                && this.output != null
-                && getPlayer() instanceof ServerPlayer player) {
+        if (isServerSide() && this.inputs != null && this.output != null && getPlayer() instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) getPlayer();
             AAENetworkHandler.INSTANCE.sendTo(new PatternConfigServerUpdatePacket(this.inputs, this.output), player);
         }
     }
