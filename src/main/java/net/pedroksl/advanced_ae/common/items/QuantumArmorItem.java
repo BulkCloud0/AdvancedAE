@@ -7,11 +7,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.IArmorMaterial;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
+import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.common.definitions.AAENbt;
 import net.pedroksl.advanced_ae.common.helpers.AAEColor;
 import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
@@ -19,8 +23,9 @@ import net.pedroksl.advanced_ae.common.items.upgrades.UpgradeType;
 /**
  * Lightweight Forge 1.16.5 Quantum Armor item.
  *
- * Stores tint and upgrade configuration in NBT while the heavier ability,
- * energy, menu and rendering layers are ported independently.
+ * Stores tint and upgrade configuration in NBT and executes the vanilla-only
+ * passive upgrade effects. AE2-linked, movement-specialized and GUI-driven
+ * upgrades remain isolated until their dependent systems are ported.
  */
 public class QuantumArmorItem extends ArmorItem {
     public static final int DEFAULT_TINT_COLOR = AAEColor.PURPLE.argb();
@@ -37,6 +42,34 @@ public class QuantumArmorItem extends ArmorItem {
         Collections.addAll(upgrades, allowedUpgrades);
         upgrades.remove(UpgradeType.EMPTY);
         this.allowedUpgrades = Collections.unmodifiableSet(upgrades);
+    }
+
+    @Override
+    public void onArmorTick(ItemStack stack, World world, PlayerEntity player) {
+        super.onArmorTick(stack, world, player);
+
+        if (isUpgradeEnabled(stack, UpgradeType.NIGHT_VISION)) {
+            player.addEffect(new EffectInstance(Effects.NIGHT_VISION, 220, 0, true, false));
+        }
+        if (isUpgradeEnabled(stack, UpgradeType.WATER_BREATHING)) {
+            player.addEffect(new EffectInstance(Effects.WATER_BREATHING, 40, 0, true, false));
+        }
+        if (isUpgradeEnabled(stack, UpgradeType.REGENERATION)) {
+            player.addEffect(new EffectInstance(Effects.REGENERATION, 40, 0, true, false));
+        }
+        if (isUpgradeEnabled(stack, UpgradeType.STRENGTH)) {
+            player.addEffect(new EffectInstance(Effects.DAMAGE_BOOST, 40, 0, true, false));
+        }
+        if (isUpgradeEnabled(stack, UpgradeType.LUCK)) {
+            player.addEffect(new EffectInstance(Effects.LUCK, 40, 0, true, false));
+        }
+        if (isUpgradeEnabled(stack, UpgradeType.HP_BUFFER)) {
+            player.addEffect(new EffectInstance(Effects.ABSORPTION, 40, 0, true, false));
+        }
+        if (isUpgradeEnabled(stack, UpgradeType.JUMP_HEIGHT)) {
+            int amplifier = Math.max(0, Math.min(4, getUpgradeValue(stack, UpgradeType.JUMP_HEIGHT, 0)));
+            player.addEffect(new EffectInstance(Effects.JUMP, 40, amplifier, true, false));
+        }
     }
 
     public int getTintColor(ItemStack stack) {
