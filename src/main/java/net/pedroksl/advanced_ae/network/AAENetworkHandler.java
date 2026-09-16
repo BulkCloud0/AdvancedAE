@@ -30,14 +30,17 @@ public final class AAENetworkHandler {
 
     private AAENetworkHandler() {}
 
-    /**
-     * Initializes the channel. Packet registrations are deliberately migrated incrementally;
-     * the modern packet payloads remain excluded until their AE2 v8 data models are ported.
-     */
     public synchronized void init() {
         if (initialized) {
             return;
         }
+
+        register(
+                KeyStateMessage.class,
+                KeyStateMessage::encode,
+                KeyStateMessage::decode,
+                KeyStateMessage::handle,
+                NetworkDirection.PLAY_TO_SERVER);
         initialized = true;
     }
 
