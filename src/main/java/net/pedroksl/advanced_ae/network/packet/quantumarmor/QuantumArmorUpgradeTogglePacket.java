@@ -29,7 +29,8 @@ public class QuantumArmorUpgradeTogglePacket extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer serverPlayer) {
-        if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu menu) {
+        if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu) {
+            QuantumArmorConfigMenu menu = (QuantumArmorConfigMenu) serverPlayer.containerMenu;
             menu.toggleUpgradeEnable(upgradeType, state);
         }
     }

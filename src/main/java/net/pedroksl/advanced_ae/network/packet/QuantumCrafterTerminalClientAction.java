@@ -32,7 +32,8 @@ public class QuantumCrafterTerminalClientAction extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer player) {
-        if (player.containerMenu instanceof QuantumCrafterTermMenu menu) {
+        if (player.containerMenu instanceof QuantumCrafterTermMenu) {
+            QuantumCrafterTermMenu menu = (QuantumCrafterTermMenu) player.containerMenu;
             if (isConfigAction) {
                 menu.configPattern(serverId, slot);
             } else {

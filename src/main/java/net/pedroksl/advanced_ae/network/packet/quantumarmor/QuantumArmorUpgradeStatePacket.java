@@ -14,7 +14,6 @@ public class QuantumArmorUpgradeStatePacket extends AddonPacket {
 
     public QuantumArmorUpgradeStatePacket(FriendlyByteBuf stream) {
         selectedIndex = stream.readInt();
-
         stack = stream.readJsonWithCodec(ItemStack.CODEC);
     }
 
@@ -26,13 +25,13 @@ public class QuantumArmorUpgradeStatePacket extends AddonPacket {
     @Override
     public void write(FriendlyByteBuf stream) {
         stream.writeInt(selectedIndex);
-
         stream.writeJsonWithCodec(ItemStack.CODEC, stack);
     }
 
     @Override
     public void clientPacketData(Player player) {
-        if (Minecraft.getInstance().screen instanceof QuantumArmorConfigScreen screen) {
+        if (Minecraft.getInstance().screen instanceof QuantumArmorConfigScreen) {
+            QuantumArmorConfigScreen screen = (QuantumArmorConfigScreen) Minecraft.getInstance().screen;
             screen.refreshList(selectedIndex, stack);
         }
     }

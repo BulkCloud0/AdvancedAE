@@ -27,7 +27,8 @@ public class SetStockAmountPacket extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer player) {
-        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu menu) {
+        if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu) {
+            QuantumCrafterConfigPatternMenu menu = (QuantumCrafterConfigPatternMenu) player.containerMenu;
             menu.setStockAmount(this.index, this.amount);
         }
     }

@@ -40,7 +40,8 @@ public class AdvPatternEncoderChangeDirectionPacket extends AddonPacket {
 
     @Override
     public void serverPacketData(ServerPlayer player) {
-        if (player.containerMenu instanceof AdvPatternEncoderMenu encoderContainer) {
+        if (player.containerMenu instanceof AdvPatternEncoderMenu) {
+            AdvPatternEncoderMenu encoderContainer = (AdvPatternEncoderMenu) player.containerMenu;
             encoderContainer.update(this.key, this.dir);
         }
     }
