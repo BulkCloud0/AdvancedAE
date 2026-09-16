@@ -1,8 +1,8 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
-issueTrackerURL="https://github.com/pedroksl/AdvancedAE/issues"
-displayURL="https://github.com/pedroksl/AdvancedAE"
+issueTrackerURL="https://github.com/BulkCloud0/AdvancedAE/issues"
+displayURL="https://github.com/BulkCloud0/AdvancedAE/tree/expansionae-1.16.5"
 
 [[mods]]
 modId="${mod_id}"
@@ -10,7 +10,7 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="${mod_authors}"
 description='''${mod_description}'''
-credits="Sea_Kerman for models"
+credits="AdvancedAE by Pedroksl; ExtendedAE by GlodBlock; Sea_Kerman for AdvancedAE models"
 logoFile="logo.png"
 
 [[dependencies.${mod_id}]]
