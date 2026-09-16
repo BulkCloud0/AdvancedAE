@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import lombok.var;
+
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -89,29 +91,39 @@ public class OutputDirectionScreen extends AEBaseScreen<OutputDirectionMenu> {
     }
 
     private int[] getButtonPosition(RelativeSide side) {
-        return switch (side) {
-            case FRONT -> new int[] {
-                BUTTON_LEFT_OFFSET + BUTTON_WIDTH + BUTTON_OFFSET, BUTTON_TOP_OFFSET + BUTTON_HEIGHT + BUTTON_OFFSET
-            };
-            case BACK -> new int[] {
-                BUTTON_LEFT_OFFSET + 2 * BUTTON_WIDTH + 2 * BUTTON_OFFSET,
-                BUTTON_TOP_OFFSET + 2 * BUTTON_HEIGHT + 2 * BUTTON_OFFSET
-            };
-            case TOP -> new int[] {BUTTON_LEFT_OFFSET + BUTTON_WIDTH + BUTTON_OFFSET, BUTTON_TOP_OFFSET};
-            case RIGHT -> new int[] {BUTTON_LEFT_OFFSET, BUTTON_TOP_OFFSET + BUTTON_HEIGHT + BUTTON_OFFSET};
-            case BOTTOM -> new int[] {
-                BUTTON_LEFT_OFFSET + BUTTON_WIDTH + BUTTON_OFFSET,
-                BUTTON_TOP_OFFSET + 2 * BUTTON_HEIGHT + 2 * BUTTON_OFFSET
-            };
-            case LEFT -> new int[] {
-                BUTTON_LEFT_OFFSET + 2 * BUTTON_WIDTH + 2 * BUTTON_OFFSET,
-                BUTTON_TOP_OFFSET + BUTTON_HEIGHT + BUTTON_OFFSET
-            };
-        };
+        switch (side) {
+            case FRONT:
+                return new int[] {
+                    BUTTON_LEFT_OFFSET + BUTTON_WIDTH + BUTTON_OFFSET,
+                    BUTTON_TOP_OFFSET + BUTTON_HEIGHT + BUTTON_OFFSET
+                };
+            case BACK:
+                return new int[] {
+                    BUTTON_LEFT_OFFSET + 2 * BUTTON_WIDTH + 2 * BUTTON_OFFSET,
+                    BUTTON_TOP_OFFSET + 2 * BUTTON_HEIGHT + 2 * BUTTON_OFFSET
+                };
+            case TOP:
+                return new int[] {BUTTON_LEFT_OFFSET + BUTTON_WIDTH + BUTTON_OFFSET, BUTTON_TOP_OFFSET};
+            case RIGHT:
+                return new int[] {BUTTON_LEFT_OFFSET, BUTTON_TOP_OFFSET + BUTTON_HEIGHT + BUTTON_OFFSET};
+            case BOTTOM:
+                return new int[] {
+                    BUTTON_LEFT_OFFSET + BUTTON_WIDTH + BUTTON_OFFSET,
+                    BUTTON_TOP_OFFSET + 2 * BUTTON_HEIGHT + 2 * BUTTON_OFFSET
+                };
+            case LEFT:
+                return new int[] {
+                    BUTTON_LEFT_OFFSET + 2 * BUTTON_WIDTH + 2 * BUTTON_OFFSET,
+                    BUTTON_TOP_OFFSET + BUTTON_HEIGHT + BUTTON_OFFSET
+                };
+            default:
+                return new int[] {BUTTON_LEFT_OFFSET, BUTTON_TOP_OFFSET};
+        }
     }
 
     private void buttonPressed(Button b) {
-        if (b instanceof OutputDirectionButton button) {
+        if (b instanceof OutputDirectionButton) {
+            OutputDirectionButton button = (OutputDirectionButton) b;
             var side = button.getSide();
             if (side != null) {
                 this.getMenu().updateSideStatus(button.getSide());
