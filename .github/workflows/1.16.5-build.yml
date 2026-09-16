@@ -2,9 +2,9 @@ name: ExpansionAE 1.16.5 Forge build
 
 on:
   push:
-    branches: [ "expansionae-1.16.5" ]
+    branches: [ "ExpansionAE-1.16.5" ]
   pull_request:
-    branches: [ "expansionae-1.16.5" ]
+    branches: [ "ExpansionAE-1.16.5" ]
   workflow_dispatch:
 
 jobs:
