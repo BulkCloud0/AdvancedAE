@@ -19,7 +19,9 @@ jobs:
           java-version: '8'
           cache: gradle
       - name: Build
+        shell: bash
         run: |
+          set -o pipefail
           chmod +x gradlew
           ./gradlew build --stacktrace --no-daemon 2>&1 | tee gradle-build.log
       - name: Upload build log
