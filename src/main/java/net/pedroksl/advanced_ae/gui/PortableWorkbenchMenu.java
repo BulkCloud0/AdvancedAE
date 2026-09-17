@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Iterators;
 
+import lombok.var;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.world.entity.player.Inventory;
@@ -98,8 +99,6 @@ public class PortableWorkbenchMenu extends UpgradeableMenu<PortableCellWorkbench
 
     @Override
     protected void setupUpgrades() {
-        // We support up to 8 upgrade slots, see ICellWorkbenchItem, but we need to pre-create all slots here
-        // while the active number of slots changes depending on the item inserted
         var upgradeInventory = new SupplierInternalInventory(this::getCachedUpgrades);
         for (int i = 0; i < 8; i++) {
             OptionalRestrictedInputSlot slot = new OptionalRestrictedInputSlot(
@@ -145,7 +144,6 @@ public class PortableWorkbenchMenu extends UpgradeableMenu<PortableCellWorkbench
     @Override
     public void onServerDataSync() {
         super.onServerDataSync();
-
         getHost().getConfigManager().putSetting(Settings.COPY_MODE, this.getCopyMode());
     }
 
@@ -174,7 +172,6 @@ public class PortableWorkbenchMenu extends UpgradeableMenu<PortableCellWorkbench
 
         var inv = getConfigInventory();
         var is = getWorkbenchItem();
-
         var it = iterateCellStacks(is);
 
         for (int x = 0; x < inv.size(); x++) {
@@ -199,7 +196,7 @@ public class PortableWorkbenchMenu extends UpgradeableMenu<PortableCellWorkbench
         if (cellInv != null) {
             i = Iterators.transform(cellInv.getAvailableStacks().iterator(), Map.Entry::getKey);
         } else {
-            i = Collections.emptyIterator();
+            i = Collections.<AEKey>emptyList().iterator();
         }
         return i;
     }
