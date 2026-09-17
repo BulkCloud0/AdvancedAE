@@ -1,7 +1,7 @@
 package net.pedroksl.advanced_ae.network.packet;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.pedroksl.advanced_ae.gui.QuantumCrafterConfigPatternMenu;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -9,7 +9,7 @@ public class SetStockAmountPacket extends AddonPacket {
     private final int index;
     private final long amount;
 
-    public SetStockAmountPacket(FriendlyByteBuf stream) {
+    public SetStockAmountPacket(PacketBuffer stream) {
         index = stream.readInt();
         amount = stream.readLong();
     }
@@ -20,13 +20,13 @@ public class SetStockAmountPacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         stream.writeInt(this.index);
         stream.writeLong(this.amount);
     }
 
     @Override
-    public void serverPacketData(ServerPlayer player) {
+    public void serverPacketData(ServerPlayerEntity player) {
         if (player.containerMenu instanceof QuantumCrafterConfigPatternMenu) {
             QuantumCrafterConfigPatternMenu menu = (QuantumCrafterConfigPatternMenu) player.containerMenu;
             menu.setStockAmount(this.index, this.amount);
