@@ -1,0 +1,23 @@
+// Keeps the transitional Java 8 generated copies on the compile classpath.
+// SourceDirectorySet.exclude() applies to every source root, so the exclusions in
+// build.gradle also hide the generated copies because they have identical relative paths.
+gradle.projectsEvaluated {
+    def p = gradle.rootProject
+    def legacySourcePaths = [
+            'net/pedroksl/advanced_ae/common/logic/AdvPatternProviderLogic.java',
+            'net/pedroksl/advanced_ae/common/logic/AdvCraftingCPULogic.java',
+            'net/pedroksl/advanced_ae/common/entities/ReactionChamberEntity.java',
+            'net/pedroksl/advanced_ae/common/entities/QuantumCrafterEntity.java',
+            'net/pedroksl/advanced_ae/client/gui/QuantumCrafterTermScreen.java'
+    ]
+
+    p.tasks.named('compileJava').configure {
+        setSource(p.files(
+                p.fileTree('src/main/java') {
+                    legacySourcePaths.each { exclude it }
+                },
+                p.fileTree('vendor/ExtendedAE/src/main/java'),
+                p.fileTree("${p.buildDir}/generated/sources/expansionaeLegacy/java")
+        ))
+    }
+}
