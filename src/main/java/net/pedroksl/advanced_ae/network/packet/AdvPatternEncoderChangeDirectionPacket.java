@@ -4,9 +4,9 @@ import static appeng.api.stacks.AEKey.writeKey;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.core.Direction;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.Direction;
 import net.pedroksl.advanced_ae.gui.patternencoder.AdvPatternEncoderMenu;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -17,7 +17,7 @@ public class AdvPatternEncoderChangeDirectionPacket extends AddonPacket {
     private final AEKey key;
     private final Direction dir;
 
-    public AdvPatternEncoderChangeDirectionPacket(FriendlyByteBuf stream) {
+    public AdvPatternEncoderChangeDirectionPacket(PacketBuffer stream) {
         this.key = AEKey.readKey(stream);
         this.dir = stream.readBoolean() ? stream.readEnum(Direction.class) : null;
     }
@@ -28,7 +28,7 @@ public class AdvPatternEncoderChangeDirectionPacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         writeKey(stream, this.key);
         if (this.dir == null) {
             stream.writeBoolean(false);
@@ -39,7 +39,7 @@ public class AdvPatternEncoderChangeDirectionPacket extends AddonPacket {
     }
 
     @Override
-    public void serverPacketData(ServerPlayer player) {
+    public void serverPacketData(ServerPlayerEntity player) {
         if (player.containerMenu instanceof AdvPatternEncoderMenu) {
             AdvPatternEncoderMenu encoderContainer = (AdvPatternEncoderMenu) player.containerMenu;
             encoderContainer.update(this.key, this.dir);
