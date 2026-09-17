@@ -1,5 +1,6 @@
 package net.pedroksl.advanced_ae.client.gui;
 
+import lombok.var;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.pedroksl.advanced_ae.gui.QuantumArmorNumInputConfigMenu;
