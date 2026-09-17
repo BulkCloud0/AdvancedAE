@@ -3,8 +3,8 @@ package net.pedroksl.advanced_ae.network.packet.quantumarmor;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.pedroksl.advanced_ae.gui.QuantumArmorStyleConfigMenu;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -13,7 +13,7 @@ public class QuantumArmorStylePacket extends AddonPacket {
     private final List<Integer> slots;
     private final int color;
 
-    public QuantumArmorStylePacket(FriendlyByteBuf stream) {
+    public QuantumArmorStylePacket(PacketBuffer stream) {
         int size = stream.readInt();
         List<Integer> list = new ArrayList<Integer>();
         for (int i = 0; i < size; i++) {
@@ -29,7 +29,7 @@ public class QuantumArmorStylePacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         stream.writeInt(slots.size());
         for (Integer slotIndex : slots) {
             stream.writeInt(slotIndex.intValue());
@@ -38,7 +38,7 @@ public class QuantumArmorStylePacket extends AddonPacket {
     }
 
     @Override
-    public void serverPacketData(ServerPlayer serverPlayer) {
+    public void serverPacketData(ServerPlayerEntity serverPlayer) {
         if (serverPlayer.containerMenu instanceof QuantumArmorStyleConfigMenu) {
             QuantumArmorStyleConfigMenu menu = (QuantumArmorStyleConfigMenu) serverPlayer.containerMenu;
             menu.updateItemColors(this.slots, this.color);
