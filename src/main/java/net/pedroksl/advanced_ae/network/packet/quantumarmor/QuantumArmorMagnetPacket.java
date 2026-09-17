@@ -3,8 +3,8 @@ package net.pedroksl.advanced_ae.network.packet.quantumarmor;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.pedroksl.advanced_ae.gui.QuantumArmorConfigMenu;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -16,7 +16,7 @@ public class QuantumArmorMagnetPacket extends AddonPacket {
     private final List<GenericStack> filter;
     private final boolean blacklist;
 
-    public QuantumArmorMagnetPacket(FriendlyByteBuf stream) {
+    public QuantumArmorMagnetPacket(PacketBuffer stream) {
         currentValue = stream.readInt();
 
         int size = stream.readInt();
@@ -36,7 +36,7 @@ public class QuantumArmorMagnetPacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         stream.writeInt(currentValue);
 
         stream.writeInt(filter.size());
@@ -48,7 +48,7 @@ public class QuantumArmorMagnetPacket extends AddonPacket {
     }
 
     @Override
-    public void serverPacketData(ServerPlayer serverPlayer) {
+    public void serverPacketData(ServerPlayerEntity serverPlayer) {
         if (serverPlayer.containerMenu instanceof QuantumArmorConfigMenu) {
             QuantumArmorConfigMenu menu = (QuantumArmorConfigMenu) serverPlayer.containerMenu;
             menu.openMagnetScreen(currentValue, filter, blacklist);
