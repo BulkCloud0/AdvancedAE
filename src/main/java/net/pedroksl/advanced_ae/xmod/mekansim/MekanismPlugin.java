@@ -1,6 +1,6 @@
 package net.pedroksl.advanced_ae.xmod.mekansim;
 
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import net.pedroksl.advanced_ae.common.helpers.RadiationShieldingProvider;
 
 import appeng.api.implementations.items.IAEItemPowerStorage;
