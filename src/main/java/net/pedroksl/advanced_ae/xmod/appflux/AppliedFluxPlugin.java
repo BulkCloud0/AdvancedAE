@@ -1,9 +1,9 @@
 package net.pedroksl.advanced_ae.xmod.appflux;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.energy.IEnergyStorage;
 
 import appeng.api.implementations.items.IAEItemPowerStorage;
@@ -23,7 +23,7 @@ public final class AppliedFluxPlugin {
     }
 
     public static double rechargeAeStorageItem(
-            IGrid grid, double neededPower, Player player, ItemStack stack, IAEItemPowerStorage aePowerStorage) {
+            IGrid grid, double neededPower, PlayerEntity player, ItemStack stack, IAEItemPowerStorage aePowerStorage) {
         return neededPower;
     }
 
