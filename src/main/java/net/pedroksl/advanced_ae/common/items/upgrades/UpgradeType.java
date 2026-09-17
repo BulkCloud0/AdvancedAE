@@ -1,12 +1,12 @@
 package net.pedroksl.advanced_ae.common.items.upgrades;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
 import net.pedroksl.advanced_ae.AdvancedAE;
 import net.pedroksl.advanced_ae.common.definitions.AAEConfig;
 import net.pedroksl.advanced_ae.common.definitions.AAEItems;
@@ -76,8 +76,8 @@ public enum UpgradeType {
         return "gui.upgrades." + AdvancedAE.MOD_ID + "." + this.name.replaceAll("\\s+", "") + "Upgrade";
     }
 
-    public Component getTranslatedName() {
-        return Component.translatable(getTranslationKey());
+    public ITextComponent getTranslatedName() {
+        return new TranslationTextComponent(getTranslationKey());
     }
 
     public UpgradeSettings getSettings() {
@@ -100,7 +100,7 @@ public enum UpgradeType {
         }
     }
 
-    public MutableComponent getTooltip() {
+    public ITextComponent getTooltip() {
         switch (this) {
             case WALK_SPEED: return AAEText.WalkSpeedTooltip.text();
             case SPRINT_SPEED: return AAEText.SprintSpeedTooltip.text();
@@ -134,6 +134,6 @@ public enum UpgradeType {
 
     @FunctionalInterface
     public interface Ability {
-        boolean execute(Level level, Player player, ItemStack stack);
+        boolean execute(World level, PlayerEntity player, ItemStack stack);
     }
 }
