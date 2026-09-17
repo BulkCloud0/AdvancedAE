@@ -6,9 +6,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
 public class ItemTrackingPacket extends AddonPacket {
+
+    private static final String PICKUP_DELAY_FIELD = "field_145804_b";
 
     private final UUID thrower;
     private final int entityId;
@@ -23,7 +26,8 @@ public class ItemTrackingPacket extends AddonPacket {
     public ItemTrackingPacket(ItemEntity item) {
         this.thrower = item.getThrower();
         this.entityId = item.getId();
-        this.pickupDelay = item.hasPickUpDelay() ? 10 : 0;
+        Integer delay = ObfuscationReflectionHelper.getPrivateValue(ItemEntity.class, item, PICKUP_DELAY_FIELD);
+        this.pickupDelay = delay != null ? delay.intValue() : 0;
     }
 
     @Override
