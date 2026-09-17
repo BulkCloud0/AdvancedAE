@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import lombok.var;
 import net.pedroksl.advanced_ae.common.definitions.AAEConfig;
 
 import appeng.hooks.ticking.TickHandler;
@@ -60,5 +61,13 @@ public class ThroughputCache {
         return average;
     }
 
-    private record CacheEntry(long amount, long timestamp) {}
+    private static final class CacheEntry {
+        private final long amount;
+        private final long timestamp;
+
+        private CacheEntry(long amount, long timestamp) {
+            this.amount = amount;
+            this.timestamp = timestamp;
+        }
+    }
 }
