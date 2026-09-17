@@ -7,9 +7,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
 import net.pedroksl.advanced_ae.client.gui.QuantumCrafterTermScreen;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -41,7 +41,7 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
         this.invalidArray = invalidArray;
     }
 
-    public QuantumCrafterTerminalPacket(FriendlyByteBuf stream) {
+    public QuantumCrafterTerminalPacket(PacketBuffer stream) {
         this.inventoryId = stream.readVarLong();
         this.fullUpdate = stream.readBoolean();
         this.inventorySize = 0;
@@ -77,7 +77,7 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         stream.writeVarLong(inventoryId);
         stream.writeBoolean(fullUpdate);
         if (fullUpdate) {
@@ -88,7 +88,7 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
         stream.writeInt(slots.size());
         for (Int2ObjectMap.Entry<ItemStack> entry : slots.int2ObjectEntrySet()) {
             stream.writeInt(entry.getIntKey());
-            stream.writeItemStack(entry.getValue(), false);
+            stream.writeItem(entry.getValue());
         }
 
         stream.writeInt(enabledArray.size());
@@ -124,7 +124,7 @@ public class QuantumCrafterTerminalPacket extends AddonPacket {
     }
 
     @Override
-    public void clientPacketData(Player player) {
+    public void clientPacketData(PlayerEntity player) {
         if (Minecraft.getInstance().screen instanceof QuantumCrafterTermScreen) {
             QuantumCrafterTermScreen<?> screen = (QuantumCrafterTermScreen<?>) Minecraft.getInstance().screen;
             if (fullUpdate) {

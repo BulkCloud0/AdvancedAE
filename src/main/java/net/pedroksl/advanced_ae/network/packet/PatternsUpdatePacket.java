@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.pedroksl.advanced_ae.client.gui.QuantumCrafterScreen;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -13,7 +13,7 @@ public class PatternsUpdatePacket extends AddonPacket {
     private final List<Boolean> invalidPatterns;
     private final List<Boolean> enabledPatterns;
 
-    public PatternsUpdatePacket(FriendlyByteBuf stream) {
+    public PatternsUpdatePacket(PacketBuffer stream) {
         List<Boolean> invalidList = new ArrayList<Boolean>();
         List<Boolean> enabledList = new ArrayList<Boolean>();
 
@@ -37,7 +37,7 @@ public class PatternsUpdatePacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         stream.writeInt(this.invalidPatterns.size());
         for (Boolean entry : this.invalidPatterns) {
             stream.writeBoolean(entry.booleanValue());
@@ -50,7 +50,7 @@ public class PatternsUpdatePacket extends AddonPacket {
     }
 
     @Override
-    public void clientPacketData(Player player) {
+    public void clientPacketData(PlayerEntity player) {
         if (Minecraft.getInstance().screen instanceof QuantumCrafterScreen) {
             QuantumCrafterScreen screen = (QuantumCrafterScreen) Minecraft.getInstance().screen;
             screen.updateInvalidButtons(this.invalidPatterns);
