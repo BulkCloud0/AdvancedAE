@@ -1,24 +1,25 @@
 package net.pedroksl.advanced_ae.xmod.apoth;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class ApoEnchPlugin {
 
-    public enum Enchantment {
+    public enum EnchantmentType {
         STABLE_FOOTING
     }
 
     private static final ResourceLocation STABLE_FOOTING_ID = new ResourceLocation("apotheosis", "stable_footing");
 
-    public static boolean isSameAs(net.minecraft.world.item.enchantment.Enchantment enchantment, Enchantment ench) {
-        net.minecraft.world.item.enchantment.Enchantment target = getEnchantment(ench);
+    public static boolean isSameAs(Enchantment enchantment, EnchantmentType ench) {
+        Enchantment target = getEnchantment(ench);
         return target != null && enchantment == target;
     }
 
-    public static net.minecraft.world.item.enchantment.Enchantment getEnchantment(Enchantment enchantment) {
+    public static Enchantment getEnchantment(EnchantmentType enchantment) {
         switch (enchantment) {
             case STABLE_FOOTING:
                 return ForgeRegistries.ENCHANTMENTS.getValue(STABLE_FOOTING_ID);
@@ -27,8 +28,8 @@ public class ApoEnchPlugin {
         }
     }
 
-    public static boolean checkForEnchant(Player player, Enchantment enchantment) {
-        net.minecraft.world.item.enchantment.Enchantment target = getEnchantment(enchantment);
+    public static boolean checkForEnchant(PlayerEntity player, EnchantmentType enchantment) {
+        Enchantment target = getEnchantment(enchantment);
         if (target == null) {
             return false;
         }
