@@ -9,8 +9,8 @@ import java.util.Map;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.pedroksl.advanced_ae.client.gui.QuantumCrafterConfigPatternScreen;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -20,7 +20,7 @@ public class PatternConfigServerUpdatePacket extends AddonPacket {
     private final LinkedHashMap<AEKey, Long> inputs;
     private final Pair<AEKey, Long> output;
 
-    public PatternConfigServerUpdatePacket(FriendlyByteBuf stream) {
+    public PatternConfigServerUpdatePacket(PacketBuffer stream) {
         LinkedHashMap<AEKey, Long> inputs = new LinkedHashMap<AEKey, Long>();
 
         int size = stream.readInt();
@@ -40,7 +40,7 @@ public class PatternConfigServerUpdatePacket extends AddonPacket {
     }
 
     @Override
-    public void write(FriendlyByteBuf stream) {
+    public void write(PacketBuffer stream) {
         stream.writeInt(this.inputs.size());
         for (Map.Entry<AEKey, Long> entry : this.inputs.entrySet()) {
             writeKey(stream, entry.getKey());
@@ -52,7 +52,7 @@ public class PatternConfigServerUpdatePacket extends AddonPacket {
     }
 
     @Override
-    public void clientPacketData(Player player) {
+    public void clientPacketData(PlayerEntity player) {
         if (Minecraft.getInstance().screen instanceof QuantumCrafterConfigPatternScreen) {
             QuantumCrafterConfigPatternScreen screen = (QuantumCrafterConfigPatternScreen) Minecraft.getInstance().screen;
             screen.update(this.inputs, this.output);
