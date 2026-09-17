@@ -6,9 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.Direction;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.Direction;
 import net.pedroksl.advanced_ae.client.gui.AdvPatternEncoderScreen;
 import net.pedroksl.ae2addonlib.network.AddonPacket;
 
@@ -18,7 +18,7 @@ public class AdvPatternEncoderPacket extends AddonPacket {
 
     private final LinkedHashMap<AEKey, Direction> dirMap;
 
-    public AdvPatternEncoderPacket(FriendlyByteBuf stream) {
+    public AdvPatternEncoderPacket(PacketBuffer stream) {
         this.dirMap = new LinkedHashMap<AEKey, Direction>();
 
         int size = stream.readInt();
@@ -38,7 +38,7 @@ public class AdvPatternEncoderPacket extends AddonPacket {
     }
 
     @Override
-    protected void write(FriendlyByteBuf stream) {
+    protected void write(PacketBuffer stream) {
         stream.writeInt(dirMap.size());
         for (Map.Entry<AEKey, Direction> entry : dirMap.entrySet()) {
             writeKey(stream, entry.getKey());
@@ -53,7 +53,7 @@ public class AdvPatternEncoderPacket extends AddonPacket {
     }
 
     @Override
-    public void clientPacketData(Player player) {
+    public void clientPacketData(PlayerEntity player) {
         if (Minecraft.getInstance().screen instanceof AdvPatternEncoderScreen) {
             AdvPatternEncoderScreen encoderGui = (AdvPatternEncoderScreen) Minecraft.getInstance().screen;
             encoderGui.update(this.dirMap);
