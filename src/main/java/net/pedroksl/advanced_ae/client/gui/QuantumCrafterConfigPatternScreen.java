@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Pair;
 
+import lombok.var;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
@@ -204,7 +205,35 @@ public class QuantumCrafterConfigPatternScreen extends AEBaseScreen<QuantumCraft
         scrollbar.setRange(0, this.rows.size() - VISIBLE_ROWS, 2);
     }
 
-    public record InputRow(AEKey key, NumberTextField textField, Component label, ValidButton button) {}
+    public static final class InputRow {
+        final AEKey key;
+        final NumberTextField textField;
+        final Component label;
+        final ValidButton button;
+
+        public InputRow(AEKey key, NumberTextField textField, Component label, ValidButton button) {
+            this.key = key;
+            this.textField = textField;
+            this.label = label;
+            this.button = button;
+        }
+
+        public AEKey key() {
+            return this.key;
+        }
+
+        public NumberTextField textField() {
+            return this.textField;
+        }
+
+        public Component label() {
+            return this.label;
+        }
+
+        public ValidButton button() {
+            return this.button;
+        }
+    }
 
     private NumberTextField addNewNumberField(long value, int index) {
         var key = InputConstants.getKey("key.keyboard" + ".enter").getDisplayName();
