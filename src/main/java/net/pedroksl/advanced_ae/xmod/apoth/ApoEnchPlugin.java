@@ -1,6 +1,5 @@
 package net.pedroksl.advanced_ae.xmod.apoth;
 
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -8,18 +7,18 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 public class ApoEnchPlugin {
 
-    public enum EnchantmentType {
+    public enum Enchantment {
         STABLE_FOOTING
     }
 
     private static final ResourceLocation STABLE_FOOTING_ID = new ResourceLocation("apotheosis", "stable_footing");
 
-    public static boolean isSameAs(Enchantment enchantment, EnchantmentType ench) {
-        Enchantment target = getEnchantment(ench);
+    public static boolean isSameAs(net.minecraft.enchantment.Enchantment enchantment, Enchantment ench) {
+        net.minecraft.enchantment.Enchantment target = getEnchantment(ench);
         return target != null && enchantment == target;
     }
 
-    public static Enchantment getEnchantment(EnchantmentType enchantment) {
+    public static net.minecraft.enchantment.Enchantment getEnchantment(Enchantment enchantment) {
         switch (enchantment) {
             case STABLE_FOOTING:
                 return ForgeRegistries.ENCHANTMENTS.getValue(STABLE_FOOTING_ID);
@@ -28,8 +27,8 @@ public class ApoEnchPlugin {
         }
     }
 
-    public static boolean checkForEnchant(PlayerEntity player, EnchantmentType enchantment) {
-        Enchantment target = getEnchantment(enchantment);
+    public static boolean checkForEnchant(PlayerEntity player, Enchantment enchantment) {
+        net.minecraft.enchantment.Enchantment target = getEnchantment(enchantment);
         if (target == null) {
             return false;
         }
