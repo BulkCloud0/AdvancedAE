@@ -1,1 +1,3 @@
 rootProject.name = 'ExpansionAE-1.16.5'
+
+apply from: 'gradle/legacy-source-fix.gradle'
