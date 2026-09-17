@@ -2,6 +2,7 @@ package net.pedroksl.advanced_ae.common.helpers;
 
 import java.awt.*;
 
+import lombok.var;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 
@@ -35,7 +36,6 @@ public class AAEColor {
         var red = color >> 16 & 0xFF;
         var green = color >> 8 & 0xFF;
         var blue = color & 0xFF;
-
         return new AAEColor(red, green, blue, alpha);
     }
 
@@ -43,7 +43,6 @@ public class AAEColor {
         var red = color >> 16 & 0xFF;
         var green = color >> 8 & 0xFF;
         var blue = color & 0xFF;
-
         return new AAEColor(red, green, blue);
     }
 
@@ -56,21 +55,10 @@ public class AAEColor {
         return ofArgb(color | 255 << 24);
     }
 
-    public float r() {
-        return this.red / 255f;
-    }
-
-    public float g() {
-        return this.green / 255f;
-    }
-
-    public float b() {
-        return this.blue / 255f;
-    }
-
-    public float a() {
-        return this.alpha / 255f;
-    }
+    public float r() { return this.red / 255f; }
+    public float g() { return this.green / 255f; }
+    public float b() { return this.blue / 255f; }
+    public float a() { return this.alpha / 255f; }
 
     public int argb() {
         return FastColor.ARGB32.color(this.alpha, this.red, this.green, this.blue);
@@ -90,5 +78,19 @@ public class AAEColor {
         return new HSV(vals[0], vals[1], vals[2]);
     }
 
-    public record HSV(float hue, float saturation, float value) {}
+    public static final class HSV {
+        private final float hue;
+        private final float saturation;
+        private final float value;
+
+        public HSV(float hue, float saturation, float value) {
+            this.hue = hue;
+            this.saturation = saturation;
+            this.value = value;
+        }
+
+        public float hue() { return this.hue; }
+        public float saturation() { return this.saturation; }
+        public float value() { return this.value; }
+    }
 }
