@@ -4,10 +4,10 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.item.IItemProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.IItemProvider;
 import net.minecraft.util.text.ITextComponent;
 
 /** Java 8 / AE2 8 compatibility wrapper for the newer type-only item key API. */
